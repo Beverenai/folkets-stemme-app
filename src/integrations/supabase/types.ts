@@ -114,6 +114,102 @@ export type Database = {
         }
         Relationships: []
       }
+      representant_voteringer: {
+        Row: {
+          created_at: string
+          id: string
+          representant_id: string
+          sak_id: string | null
+          stemme: string
+          votering_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          representant_id: string
+          sak_id?: string | null
+          stemme: string
+          votering_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          representant_id?: string
+          sak_id?: string | null
+          stemme?: string
+          votering_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "representant_voteringer_representant_id_fkey"
+            columns: ["representant_id"]
+            isOneToOne: false
+            referencedRelation: "representanter"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "representant_voteringer_sak_id_fkey"
+            columns: ["sak_id"]
+            isOneToOne: false
+            referencedRelation: "stortinget_saker"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      representanter: {
+        Row: {
+          bilde_url: string | null
+          created_at: string
+          epost: string | null
+          er_aktiv: boolean | null
+          etternavn: string
+          fodt: string | null
+          fornavn: string
+          fylke: string | null
+          id: string
+          kjonn: string | null
+          komite: string | null
+          parti: string | null
+          parti_forkortelse: string | null
+          stortinget_id: string
+          updated_at: string
+        }
+        Insert: {
+          bilde_url?: string | null
+          created_at?: string
+          epost?: string | null
+          er_aktiv?: boolean | null
+          etternavn: string
+          fodt?: string | null
+          fornavn: string
+          fylke?: string | null
+          id?: string
+          kjonn?: string | null
+          komite?: string | null
+          parti?: string | null
+          parti_forkortelse?: string | null
+          stortinget_id: string
+          updated_at?: string
+        }
+        Update: {
+          bilde_url?: string | null
+          created_at?: string
+          epost?: string | null
+          er_aktiv?: boolean | null
+          etternavn?: string
+          fodt?: string | null
+          fornavn?: string
+          fylke?: string | null
+          id?: string
+          kjonn?: string | null
+          komite?: string | null
+          parti?: string | null
+          parti_forkortelse?: string | null
+          stortinget_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stortinget_saker: {
         Row: {
           behandlet_sesjon: string | null

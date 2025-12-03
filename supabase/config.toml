@@ -2,3 +2,6 @@ project_id = "simgnodjhnpvyqqhwykg"
 
 [functions.sync-stortinget]
 verify_jwt = false
+
+[functions.sync-representanter]
+verify_jwt = false
