@@ -101,11 +101,21 @@ export default function Lovbibliotek() {
   };
 
   const stats = useMemo(() => {
-    const vedtatt = filteredSaker.filter(s => s.vedtak_resultat === 'vedtatt' || s.status === 'avsluttet').length;
+    // Count based on vedtak_resultat and voting data
+    const vedtatt = filteredSaker.filter(s => 
+      s.vedtak_resultat === 'vedtatt' || 
+      (s.stortinget_votering_for && s.stortinget_votering_for > (s.stortinget_votering_mot || 0))
+    ).length;
+    const avvist = filteredSaker.filter(s => 
+      s.vedtak_resultat === 'ikke_vedtatt' || 
+      (s.stortinget_votering_mot && s.stortinget_votering_mot > (s.stortinget_votering_for || 0))
+    ).length;
+    const pending = filteredSaker.length - vedtatt - avvist;
     return {
       total: filteredSaker.length,
       vedtatt,
-      avvist: filteredSaker.length - vedtatt,
+      avvist,
+      pending,
     };
   }, [filteredSaker]);
 
@@ -193,7 +203,7 @@ export default function Lovbibliotek() {
         </header>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 px-4 py-4">
+        <div className="grid grid-cols-4 gap-2 px-4 py-4">
           <div className="bg-card rounded-xl p-3 text-center border border-border/50">
             <p className="text-xl font-bold text-foreground">{stats.total}</p>
             <p className="text-[10px] text-muted-foreground">Totalt</p>
@@ -204,6 +214,10 @@ export default function Lovbibliotek() {
           </div>
           <div className="bg-card rounded-xl p-3 text-center border border-border/50">
             <p className="text-xl font-bold text-vote-mot">{stats.avvist}</p>
+            <p className="text-[10px] text-muted-foreground">Avvist</p>
+          </div>
+          <div className="bg-card rounded-xl p-3 text-center border border-border/50">
+            <p className="text-xl font-bold text-muted-foreground">{stats.pending}</p>
             <p className="text-[10px] text-muted-foreground">Pågående</p>
           </div>
         </div>
@@ -245,10 +259,16 @@ export default function Lovbibliotek() {
                         <Calendar className="h-3 w-3" />
                         {sak.behandlet_sesjon}
                       </span>
-                      {sak.status === 'avsluttet' && (
+                      {sak.vedtak_resultat === 'vedtatt' && (
                         <span className="text-[10px] text-vote-for flex items-center gap-1">
                           <Check className="h-3 w-3" />
                           Vedtatt
+                        </span>
+                      )}
+                      {sak.vedtak_resultat === 'ikke_vedtatt' && (
+                        <span className="text-[10px] text-vote-mot flex items-center gap-1">
+                          <X className="h-3 w-3" />
+                          Avvist
                         </span>
                       )}
                     </div>

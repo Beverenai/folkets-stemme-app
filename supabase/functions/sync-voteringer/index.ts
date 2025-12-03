@@ -9,14 +9,19 @@ const corsHeaders = {
 function safeParseDate(dateStr: string | null | undefined): string | null {
   if (!dateStr) return null;
   try {
+    // Handle .NET date format /Date(1234567890000+0100)/
+    const netMatch = dateStr.match(/\/Date\((-?\d+)([+-]\d{4})?\)\//);
+    if (netMatch) {
+      const timestamp = parseInt(netMatch[1], 10);
+      return new Date(timestamp).toISOString();
+    }
+    
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) {
-      console.log(`Invalid date: ${dateStr}`);
       return null;
     }
     return date.toISOString();
   } catch {
-    console.log(`Error parsing date: ${dateStr}`);
     return null;
   }
 }
@@ -44,12 +49,13 @@ Deno.serve(async (req) => {
     console.log(`Loaded ${repMap.size} representanter`);
 
     // Get IMPORTANT saker that need voting data (not yet synced)
+    // Reduced to 10 to avoid CPU timeout
     const { data: saker, error: sakerError } = await supabase
       .from('stortinget_saker')
       .select('id, stortinget_id, tittel, status, kategori')
       .eq('er_viktig', true)
       .is('voteringer_synced_at', null)
-      .limit(50); // Increased from 20 for faster processing
+      .limit(10);
 
     if (sakerError) throw sakerError;
 
@@ -168,7 +174,9 @@ Deno.serve(async (req) => {
             let voteringMot = 0;
             let voteringAvholdende = 0;
 
-            // Insert votes
+            // Collect votes for batch insert
+            const votesToInsert: any[] = [];
+
             for (const repVote of representantList) {
               const repStortingetId = repVote?.representant?.id;
               // Handle vote as string, object with text, or extract from various formats
@@ -193,11 +201,10 @@ Deno.serve(async (req) => {
               }
 
               const repInfo = repMap.get(repStortingetId);
-              if (!repInfo) continue;
-
-              // Count party votes
-              const partiForkortelse = repInfo.parti_forkortelse || 'IND';
-              const partiNavn = repInfo.parti || 'Uavhengig';
+              
+              // Count party votes (even if rep not in our DB)
+              const partiForkortelse = repInfo?.parti_forkortelse || repVote?.representant?.parti?.id || 'IND';
+              const partiNavn = repInfo?.parti || repVote?.representant?.parti?.navn || 'Uavhengig';
               
               if (!partiVotes[partiForkortelse]) {
                 partiVotes[partiForkortelse] = { for: 0, mot: 0, avholdende: 0, navn: partiNavn };
@@ -215,25 +222,31 @@ Deno.serve(async (req) => {
                 partiVotes[partiForkortelse].avholdende++;
               }
 
-              const { data: existing } = await supabase
+              // Only insert if rep exists in our DB
+              if (repInfo) {
+                votesToInsert.push({
+                  representant_id: repInfo.id,
+                  sak_id: sak.id,
+                  votering_id: String(voteringId),
+                  votering_uuid: voteringDbId,
+                  stemme,
+                });
+              }
+            }
+
+            // Batch insert votes with ON CONFLICT DO NOTHING
+            if (votesToInsert.length > 0) {
+              const { error: insertError } = await supabase
                 .from('representant_voteringer')
-                .select('id')
-                .eq('representant_id', repInfo.id)
-                .eq('sak_id', sak.id)
-                .eq('votering_id', String(voteringId))
-                .maybeSingle();
+                .upsert(votesToInsert, { 
+                  onConflict: 'representant_id,sak_id,votering_id',
+                  ignoreDuplicates: true 
+                });
 
-              if (!existing) {
-                const { error: insertError } = await supabase
-                  .from('representant_voteringer')
-                  .insert({
-                    representant_id: repInfo.id,
-                    sak_id: sak.id,
-                    votering_id: String(voteringId),
-                    stemme,
-                  });
-
-                if (!insertError) totalInserted++;
+              if (!insertError) {
+                totalInserted += votesToInsert.length;
+              } else {
+                console.error('Batch insert error:', insertError);
               }
             }
 
@@ -251,39 +264,25 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Insert/update parti_voteringer
-        for (const [partiForkortelse, votes] of Object.entries(partiVotes)) {
-          const { data: existingPartiVote } = await supabase
+        // Batch insert/update parti_voteringer
+        const partiVotesToUpsert = Object.entries(partiVotes).map(([partiForkortelse, votes]) => ({
+          sak_id: sak.id,
+          parti_forkortelse: partiForkortelse,
+          parti_navn: votes.navn,
+          stemmer_for: votes.for,
+          stemmer_mot: votes.mot,
+          stemmer_avholdende: votes.avholdende,
+        }));
+
+        if (partiVotesToUpsert.length > 0) {
+          await supabase
             .from('parti_voteringer')
-            .select('id')
-            .eq('sak_id', sak.id)
-            .eq('parti_forkortelse', partiForkortelse)
-            .maybeSingle();
-
-          if (existingPartiVote) {
-            await supabase
-              .from('parti_voteringer')
-              .update({
-                stemmer_for: votes.for,
-                stemmer_mot: votes.mot,
-                stemmer_avholdende: votes.avholdende,
-              })
-              .eq('id', existingPartiVote.id);
-          } else {
-            await supabase
-              .from('parti_voteringer')
-              .insert({
-                sak_id: sak.id,
-                parti_forkortelse: partiForkortelse,
-                parti_navn: votes.navn,
-                stemmer_for: votes.for,
-                stemmer_mot: votes.mot,
-                stemmer_avholdende: votes.avholdende,
-              });
-          }
+            .upsert(partiVotesToUpsert, { 
+              onConflict: 'sak_id,parti_forkortelse',
+              ignoreDuplicates: false 
+            });
+          console.log(`Upserted ${partiVotesToUpsert.length} parti_voteringer`);
         }
-
-        console.log(`Inserted/updated ${Object.keys(partiVotes).length} parti_voteringer`);
 
         // Determine vedtak result
         let vedtakResultat = null;
@@ -305,6 +304,7 @@ Deno.serve(async (req) => {
             stortinget_votering_mot: totalMot,
             stortinget_votering_avholdende: totalAvholdende,
             vedtak_resultat: vedtakResultat,
+            status: 'avsluttet',
             voteringer_synced_at: new Date().toISOString(),
           })
           .eq('id', sak.id);
@@ -313,7 +313,7 @@ Deno.serve(async (req) => {
         sakerProcessed++;
         
         // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 100));
 
       } catch (sakError: any) {
         console.error(`Error processing sak ${sak.stortinget_id}:`, sakError);

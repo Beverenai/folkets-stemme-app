@@ -57,6 +57,44 @@ function classifySak(tittel: string): { kategori: string; erViktig: boolean } {
   return { kategori: 'annet', erViktig: false };
 }
 
+// Parse status from API - handles various formats
+function parseStatus(statusField: any, sesjonId: string): string {
+  // Historical sessions (before current) are always finished
+  const currentSession = '2024-2025';
+  if (sesjonId !== currentSession) {
+    return 'avsluttet';
+  }
+  
+  // Handle status as object with navn property
+  if (typeof statusField === 'object' && statusField !== null) {
+    const navn = statusField.navn || statusField.name || '';
+    return parseStatusString(navn);
+  }
+  
+  // Handle status as string
+  if (typeof statusField === 'string') {
+    return parseStatusString(statusField);
+  }
+  
+  return 'pågående';
+}
+
+function parseStatusString(status: string): string {
+  const s = status.toLowerCase();
+  if (
+    s.includes('behandlet') ||
+    s.includes('vedtatt') ||
+    s.includes('forkastet') ||
+    s.includes('avsluttet') ||
+    s.includes('ferdig') ||
+    s.includes('bifalt') ||
+    s.includes('ikke bifalt')
+  ) {
+    return 'avsluttet';
+  }
+  return 'pågående';
+}
+
 // Parse XML to extract text content
 function getTextContent(xml: string, tag: string): string | null {
   const regex = new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, 'i');
@@ -122,7 +160,7 @@ async function fetchStortingetSaker(sesjonId: string): Promise<StortingetSak[]> 
         kort_tittel: sak.korttittel || sak.tittel?.substring(0, 100) || null,
         beskrivelse: sak.innstilling_sammendrag || sak.kortvedtak || null,
         tema: sak.hovedemne?.navn || sak.emne?.navn || null,
-        status: sak.status === 'behandlet' ? 'avsluttet' : 'pågående',
+        status: parseStatus(sak.status, sesjonId),
         dokumentgruppe: sak.dokumentgruppe?.navn || null,
         behandlet_sesjon: sak.sesjon_id || sesjonId,
         kategori: classification.kategori,
@@ -131,7 +169,8 @@ async function fetchStortingetSaker(sesjonId: string): Promise<StortingetSak[]> 
     }
     
     const viktigCount = saker.filter(s => s.er_viktig).length;
-    console.log(`Parsed ${saker.length} saker from JSON (${viktigCount} viktige)`);
+    const avsluttetCount = saker.filter(s => s.status === 'avsluttet').length;
+    console.log(`Parsed ${saker.length} saker from JSON (${viktigCount} viktige, ${avsluttetCount} avsluttet)`);
     return saker;
   } catch (error) {
     console.error('Error fetching JSON, trying XML:', error);
@@ -173,7 +212,7 @@ async function fetchStortingetSakerXML(sesjonId: string): Promise<StortingetSak[
       kort_tittel: getTextContent(sakXml, 'korttittel'),
       beskrivelse: getTextContent(sakXml, 'innstilling_sammendrag') || getTextContent(sakXml, 'kortvedtak'),
       tema: getTextContent(sakXml, 'hovedemne_navn'),
-      status: statusText.toLowerCase().includes('behandlet') ? 'avsluttet' : 'pågående',
+      status: parseStatus(statusText, sesjonId),
       dokumentgruppe: getTextContent(sakXml, 'dokumentgruppe_navn'),
       behandlet_sesjon: getTextContent(sakXml, 'sesjon_id') || sesjonId,
       kategori: classification.kategori,
