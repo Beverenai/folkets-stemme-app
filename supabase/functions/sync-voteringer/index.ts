@@ -5,6 +5,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Safe date parsing to handle invalid dates from API
+function safeParseDate(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null;
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      console.log(`Invalid date: ${dateStr}`);
+      return null;
+    }
+    return date.toISOString();
+  } catch {
+    console.log(`Error parsing date: ${dateStr}`);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -31,9 +47,9 @@ Deno.serve(async (req) => {
     const { data: saker, error: sakerError } = await supabase
       .from('stortinget_saker')
       .select('id, stortinget_id, tittel, status, kategori')
-      .eq('er_viktig', true)  // Only process important saker
+      .eq('er_viktig', true)
       .is('voteringer_synced_at', null)
-      .limit(20);
+      .limit(50); // Increased from 20 for faster processing
 
     if (sakerError) throw sakerError;
 
@@ -89,7 +105,7 @@ Deno.serve(async (req) => {
         // Track party votes for this sak
         const partiVotes: Record<string, { for: number; mot: number; avholdende: number; navn: string }> = {};
 
-        // Process each votering individually (not just the first one)
+        // Process each votering individually
         for (const votering of voteringListe) {
           const voteringId = votering?.votering_id;
           const forslagTekst = votering?.votering_tema || votering?.kommentar || sak.tittel;
@@ -112,14 +128,14 @@ Deno.serve(async (req) => {
           if (existingVotering) {
             voteringDbId = existingVotering.id;
           } else {
-            // Create new votering entry
+            // Create new votering entry with safe date parsing
             const { data: newVotering, error: voteringError } = await supabase
               .from('voteringer')
               .insert({
                 stortinget_votering_id: String(voteringId),
                 sak_id: sak.id,
                 forslag_tekst: forslagTekst,
-                votering_dato: voteringDato ? new Date(voteringDato).toISOString() : null,
+                votering_dato: safeParseDate(voteringDato),
                 status: vedtatt !== null ? 'avsluttet' : 'pågående',
                 vedtatt: vedtatt,
               })
@@ -296,11 +312,7 @@ Deno.serve(async (req) => {
 
       } catch (sakError: any) {
         console.error(`Error processing sak ${sak.stortinget_id}:`, sakError);
-        // Mark as synced to avoid infinite retry
-        await supabase
-          .from('stortinget_saker')
-          .update({ voteringer_synced_at: new Date().toISOString() })
-          .eq('id', sak.id);
+        // DON'T mark as synced on error - allows retry on next run
       }
     }
 
