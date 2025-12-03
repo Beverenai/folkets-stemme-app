@@ -90,14 +90,18 @@ serve(async (req) => {
     }
 
     // 4. Generate AI content for new important saker without summaries
+    // Only for 2024-2025 and 2025-2026 sessions, prioritized by category
     console.log('Step 4: Generating AI content...');
     try {
       const { data: sakerUtenAI } = await supabase
         .from('stortinget_saker')
-        .select('id, tittel')
+        .select('id, tittel, kategori')
         .eq('er_viktig', true)
         .is('oppsummering', null)
-        .limit(5);
+        .in('behandlet_sesjon', ['2024-2025', '2025-2026'])
+        .in('kategori', ['lovendring', 'budsjett', 'grunnlov', 'melding', 'politikk', 'representantforslag'])
+        .order('kategori', { ascending: true })
+        .limit(25);
 
       if (sakerUtenAI && sakerUtenAI.length > 0) {
         console.log(`Found ${sakerUtenAI.length} saker needing AI content`);

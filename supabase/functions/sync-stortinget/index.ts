@@ -336,15 +336,10 @@ serve(async (req) => {
       // No body or invalid JSON, use defaults
     }
 
-    // Get sessions to sync - either specific session or last 4 years
+    // Get sessions to sync - either specific session or only 2025+ sessions
     const sessions = requestedSession 
       ? [requestedSession]
-      : [
-          '2021-2022',  // Start of current Storting period
-          '2022-2023',
-          '2023-2024',
-          '2024-2025',
-        ];
+      : ['2024-2025', '2025-2026'];
 
     let totalInserted = 0;
     let totalUpdated = 0;
