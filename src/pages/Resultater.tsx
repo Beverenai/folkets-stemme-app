@@ -4,14 +4,26 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
-import { BarChart3, Users, CheckCircle, XCircle, Share2, PartyPopper } from 'lucide-react';
+import { BarChart3, Users, CheckCircle, XCircle, Share2, PartyPopper, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResultBar from '@/components/ResultBar';
 import useEmblaCarousel from 'embla-carousel-react';
 import { Button } from '@/components/ui/button';
+import KategoriBadge from '@/components/KategoriBadge';
+import PartiBreakdown from '@/components/PartiBreakdown';
+import { format } from 'date-fns';
+import { nb } from 'date-fns/locale';
+
+interface PartiStemme {
+  parti_forkortelse: string;
+  stemmer_for: number;
+  stemmer_mot: number;
+  sak_id: string;
+}
 
 interface VoteringResult {
   id: string;
+  sak_id: string | null;
   oppsummering: string | null;
   forslag_tekst: string | null;
   vedtatt: boolean | null;
@@ -24,45 +36,53 @@ interface VoteringResult {
     kategori: string | null;
   } | null;
   folke_stemmer?: { stemme: string }[];
+  parti_stemmer?: PartiStemme[];
 }
 
 async function fetchResultater() {
   const sb = supabase as any;
   
-  const [voteringerRes, stemmerRes] = await Promise.all([
+  const [voteringerRes, stemmerRes, partiRes] = await Promise.all([
     sb.from('voteringer')
       .select(`
-        id, oppsummering, forslag_tekst, vedtatt, resultat_for, resultat_mot, resultat_avholdende, votering_dato,
+        id, sak_id, oppsummering, forslag_tekst, vedtatt, resultat_for, resultat_mot, resultat_avholdende, votering_dato,
         stortinget_saker(tittel, kategori)
       `)
       .eq('status', 'avsluttet')
       .order('votering_dato', { ascending: false })
-      .limit(30),
-    sb.from('folke_stemmer').select('stemme, votering_id')
+      .limit(15),
+    sb.from('folke_stemmer').select('stemme, votering_id'),
+    sb.from('parti_voteringer').select('parti_forkortelse, sak_id, stemmer_for, stemmer_mot')
   ]);
 
   if (voteringerRes.error) throw voteringerRes.error;
 
   const voteringer = voteringerRes.data || [];
   const stemmer = stemmerRes.data || [];
+  const partiStemmer = partiRes.data || [];
 
   return voteringer.map((v: any) => ({
     ...v,
-    folke_stemmer: stemmer.filter((s: any) => s.votering_id === v.id)
+    folke_stemmer: stemmer.filter((s: any) => s.votering_id === v.id),
+    parti_stemmer: partiStemmer.filter((p: any) => p.sak_id === v.sak_id)
   })) as VoteringResult[];
 }
 
 function ResultCardSkeleton() {
   return (
-    <div className="bg-card/60 backdrop-blur-xl border border-border/30 rounded-3xl p-6 shadow-xl">
-      <Skeleton className="h-5 w-24 rounded-full mb-4" />
+    <div className="bg-card/60 backdrop-blur-xl border border-border/30 rounded-3xl p-5 shadow-xl">
+      <div className="flex items-center justify-between mb-3">
+        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-4 w-16" />
+      </div>
       <Skeleton className="h-5 w-full mb-2" />
-      <Skeleton className="h-5 w-3/4 mb-6" />
-      <Skeleton className="h-3 w-full rounded-full mb-6" />
-      <Skeleton className="h-3 w-full rounded-full mb-6" />
-      <div className="flex gap-3 pt-4 border-t border-border/20">
-        <Skeleton className="flex-1 h-11 rounded-2xl" />
-        <Skeleton className="flex-1 h-11 rounded-2xl" />
+      <Skeleton className="h-5 w-4/5 mb-4" />
+      <Skeleton className="h-3 w-full rounded-full mb-4" />
+      <Skeleton className="h-3 w-full rounded-full mb-4" />
+      <Skeleton className="h-12 w-full rounded-2xl mb-3" />
+      <div className="flex gap-3 pt-3 border-t border-border/20">
+        <Skeleton className="flex-1 h-10 rounded-2xl" />
+        <Skeleton className="flex-1 h-10 rounded-2xl" />
       </div>
     </div>
   );
@@ -125,15 +145,26 @@ export default function Resultater() {
     }
   };
 
+  const totalSlides = resultater.length + 1; // +1 for end slide
+
   return (
     <Layout title="Resultater" hideNav>
       <div className="h-[calc(100vh-60px)] flex flex-col animate-ios-fade">
-        {/* Header - kompakt */}
-        <div className="px-4 pt-4 pb-2">
-          <h1 className="text-xl font-bold text-foreground">Resultater</h1>
-          <p className="text-sm text-muted-foreground">
-            Swipe for å se avstemningsresultater
-          </p>
+        {/* Header - kompakt med teller */}
+        <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-foreground">Resultater</h1>
+            <p className="text-xs text-muted-foreground">
+              Swipe for å se avstemninger
+            </p>
+          </div>
+          {resultater.length > 0 && (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{currentIndex + 1}</span>
+              <span>av</span>
+              <span>{totalSlides}</span>
+            </div>
+          )}
         </div>
 
         {/* Carousel - vertikalt sentrert */}
@@ -153,35 +184,36 @@ export default function Resultater() {
                   const totalFolke = folkeFor + folkeMot + folkeAvholdende;
                   const enighet = getEnighet(votering);
                   const displayText = votering.oppsummering || votering.forslag_tekst || votering.stortinget_saker?.tittel || 'Votering';
+                  const kategori = votering.stortinget_saker?.kategori;
+                  const dato = votering.votering_dato 
+                    ? format(new Date(votering.votering_dato), 'd. MMM yyyy', { locale: nb })
+                    : null;
 
                   return (
                     <div key={votering.id} className="flex-[0_0_100%] min-w-0 px-4">
-                      {/* Glassmorphism card - kompakt, auto-høyde */}
-                      <div className="bg-card/60 backdrop-blur-xl border border-border/30 rounded-3xl p-6 shadow-xl">
-                        {/* Enighet badge */}
-                        {enighet !== null && (
-                          <div className={cn(
-                            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold mb-4',
-                            enighet ? 'bg-vote-for/20 text-vote-for' : 'bg-vote-mot/20 text-vote-mot'
-                          )}>
-                            {enighet ? <CheckCircle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                            {enighet ? 'Enig med folket' : 'Uenig med folket'}
-                          </div>
-                        )}
+                      {/* Glassmorphism card - kompakt, mobiloptimalisert */}
+                      <div className="bg-card/60 backdrop-blur-xl border border-border/30 rounded-3xl p-5 shadow-xl">
+                        {/* Kategori + dato øverst */}
+                        <div className="flex items-center justify-between mb-3">
+                          <KategoriBadge kategori={kategori} size="sm" />
+                          {dato && (
+                            <span className="text-xs text-muted-foreground">{dato}</span>
+                          )}
+                        </div>
 
-                        {/* Tittel - kompakt */}
-                        <h2 className="text-lg font-bold leading-tight mb-5 line-clamp-3">
+                        {/* Tittel - mobiltilpasset */}
+                        <h2 className="text-base font-semibold leading-snug mb-4 line-clamp-3 break-words">
                           {displayText}
                         </h2>
 
-                        {/* Resultatseksjoner - tett spacing */}
-                        <div className="space-y-4 mb-5">
+                        {/* Resultatseksjoner - kompakt */}
+                        <div className="space-y-3 mb-4">
                           {/* Folket */}
                           {totalFolke > 0 && (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-muted-foreground flex items-center gap-1.5">
-                                  <Users className="h-3.5 w-3.5" />
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
                                   Folket ({totalFolke})
                                 </span>
                               </div>
@@ -195,11 +227,11 @@ export default function Resultater() {
                           )}
 
                           {/* Stortinget */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
                               <span className="text-muted-foreground">Stortinget</span>
                               <span className={cn(
-                                'font-semibold text-xs',
+                                'font-semibold',
                                 votering.vedtatt ? 'text-vote-for' : 'text-vote-mot'
                               )}>
                                 {votering.vedtatt ? 'Vedtatt' : 'Ikke vedtatt'}
@@ -214,17 +246,36 @@ export default function Resultater() {
                           </div>
                         </div>
 
-                        {/* Knapper - side ved side */}
-                        <div className="flex gap-3 pt-4 border-t border-border/20">
+                        {/* Parti-breakdown */}
+                        {votering.parti_stemmer && votering.parti_stemmer.length > 0 && (
+                          <div className="mb-4 pt-3 border-t border-border/20">
+                            <PartiBreakdown partiStemmer={votering.parti_stemmer} />
+                          </div>
+                        )}
+
+                        {/* Enighet badge */}
+                        {enighet !== null && (
+                          <div className={cn(
+                            'flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium mb-4',
+                            enighet ? 'bg-vote-for/10 text-vote-for' : 'bg-vote-mot/10 text-vote-mot'
+                          )}>
+                            {enighet ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                            {enighet ? 'Stortinget stemte som folket' : 'Stortinget stemte mot folket'}
+                          </div>
+                        )}
+
+                        {/* Knapper - kompakte */}
+                        <div className="flex gap-2 pt-3 border-t border-border/20">
                           <Button
                             variant="outline"
-                            className="flex-1 h-11 rounded-2xl bg-background/50 backdrop-blur-sm"
+                            size="sm"
+                            className="flex-1 h-10 rounded-xl bg-background/50"
                             onClick={() => handleShare(votering)}
                           >
-                            <Share2 className="h-4 w-4 mr-2" />
+                            <Share2 className="h-4 w-4 mr-1.5" />
                             Del
                           </Button>
-                          <Button asChild className="flex-1 h-11 rounded-2xl">
+                          <Button asChild size="sm" className="flex-1 h-10 rounded-xl">
                             <Link to={`/votering/${votering.id}`}>
                               Se detaljer
                             </Link>
@@ -237,15 +288,15 @@ export default function Resultater() {
 
                 {/* End slide */}
                 <div className="flex-[0_0_100%] min-w-0 px-4">
-                  <div className="bg-card/60 backdrop-blur-xl border border-border/30 rounded-3xl p-6 shadow-xl text-center">
-                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 mx-auto">
-                      <PartyPopper className="h-8 w-8 text-primary" />
+                  <div className="bg-card/60 backdrop-blur-xl border border-border/30 rounded-3xl p-5 shadow-xl text-center">
+                    <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-3 mx-auto">
+                      <PartyPopper className="h-7 w-7 text-primary" />
                     </div>
-                    <h2 className="text-lg font-bold mb-2">Du har sett alle!</h2>
-                    <p className="text-sm text-muted-foreground mb-5">
+                    <h2 className="text-base font-bold mb-2">Du har sett alle!</h2>
+                    <p className="text-xs text-muted-foreground mb-4">
                       Kom tilbake senere for nye resultater
                     </p>
-                    <Button asChild variant="outline" className="rounded-2xl h-11 w-full bg-background/50">
+                    <Button asChild variant="outline" size="sm" className="rounded-xl h-10 w-full bg-background/50">
                       <Link to="/">Tilbake til forsiden</Link>
                     </Button>
                   </div>
@@ -253,29 +304,20 @@ export default function Resultater() {
               </>
             ) : (
               <div className="flex-[0_0_100%] min-w-0 px-4">
-                <div className="bg-card/60 backdrop-blur-xl border border-border/30 rounded-3xl p-8 shadow-xl text-center">
-                  <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                  <p className="text-muted-foreground">Ingen avsluttede voteringer ennå</p>
+                <div className="bg-card/60 backdrop-blur-xl border border-border/30 rounded-3xl p-6 shadow-xl text-center">
+                  <BarChart3 className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">Ingen avsluttede voteringer ennå</p>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Dot indicators */}
-        {resultater.length > 0 && (
-          <div className="flex justify-center gap-1.5 py-4">
-            {[...resultater, null].map((_, index) => (
-              <div
-                key={index}
-                className={cn(
-                  'h-2 rounded-full transition-all duration-300',
-                  index === currentIndex 
-                    ? 'w-6 bg-primary' 
-                    : 'w-2 bg-muted-foreground/30'
-                )}
-              />
-            ))}
+        {/* Swipe hint */}
+        {resultater.length > 0 && currentIndex < resultater.length && (
+          <div className="flex items-center justify-center gap-1 py-3 text-xs text-muted-foreground">
+            <span>Swipe for neste</span>
+            <ChevronRight className="h-3 w-3" />
           </div>
         )}
       </div>
