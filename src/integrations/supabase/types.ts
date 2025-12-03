@@ -225,6 +225,7 @@ export type Database = {
           oppsummering: string | null
           sist_oppdatert_fra_stortinget: string | null
           status: string
+          stengt_dato: string | null
           stortinget_id: string
           stortinget_vedtak: string | null
           stortinget_votering_avholdende: number | null
@@ -233,6 +234,8 @@ export type Database = {
           tema: string | null
           tittel: string
           updated_at: string
+          vedtak_resultat: string | null
+          voteringer_synced_at: string | null
         }
         Insert: {
           argumenter_for?: Json | null
@@ -248,6 +251,7 @@ export type Database = {
           oppsummering?: string | null
           sist_oppdatert_fra_stortinget?: string | null
           status?: string
+          stengt_dato?: string | null
           stortinget_id: string
           stortinget_vedtak?: string | null
           stortinget_votering_avholdende?: number | null
@@ -256,6 +260,8 @@ export type Database = {
           tema?: string | null
           tittel: string
           updated_at?: string
+          vedtak_resultat?: string | null
+          voteringer_synced_at?: string | null
         }
         Update: {
           argumenter_for?: Json | null
@@ -271,6 +277,7 @@ export type Database = {
           oppsummering?: string | null
           sist_oppdatert_fra_stortinget?: string | null
           status?: string
+          stengt_dato?: string | null
           stortinget_id?: string
           stortinget_vedtak?: string | null
           stortinget_votering_avholdende?: number | null
@@ -279,6 +286,8 @@ export type Database = {
           tema?: string | null
           tittel?: string
           updated_at?: string
+          vedtak_resultat?: string | null
+          voteringer_synced_at?: string | null
         }
         Relationships: []
       }
