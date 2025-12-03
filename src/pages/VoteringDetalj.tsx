@@ -4,9 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, ThumbsUp, ThumbsDown, Minus, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResultBar from '@/components/ResultBar';
+import PartiVoteringList from '@/components/PartiVoteringList';
 
 interface Votering {
   id: string;
@@ -33,6 +34,14 @@ interface VoteStats {
   total: number;
 }
 
+interface PartiVote {
+  parti_forkortelse: string;
+  parti_navn: string;
+  stemmer_for: number;
+  stemmer_mot: number;
+  stemmer_avholdende: number;
+}
+
 export default function VoteringDetalj() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -44,6 +53,7 @@ export default function VoteringDetalj() {
   const [userVote, setUserVote] = useState<string | null>(null);
   const [voteStats, setVoteStats] = useState<VoteStats>({ for: 0, mot: 0, avholdende: 0, total: 0 });
   const [voting, setVoting] = useState(false);
+  const [partiVotes, setPartiVotes] = useState<PartiVote[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -91,6 +101,18 @@ export default function VoteringDetalj() {
 
           if (userVoteData) {
             setUserVote(userVoteData.stemme);
+          }
+        }
+
+        // Get party votes if we have a sak_id
+        if (voteringData?.sak_id) {
+          const { data: partiData } = await sb
+            .from('parti_voteringer')
+            .select('*')
+            .eq('sak_id', voteringData.sak_id);
+          
+          if (partiData) {
+            setPartiVotes(partiData);
           }
         }
       } catch (error) {
@@ -354,6 +376,17 @@ export default function VoteringDetalj() {
               size="lg"
               showLabels
             />
+          </div>
+        )}
+
+        {/* Party breakdown */}
+        {partiVotes.length > 0 && (
+          <div className="premium-card p-5 animate-ios-slide-up">
+            <div className="flex items-center gap-2 mb-4">
+              <Building2 className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-lg">Partienes stemmer</h3>
+            </div>
+            <PartiVoteringList partiVotes={partiVotes} />
           </div>
         )}
 
