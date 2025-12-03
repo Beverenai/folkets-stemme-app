@@ -4,15 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, Building2, ListChecks, UserCheck } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import ArgumentsSection from '@/components/ArgumentsSection';
-import ResultBar from '@/components/ResultBar';
-import VotingSection from '@/components/VotingSection';
-import PartiVoteringList from '@/components/PartiVoteringList';
-import VoteringList from '@/components/VoteringList';
-import RepresentantVoteList from '@/components/RepresentantVoteList';
+import { ArrowLeft, Share2 } from 'lucide-react';
 import ShareCard from '@/components/ShareCard';
+import SakSwipeView from '@/components/SakSwipeView';
 import { Json } from '@/integrations/supabase/types';
 
 interface Sak {
@@ -253,18 +247,11 @@ export default function SakDetalj() {
 
   if (!sak) return null;
 
-  const isAvsluttet = sak.status === 'avsluttet';
-  const argumenterFor = Array.isArray(sak.argumenter_for) ? sak.argumenter_for as string[] : [];
-  const argumenterMot = Array.isArray(sak.argumenter_mot) ? sak.argumenter_mot as string[] : [];
-  
-  const hasStortingetVotes = (sak.stortinget_votering_for || 0) > 0 || (sak.stortinget_votering_mot || 0) > 0;
-  const vedtatt = (sak.stortinget_votering_for || 0) > (sak.stortinget_votering_mot || 0);
-
   return (
     <Layout hideHeader>
-      <div className="min-h-screen bg-background">
+      <div className="h-screen flex flex-col bg-background">
         {/* Simple Clean Header */}
-        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50 safe-top">
+        <header className="flex-shrink-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50 safe-top">
           <div className="flex items-center justify-between h-14 px-4">
             <button 
               onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/saker')} 
@@ -281,169 +268,16 @@ export default function SakDetalj() {
           </div>
         </header>
 
-        {/* Content */}
-        <div className="px-4 py-5 space-y-5 pb-tab-bar animate-ios-fade">
-          {/* Status badges and title */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className={cn(
-                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
-                isAvsluttet 
-                  ? 'bg-secondary text-secondary-foreground' 
-                  : 'bg-vote-for/20 text-vote-for'
-              )}>
-                {isAvsluttet ? <CheckCircle className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
-                {isAvsluttet ? 'Avsluttet' : 'Pågående'}
-              </span>
-              {sak.kategori && (
-                <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground capitalize">
-                  {sak.kategori}
-                </span>
-              )}
-            </div>
-            <h1 className="text-xl font-bold leading-tight">
-              {sak.kort_tittel || sak.tittel}
-            </h1>
-          </div>
-
-          {/* Summary card */}
-          {(sak.oppsummering || sak.beskrivelse) && (
-            <div className="premium-card p-5 animate-ios-slide-up">
-              <h2 className="font-semibold text-sm text-primary mb-3">Oppsummering</h2>
-              <p className="text-[15px] leading-relaxed text-foreground/90">
-                {sak.oppsummering || sak.beskrivelse}
-              </p>
-              <a
-                href={`https://www.stortinget.no/no/Saker-og-publikasjoner/Saker/Sak/?p=${sak.stortinget_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 mt-4 text-sm text-primary ios-touch font-medium"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Les mer på Stortinget.no
-              </a>
-            </div>
-          )}
-
-          {/* Arguments */}
-          {(argumenterFor.length > 0 || argumenterMot.length > 0) && (
-            <ArgumentsSection 
-              argumenterFor={argumenterFor}
-              argumenterMot={argumenterMot}
-            />
-          )}
-
-          {/* Voting section */}
-          <VotingSection 
-            userVote={userVote}
-            onVote={handleVote}
+        {/* Swipe View */}
+        <div className="flex-1 overflow-hidden">
+          <SakSwipeView
+            sak={sak}
             isLoggedIn={!!user}
+            userVote={userVote}
+            voteStats={voteStats}
+            onVote={handleVote}
+            onShare={handleShare}
           />
-
-          {/* Public votes results */}
-          <div className="premium-card p-5 animate-ios-slide-up">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">Folkets stemmer</h3>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span>{voteStats.total} stemmer</span>
-              </div>
-            </div>
-
-            {voteStats.total > 0 ? (
-              <ResultBar 
-                forCount={voteStats.for}
-                motCount={voteStats.mot}
-                avholdendeCount={voteStats.avholdende}
-                size="lg"
-                showLabels
-              />
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground text-sm">
-                  Ingen har stemt ennå. Vær den første!
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Stortinget results */}
-          {hasStortingetVotes && (
-            <div className="premium-card p-5 animate-ios-slide-up">
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg">Stortingets vedtak</h3>
-              </div>
-              
-              <div className={cn(
-                "p-4 rounded-xl mb-4",
-                vedtatt ? "bg-vote-for/10" : "bg-vote-mot/10"
-              )}>
-                <p className={cn(
-                  "text-lg font-semibold",
-                  vedtatt ? "text-vote-for" : "text-vote-mot"
-                )}>
-                  {vedtatt ? 'Vedtatt' : 'Forkastet'} med {sak.stortinget_votering_for} mot {sak.stortinget_votering_mot} stemmer
-                </p>
-                {sak.stortinget_vedtak && (
-                  <p className="text-sm text-muted-foreground mt-1">{sak.stortinget_vedtak}</p>
-                )}
-              </div>
-
-              <ResultBar 
-                forCount={sak.stortinget_votering_for || 0}
-                motCount={sak.stortinget_votering_mot || 0}
-                avholdendeCount={sak.stortinget_votering_avholdende || 0}
-                size="lg"
-                showLabels
-              />
-            </div>
-          )}
-
-          {/* Party breakdown */}
-          {partiVotes.length > 0 && (
-            <div className="premium-card p-5 animate-ios-slide-up">
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg">Partienes stemmer</h3>
-              </div>
-              <PartiVoteringList partiVotes={partiVotes} voteringCount={voteringer.length} />
-            </div>
-          )}
-
-          {/* Individual representative votes */}
-          {representantVotes.length > 0 && (
-            <div className="premium-card p-5 animate-ios-slide-up">
-              <div className="flex items-center gap-2 mb-4">
-                <UserCheck className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg">Representantenes stemmer</h3>
-              </div>
-              <RepresentantVoteList votes={representantVotes} />
-            </div>
-          )}
-
-          {/* All voteringer list */}
-          {voteringer.length > 1 && (
-            <div className="premium-card p-5 animate-ios-slide-up">
-              <div className="flex items-center gap-2 mb-4">
-                <ListChecks className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg">Alle voteringer ({voteringer.length})</h3>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Denne saken hadde {voteringer.length} separate avstemninger.
-              </p>
-              <VoteringList voteringer={voteringer} mainVoteringId={mainVoteringId || undefined} />
-            </div>
-          )}
-
-          {/* Prominent Share Button */}
-          <button
-            onClick={handleShare}
-            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 ios-press animate-ios-slide-up"
-          >
-            <Share2 className="h-5 w-5" />
-            Del resultat
-          </button>
         </div>
 
         {/* Share Modal */}
