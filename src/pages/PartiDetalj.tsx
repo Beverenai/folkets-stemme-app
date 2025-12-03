@@ -6,6 +6,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { getPartiConfig, PARTI_CONFIG } from '@/lib/partiConfig';
+
+// Helper to lighten/darken a hex color
+function adjustColor(hex: string, amount: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+  const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
+  const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
+  return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+}
 import PartiBadge from '@/components/PartiBadge';
 
 interface PartiVotering {
@@ -157,13 +166,20 @@ export default function PartiDetalj() {
         {/* Parti header with color */}
         <div className="px-4 py-8 text-center">
           <div 
-            className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center font-bold text-2xl shadow-lg"
+            className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center font-bold text-3xl relative overflow-hidden"
             style={{ 
-              backgroundColor: config.farge,
-              color: config.tekstFarge
+              background: `linear-gradient(145deg, ${config.farge}, ${adjustColor(config.farge, -30)})`,
+              color: config.tekstFarge,
+              boxShadow: `0 8px 32px ${config.farge}50, 0 4px 12px ${config.farge}30, inset 0 1px 0 ${adjustColor(config.farge, 40)}40`
             }}
           >
-            {config.forkortelse}
+            <div 
+              className="absolute inset-0 opacity-30"
+              style={{
+                background: `linear-gradient(180deg, white 0%, transparent 50%)`
+              }}
+            />
+            <span className="relative z-10 drop-shadow-sm">{config.forkortelse}</span>
           </div>
         
         <h1 className="text-2xl font-bold text-foreground mb-2">
