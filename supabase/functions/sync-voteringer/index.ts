@@ -30,72 +30,163 @@ Deno.serve(async (req) => {
     let totalInserted = 0;
     let sakerProcessed = 0;
 
-    // Fetch alle voteringer (no session filter)
-    const url = `https://data.stortinget.no/eksport/voteringer?format=json`;
-    console.log('Fetching all voteringer...');
+    // Step 1: Get saker from session (saker_liste is directly an array)
+    const sesjonId = '2023-2024';
+    const sakerUrl = `https://data.stortinget.no/eksport/saker?sesjonid=${sesjonId}&format=json`;
+    console.log(`Fetching saker from ${sakerUrl}`);
     
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.log(`API returned ${res.status}`);
+    const sakerRes = await fetch(sakerUrl);
+    if (!sakerRes.ok) {
       return new Response(
-        JSON.stringify({ success: true, message: 'API unavailable, try later', inserted: 0 }),
+        JSON.stringify({ success: false, message: `API error: ${sakerRes.status}` }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const data = await res.json();
-    const voteringListe = data?.votering_liste?.votering || [];
-    console.log(`Found ${voteringListe.length} voteringer`);
+    const sakerData = await sakerRes.json();
+    // saker_liste is directly an array, not an object with a 'sak' property
+    const sakerListe = sakerData?.saker_liste || [];
+    console.log(`Found ${sakerListe.length} saker`);
 
-    // Process up to 5 voteringer
-    for (const votering of voteringListe.slice(0, 5)) {
-      const voteringId = votering?.votering_id;
-      const sakId = votering?.sak_id;
-      if (!voteringId || !sakId) continue;
+    // Process saker, looking for ones with voteringer (skip first 100 which are often grunnlovsforslag)
+    let sakIndex = 100;
+    for (const sak of sakerListe.slice(100, 200)) {
+      sakIndex++;
+      const sakStortingetId = sak?.id;
+      const sakTittel = sak?.tittel || sak?.kort_tittel || `Sak ${sakStortingetId}`;
+      
+      if (!sakStortingetId) continue;
 
-      // Get or create sak
-      let { data: sak } = await supabase
+      console.log(`Processing sak ${sakStortingetId}: ${sakTittel?.substring(0, 50)}...`);
+
+      // Step 2: Get voteringer for this sak
+      const voteringerUrl = `https://data.stortinget.no/eksport/voteringer?sakid=${sakStortingetId}&format=json`;
+      
+      const voteringerRes = await fetch(voteringerUrl);
+      if (!voteringerRes.ok) {
+        console.log(`No voteringer for sak ${sakStortingetId}`);
+        continue;
+      }
+
+      const voteringerData = await voteringerRes.json();
+      // sak_votering_liste can be array or object with sak_votering
+      let voteringListe = voteringerData?.sak_votering_liste;
+      if (voteringListe && !Array.isArray(voteringListe)) {
+        voteringListe = voteringListe.sak_votering || [];
+      }
+      if (!voteringListe) voteringListe = [];
+      if (!Array.isArray(voteringListe)) voteringListe = [voteringListe];
+      
+      if (voteringListe.length === 0) {
+        console.log(`No voteringer for sak ${sakStortingetId}`);
+        continue;
+      }
+
+      console.log(`Found ${voteringListe.length} voteringer for sak ${sakStortingetId}`);
+
+      // Get or create sak in database
+      let { data: eksisterendeSak } = await supabase
         .from('stortinget_saker')
         .select('id')
-        .eq('stortinget_id', sakId)
+        .eq('stortinget_id', String(sakStortingetId))
         .maybeSingle();
 
-      if (!sak) {
-        const { data: nySak } = await supabase
+      let sakUuid: string;
+      
+      if (!eksisterendeSak) {
+        const { data: nySak, error: insertError } = await supabase
           .from('stortinget_saker')
-          .insert({ stortinget_id: sakId, tittel: `Sak ${sakId}`, status: 'behandlet' })
+          .insert({
+            stortinget_id: String(sakStortingetId),
+            tittel: sakTittel,
+            kort_tittel: sakTittel.substring(0, 100),
+            status: 'behandlet',
+          })
           .select('id')
           .single();
-        if (!nySak) continue;
-        sak = nySak;
+
+        if (insertError || !nySak) {
+          console.error(`Failed to insert sak ${sakStortingetId}:`, insertError);
+          continue;
+        }
+        sakUuid = nySak.id;
+        console.log(`Created new sak in DB`);
+      } else {
+        sakUuid = eksisterendeSak.id;
       }
 
-      // Get votes
-      const resultatRes = await fetch(`https://data.stortinget.no/eksport/voteringsresultat?voteringid=${voteringId}&format=json`);
-      if (!resultatRes.ok) continue;
+      // Process first votering
+      const votering = voteringListe[0];
+      const voteringId = votering?.votering_id;
+      if (!voteringId) {
+        console.log(`No votering_id for sak ${sakStortingetId}`);
+        continue;
+      }
+
+      console.log(`Processing votering ${voteringId}`);
+
+      // Step 3: Get voteringsresultat
+      const resultatUrl = `https://data.stortinget.no/eksport/voteringsresultat?voteringid=${voteringId}&format=json`;
+      const resultatRes = await fetch(resultatUrl);
+      
+      if (!resultatRes.ok) {
+        console.log(`Resultat API returned ${resultatRes.status}`);
+        continue;
+      }
 
       const resultatData = await resultatRes.json();
-      const votes = resultatData?.voteringsresultat_liste?.representant_voteringsresultat || [];
+      let representantList = resultatData?.voteringsresultat_liste?.representant_voteringsresultat;
+      if (!representantList) representantList = resultatData?.voteringsresultat_liste;
+      if (!Array.isArray(representantList)) representantList = representantList ? [representantList] : [];
 
-      for (const v of votes) {
-        const repId = v?.representant?.id;
-        const vote = v?.votering?.toLowerCase();
-        const repUuid = repMap.get(repId);
+      console.log(`Found ${representantList.length} votes`);
+
+      // Insert votes
+      for (const repVote of representantList) {
+        const repStortingetId = repVote?.representant?.id;
+        const vote = repVote?.votering?.toLowerCase();
+
+        if (!repStortingetId || !vote) continue;
+
+        const repUuid = repMap.get(repStortingetId);
         if (!repUuid) continue;
 
-        const stemme = vote === 'for' ? 'for' : vote === 'mot' ? 'mot' : 'avholdende';
-        
-        const { error } = await supabase
+        let stemme = 'ikke_tilstede';
+        if (vote === 'for') stemme = 'for';
+        else if (vote === 'mot') stemme = 'mot';
+        else if (vote === 'avholdende' || vote === 'ikke_avgitt_stemme') stemme = 'avholdende';
+
+        const { data: existing } = await supabase
           .from('representant_voteringer')
-          .insert({ representant_id: repUuid, sak_id: sak.id, votering_id: voteringId, stemme });
-        
-        if (!error) totalInserted++;
+          .select('id')
+          .eq('representant_id', repUuid)
+          .eq('sak_id', sakUuid)
+          .eq('votering_id', String(voteringId))
+          .maybeSingle();
+
+        if (!existing) {
+          const { error: insertError } = await supabase
+            .from('representant_voteringer')
+            .insert({
+              representant_id: repUuid,
+              sak_id: sakUuid,
+              votering_id: String(voteringId),
+              stemme,
+            });
+
+          if (!insertError) totalInserted++;
+        }
       }
+
       sakerProcessed++;
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
 
+    const message = `Synkronisert ${totalInserted} voteringer fra ${sakerProcessed} saker`;
+    console.log(message);
+
     return new Response(
-      JSON.stringify({ success: true, message: `Synkronisert ${totalInserted} voteringer fra ${sakerProcessed} saker`, inserted: totalInserted }),
+      JSON.stringify({ success: true, message, inserted: totalInserted, sakerProcessed }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
