@@ -165,22 +165,37 @@ export default function PartiDetalj() {
 
         {/* Parti header with color */}
         <div className="px-4 py-8 text-center">
-          <div 
-            className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center font-bold text-3xl relative overflow-hidden"
-            style={{ 
-              background: `linear-gradient(145deg, ${config.farge}, ${adjustColor(config.farge, -30)})`,
-              color: config.tekstFarge,
-              boxShadow: `0 8px 32px ${config.farge}50, 0 4px 12px ${config.farge}30, inset 0 1px 0 ${adjustColor(config.farge, 40)}40`
-            }}
-          >
+          {config.logo ? (
             <div 
-              className="absolute inset-0 opacity-30"
-              style={{
-                background: `linear-gradient(180deg, white 0%, transparent 50%)`
+              className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center bg-white p-3 relative overflow-hidden"
+              style={{ 
+                boxShadow: `0 8px 32px ${config.farge}40, 0 4px 12px ${config.farge}25`
               }}
-            />
-            <span className="relative z-10 drop-shadow-sm">{config.forkortelse}</span>
-          </div>
+            >
+              <img 
+                src={config.logo} 
+                alt={config.navn}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div 
+              className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center font-bold text-3xl relative overflow-hidden"
+              style={{ 
+                background: `linear-gradient(145deg, ${config.farge}, ${adjustColor(config.farge, -30)})`,
+                color: config.tekstFarge,
+                boxShadow: `0 8px 32px ${config.farge}50, 0 4px 12px ${config.farge}30, inset 0 1px 0 ${adjustColor(config.farge, 40)}40`
+              }}
+            >
+              <div 
+                className="absolute inset-0 opacity-30"
+                style={{
+                  background: `linear-gradient(180deg, white 0%, transparent 50%)`
+                }}
+              />
+              <span className="relative z-10 drop-shadow-sm">{config.forkortelse}</span>
+            </div>
+          )}
         
         <h1 className="text-2xl font-bold text-foreground mb-2">
           {config.navn}
