@@ -135,6 +135,7 @@ Deno.serve(async (req) => {
             voteringDbId = existingVotering.id;
           } else {
             // Create new votering entry with safe date parsing
+            // Inherit status from the parent sak
             const { data: newVotering, error: voteringError } = await supabase
               .from('voteringer')
               .insert({
@@ -142,7 +143,7 @@ Deno.serve(async (req) => {
                 sak_id: sak.id,
                 forslag_tekst: forslagTekst,
                 votering_dato: safeParseDate(voteringDato),
-                status: vedtatt !== null ? 'avsluttet' : 'pågående',
+                status: sak.status || 'pågående',
                 vedtatt: vedtatt,
               })
               .select('id')

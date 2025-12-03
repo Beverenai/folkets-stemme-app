@@ -24,6 +24,7 @@ interface Votering {
     tittel: string;
     stortinget_id: string;
     kategori: string | null;
+    status: string;
   } | null;
   folke_stemmer?: { stemme: string; user_id: string }[];
 }
@@ -55,12 +56,13 @@ export default function Voteringer() {
         .from('voteringer')
         .select(`
           *,
-          stortinget_saker(tittel, stortinget_id, kategori)
+          stortinget_saker!inner(tittel, stortinget_id, kategori, status)
         `)
         .order('votering_dato', { ascending: false, nullsFirst: false });
 
+      // Filter by sak status instead of votering status
       if (statusFilter !== 'alle') {
-        query = query.eq('status', statusFilter);
+        query = query.eq('stortinget_saker.status', statusFilter);
       }
 
       if (search) {
