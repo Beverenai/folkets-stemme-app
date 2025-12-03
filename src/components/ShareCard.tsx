@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Share2, X as Twitter, Facebook, Link2, MessageCircle, Check } from 'lucide-react';
+import { Share2, Check, Users, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
@@ -18,6 +18,9 @@ interface ShareCardProps {
   forCount: number;
   motCount: number;
   avholdendeCount: number;
+  stortingetFor?: number | null;
+  stortingetMot?: number | null;
+  stortingetAvholdende?: number | null;
   url: string;
 }
 
@@ -25,20 +28,55 @@ export default function ShareCard({
   open,
   onOpenChange,
   title,
-  summary,
   forCount,
   motCount,
   avholdendeCount,
+  stortingetFor,
+  stortingetMot,
+  stortingetAvholdende,
   url,
 }: ShareCardProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
+  // Public votes
   const total = forCount + motCount + avholdendeCount;
   const forPercent = total > 0 ? Math.round((forCount / total) * 100) : 0;
   const motPercent = total > 0 ? Math.round((motCount / total) * 100) : 0;
+  const publicMajority = forPercent > motPercent ? 'for' : forPercent < motPercent ? 'mot' : 'likt';
 
-  const shareText = `${title}\n\n📊 Folkets mening:\n✅ ${forPercent}% Enig\n❌ ${motPercent}% Uenig\n\nStem selv på Folkets Storting!`;
+  // Parliament votes
+  const hasStortingetVotes = stortingetFor != null && stortingetMot != null && (stortingetFor > 0 || stortingetMot > 0);
+  const stortingetTotal = (stortingetFor || 0) + (stortingetMot || 0) + (stortingetAvholdende || 0);
+  const stortingetForPercent = stortingetTotal > 0 ? Math.round(((stortingetFor || 0) / stortingetTotal) * 100) : 0;
+  const stortingetMotPercent = stortingetTotal > 0 ? Math.round(((stortingetMot || 0) / stortingetTotal) * 100) : 0;
+  const stortingetMajority = (stortingetFor || 0) > (stortingetMot || 0) ? 'for' : (stortingetFor || 0) < (stortingetMot || 0) ? 'mot' : 'likt';
+  const vedtatt = (stortingetFor || 0) > (stortingetMot || 0);
+
+  // Agreement check
+  const isAgreement = publicMajority === stortingetMajority;
+
+  // Share text
+  const shareText = hasStortingetVotes
+    ? `${title}
+
+📊 Folkets mening:
+✅ ${forPercent}% For
+❌ ${motPercent}% Mot
+
+🏛️ Stortingets vedtak: ${vedtatt ? 'Vedtatt' : 'Forkastet'} (${stortingetFor}–${stortingetMot})
+
+${isAgreement ? '✓ Folket er ENIG med Stortinget' : '✗ Folket er UENIG med Stortinget'}
+
+Stem selv på Folkets Storting!`
+    : `${title}
+
+📊 Folkets mening:
+✅ ${forPercent}% For
+❌ ${motPercent}% Mot
+
+Stem selv på Folkets Storting!`;
+
   const encodedText = encodeURIComponent(shareText);
   const encodedUrl = encodeURIComponent(url);
 
@@ -66,7 +104,6 @@ export default function ShareCard({
         url: url,
       });
     } catch {
-      // Fallback to copy
       copyLink();
     }
   };
@@ -90,9 +127,9 @@ export default function ShareCard({
         </DialogHeader>
 
         {/* Preview Card */}
-        <div className="bg-background rounded-xl p-5 border border-border">
+        <div className="bg-background rounded-xl p-5 border border-border space-y-4">
           {/* Logo/Brand */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">FS</span>
             </div>
@@ -100,40 +137,98 @@ export default function ShareCard({
           </div>
 
           {/* Title */}
-          <h3 className="font-bold text-lg mb-4 leading-tight">{title}</h3>
+          <h3 className="font-bold text-lg leading-tight">{title}</h3>
 
-          {/* Result Bar */}
-          {total > 0 && (
-            <div className="space-y-2">
+          {/* Folket Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span>Folket</span>
+            </div>
+            {total > 0 ? (
+              <>
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="text-vote-for">For {forPercent}%</span>
+                  <span className="text-vote-mot">Mot {motPercent}%</span>
+                </div>
+                <div className="h-3 rounded-full overflow-hidden bg-secondary flex">
+                  {forPercent > 0 && (
+                    <div 
+                      className="bg-vote-for h-full"
+                      style={{ width: `${forPercent}%` }}
+                    />
+                  )}
+                  {motPercent > 0 && (
+                    <div 
+                      className="bg-vote-mot h-full"
+                      style={{ width: `${motPercent}%` }}
+                    />
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Ingen stemmer ennå</p>
+            )}
+          </div>
+
+          {/* Stortinget Section */}
+          {hasStortingetVotes && (
+            <div className="space-y-2 pt-2 border-t border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Building2 className="h-4 w-4" />
+                  <span>Stortinget</span>
+                </div>
+                <span className={cn(
+                  "text-xs font-semibold px-2 py-0.5 rounded-full",
+                  vedtatt 
+                    ? "bg-vote-for/20 text-vote-for" 
+                    : "bg-vote-mot/20 text-vote-mot"
+                )}>
+                  {vedtatt ? 'Vedtatt' : 'Forkastet'}
+                </span>
+              </div>
               <div className="flex justify-between text-sm font-medium">
-                <span className="text-vote-for">Enig</span>
-                <span className="text-vote-mot">Uenig</span>
+                <span className="text-vote-for">For {stortingetFor}</span>
+                <span className="text-vote-mot">Mot {stortingetMot}</span>
               </div>
               <div className="h-3 rounded-full overflow-hidden bg-secondary flex">
-                {forPercent > 0 && (
+                {stortingetForPercent > 0 && (
                   <div 
-                    className="bg-vote-for h-full transition-all duration-500"
-                    style={{ width: `${forPercent}%` }}
+                    className="bg-vote-for h-full"
+                    style={{ width: `${stortingetForPercent}%` }}
                   />
                 )}
-                {motPercent > 0 && (
+                {stortingetMotPercent > 0 && (
                   <div 
-                    className="bg-vote-mot h-full transition-all duration-500"
-                    style={{ width: `${motPercent}%` }}
+                    className="bg-vote-mot h-full"
+                    style={{ width: `${stortingetMotPercent}%` }}
                   />
                 )}
-              </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>{forPercent}%</span>
-                <span>{motPercent}%</span>
               </div>
             </div>
           )}
 
-          {total === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Vær den første til å stemme!
-            </p>
+          {/* Agreement/Disagreement Badge */}
+          {hasStortingetVotes && total > 0 && (
+            <div className={cn(
+              "flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium",
+              isAgreement 
+                ? "bg-vote-for/10 text-vote-for" 
+                : "bg-vote-mot/10 text-vote-mot"
+            )}>
+              {isAgreement ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  <span>Folket er ENIG med Stortinget</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-lg">⚠️</span>
+                  <span>Folket er UENIG med Stortinget</span>
+                </>
+              )}
+            </div>
           )}
         </div>
 
@@ -146,8 +241,8 @@ export default function ShareCard({
               onClick={shareToTwitter}
               className="flex flex-col items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors ios-press"
             >
-              <div className="h-10 w-10 rounded-full bg-[#1DA1F2] flex items-center justify-center">
-                <Twitter className="h-5 w-5 text-white" />
+              <div className="h-10 w-10 rounded-full bg-[#000000] flex items-center justify-center">
+                <span className="text-white font-bold text-lg">𝕏</span>
               </div>
               <span className="text-xs font-medium">X</span>
             </button>
@@ -157,7 +252,7 @@ export default function ShareCard({
               className="flex flex-col items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors ios-press"
             >
               <div className="h-10 w-10 rounded-full bg-[#1877F2] flex items-center justify-center">
-                <Facebook className="h-5 w-5 text-white" />
+                <span className="text-white font-bold text-lg">f</span>
               </div>
               <span className="text-xs font-medium">Facebook</span>
             </button>
@@ -167,7 +262,7 @@ export default function ShareCard({
               className="flex flex-col items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors ios-press"
             >
               <div className="h-10 w-10 rounded-full bg-vote-for flex items-center justify-center">
-                <MessageCircle className="h-5 w-5 text-white" />
+                <span className="text-white text-lg">💬</span>
               </div>
               <span className="text-xs font-medium">Melding</span>
             </button>
@@ -183,7 +278,7 @@ export default function ShareCard({
                 {copied ? (
                   <Check className="h-5 w-5 text-white" />
                 ) : (
-                  <Link2 className="h-5 w-5 text-white" />
+                  <span className="text-white text-lg">🔗</span>
                 )}
               </div>
               <span className="text-xs font-medium">{copied ? 'Kopiert!' : 'Kopier'}</span>

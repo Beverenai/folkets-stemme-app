@@ -289,6 +289,9 @@ export default function SakDetalj() {
           forCount={voteStats.for}
           motCount={voteStats.mot}
           avholdendeCount={voteStats.avholdende}
+          stortingetFor={sak.stortinget_votering_for}
+          stortingetMot={sak.stortinget_votering_mot}
+          stortingetAvholdende={sak.stortinget_votering_avholdende}
           url={window.location.href}
         />
       </div>
