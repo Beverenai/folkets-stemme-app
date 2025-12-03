@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, RefreshCw, ChevronRight, Users } from 'lucide-react';
+import { Search, ChevronRight, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useToast } from '@/hooks/use-toast';
+import PartiBadge from '@/components/PartiBadge';
+import { getPartiConfig, PARTI_CONFIG } from '@/lib/partiConfig';
 
 interface Representant {
   id: string;
@@ -21,25 +21,23 @@ interface Representant {
 }
 
 const partier = [
-  { id: 'alle', navn: 'Alle' },
-  { id: 'A', navn: 'Ap' },
-  { id: 'H', navn: 'Høyre' },
-  { id: 'SP', navn: 'Sp' },
-  { id: 'FRP', navn: 'FrP' },
-  { id: 'SV', navn: 'SV' },
-  { id: 'R', navn: 'Rødt' },
-  { id: 'V', navn: 'Venstre' },
-  { id: 'KRF', navn: 'KrF' },
-  { id: 'MDG', navn: 'MDG' },
+  { id: 'alle', navn: 'Alle', farge: null },
+  { id: 'A', navn: 'Ap', farge: PARTI_CONFIG['A'].farge },
+  { id: 'H', navn: 'H', farge: PARTI_CONFIG['H'].farge },
+  { id: 'SP', navn: 'Sp', farge: PARTI_CONFIG['SP'].farge },
+  { id: 'FRP', navn: 'FrP', farge: PARTI_CONFIG['FRP'].farge },
+  { id: 'SV', navn: 'SV', farge: PARTI_CONFIG['SV'].farge },
+  { id: 'R', navn: 'R', farge: PARTI_CONFIG['R'].farge },
+  { id: 'V', navn: 'V', farge: PARTI_CONFIG['V'].farge },
+  { id: 'KRF', navn: 'KrF', farge: PARTI_CONFIG['KRF'].farge },
+  { id: 'MDG', navn: 'MDG', farge: PARTI_CONFIG['MDG'].farge },
 ];
 
 export default function Representanter() {
   const [representanter, setRepresentanter] = useState<Representant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState('');
   const [partiFilter, setPartiFilter] = useState('alle');
-  const { toast } = useToast();
 
   useEffect(() => {
     fetchRepresentanter();
@@ -71,65 +69,15 @@ export default function Representanter() {
     setLoading(false);
   };
 
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-representanter');
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Synkronisering fullført',
-        description: data.message,
-      });
-      
-      fetchRepresentanter();
-    } catch (error: any) {
-      toast({
-        title: 'Feil ved synkronisering',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const getPartiColor = (parti: string | null) => {
-    const colors: Record<string, string> = {
-      'A': 'bg-red-500',
-      'H': 'bg-blue-600',
-      'SP': 'bg-green-600',
-      'FRP': 'bg-blue-900',
-      'SV': 'bg-pink-600',
-      'R': 'bg-red-700',
-      'V': 'bg-green-500',
-      'KRF': 'bg-yellow-500',
-      'MDG': 'bg-green-400',
-    };
-    return colors[parti || ''] || 'bg-muted';
-  };
-
   return (
     <Layout title="Representanter">
       <div className="space-y-4">
-        {/* Header med sync-knapp */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            <span className="text-sm text-muted-foreground">
-              {representanter.length} representanter
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSync}
-            disabled={syncing}
-            className="h-8 w-8"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-          </Button>
+        {/* Header */}
+        <div className="flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" />
+          <span className="text-sm text-muted-foreground">
+            {representanter.length} representanter
+          </span>
         </div>
 
         {/* Søkefelt */}
@@ -151,9 +99,17 @@ export default function Representanter() {
               onClick={() => setPartiFilter(parti.id)}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 partiFilter === parti.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  ? 'ring-2 ring-offset-2 ring-offset-background'
+                  : 'opacity-80 hover:opacity-100'
               }`}
+              style={parti.farge ? {
+                backgroundColor: parti.farge,
+                color: getPartiConfig(parti.id).tekstFarge,
+                ...(partiFilter === parti.id ? { ringColor: parti.farge } : {})
+              } : {
+                backgroundColor: partiFilter === parti.id ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
+                color: partiFilter === parti.id ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))'
+              }}
             >
               {parti.navn}
             </button>
@@ -171,7 +127,7 @@ export default function Representanter() {
             <p className="text-muted-foreground">
               {search || partiFilter !== 'alle' 
                 ? 'Ingen representanter funnet' 
-                : 'Trykk på sync-knappen for å hente representanter'}
+                : 'Laster representanter...'}
             </p>
           </div>
         ) : (
@@ -198,9 +154,7 @@ export default function Representanter() {
                   </p>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     {rep.parti_forkortelse && (
-                      <span className={`px-2 py-0.5 rounded-full text-xs text-white ${getPartiColor(rep.parti_forkortelse)}`}>
-                        {rep.parti_forkortelse}
-                      </span>
+                      <PartiBadge parti={rep.parti_forkortelse} size="sm" />
                     )}
                     {rep.fylke && (
                       <span className="truncate">{rep.fylke}</span>
