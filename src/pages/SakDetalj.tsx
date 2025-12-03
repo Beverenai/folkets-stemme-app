@@ -4,12 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, Sparkles, RefreshCw, Building2 } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, Sparkles, RefreshCw, Building2, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ArgumentsSection from '@/components/ArgumentsSection';
 import ResultBar from '@/components/ResultBar';
 import VotingSection from '@/components/VotingSection';
 import PartiVoteringList from '@/components/PartiVoteringList';
+import VoteringList from '@/components/VoteringList';
 import { Json } from '@/integrations/supabase/types';
 
 interface Sak {
@@ -46,8 +47,15 @@ interface PartiVote {
   stemmer_avholdende: number;
 }
 
-interface VoteringInfo {
-  count: number;
+interface Votering {
+  id: string;
+  stortinget_votering_id: string;
+  forslag_tekst: string | null;
+  votering_dato: string | null;
+  vedtatt: boolean | null;
+  resultat_for: number | null;
+  resultat_mot: number | null;
+  resultat_avholdende: number | null;
 }
 
 export default function SakDetalj() {
@@ -62,7 +70,8 @@ export default function SakDetalj() {
   const [voteStats, setVoteStats] = useState<VoteStats>({ for: 0, mot: 0, avholdende: 0, total: 0 });
   const [generatingAI, setGeneratingAI] = useState(false);
   const [partiVotes, setPartiVotes] = useState<PartiVote[]>([]);
-  const [voteringCount, setVoteringCount] = useState<number>(0);
+  const [voteringer, setVoteringer] = useState<Votering[]>([]);
+  const [mainVoteringId, setMainVoteringId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -117,13 +126,24 @@ export default function SakDetalj() {
           setPartiVotes(partiData);
         }
 
-        // Fetch votering count for context
-        const { count } = await supabase
+        // Fetch all voteringer for this sak
+        const { data: voteringerData } = await supabase
           .from('voteringer')
-          .select('*', { count: 'exact', head: true })
-          .eq('sak_id', id);
+          .select('*')
+          .eq('sak_id', id)
+          .order('votering_dato', { ascending: false });
         
-        setVoteringCount(count || 0);
+        if (voteringerData && voteringerData.length > 0) {
+          setVoteringer(voteringerData);
+          
+          // Find main votering (the one matching sak's vote counts)
+          const mainVotering = voteringerData.find(v => 
+            v.resultat_for === sakData.stortinget_votering_for &&
+            v.resultat_mot === sakData.stortinget_votering_mot
+          ) || voteringerData[0];
+          
+          setMainVoteringId(mainVotering?.id || null);
+        }
       } catch (error) {
         console.error('Error fetching sak:', error);
       } finally {
@@ -183,7 +203,6 @@ export default function SakDetalj() {
         url: window.location.href,
       });
     } catch {
-      // Fallback: copy to clipboard
       await navigator.clipboard.writeText(window.location.href);
       toast({ title: 'Lenke kopiert!' });
     }
@@ -244,6 +263,9 @@ export default function SakDetalj() {
   const isAvsluttet = sak.status === 'avsluttet';
   const argumenterFor = Array.isArray(sak.argumenter_for) ? sak.argumenter_for as string[] : [];
   const argumenterMot = Array.isArray(sak.argumenter_mot) ? sak.argumenter_mot as string[] : [];
+  
+  const hasStortingetVotes = (sak.stortinget_votering_for || 0) > 0 || (sak.stortinget_votering_mot || 0) > 0;
+  const vedtatt = (sak.stortinget_votering_for || 0) > (sak.stortinget_votering_mot || 0);
 
   return (
     <Layout hideHeader>
@@ -275,7 +297,6 @@ export default function SakDetalj() {
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div className="flex items-center gap-2">
-              {/* AI Generate button */}
               <button 
                 onClick={generateAIContent}
                 disabled={generatingAI}
@@ -327,7 +348,7 @@ export default function SakDetalj() {
 
       {/* Content */}
       <div className="px-4 py-6 space-y-6 pb-tab-bar animate-ios-fade">
-        {/* AI Generate prompt - show when no AI content */}
+        {/* AI Generate prompt */}
         {!sak.oppsummering && argumenterFor.length === 0 && argumenterMot.length === 0 && (
           <button
             onClick={generateAIContent}
@@ -390,10 +411,10 @@ export default function SakDetalj() {
           isLoggedIn={!!user}
         />
 
-        {/* Results */}
+        {/* Public votes results */}
         <div className="premium-card p-5 animate-ios-slide-up">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-lg">Resultat</h3>
+            <h3 className="font-semibold text-lg">Folkets stemmer</h3>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
               <span>{voteStats.total} stemmer</span>
@@ -401,15 +422,13 @@ export default function SakDetalj() {
           </div>
 
           {voteStats.total > 0 ? (
-            <div className="space-y-4">
-              <ResultBar 
-                forCount={voteStats.for}
-                motCount={voteStats.mot}
-                avholdendeCount={voteStats.avholdende}
-                size="lg"
-                showLabels
-              />
-            </div>
+            <ResultBar 
+              forCount={voteStats.for}
+              motCount={voteStats.mot}
+              avholdendeCount={voteStats.avholdende}
+              size="lg"
+              showLabels
+            />
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground text-sm">
@@ -419,10 +438,30 @@ export default function SakDetalj() {
           )}
         </div>
 
-        {/* Stortinget results (if available) */}
-        {(sak.stortinget_votering_for || sak.stortinget_votering_mot) && (
+        {/* Stortinget results - with clear headline */}
+        {hasStortingetVotes && (
           <div className="premium-card p-5 animate-ios-slide-up">
-            <h3 className="font-semibold text-lg mb-4">Stortingets votering</h3>
+            <div className="flex items-center gap-2 mb-4">
+              <Building2 className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-lg">Stortingets vedtak</h3>
+            </div>
+            
+            {/* Clear result statement */}
+            <div className={cn(
+              "p-4 rounded-xl mb-4",
+              vedtatt ? "bg-vote-for/10" : "bg-vote-mot/10"
+            )}>
+              <p className={cn(
+                "text-lg font-semibold",
+                vedtatt ? "text-vote-for" : "text-vote-mot"
+              )}>
+                {vedtatt ? 'Vedtatt' : 'Forkastet'} med {sak.stortinget_votering_for} mot {sak.stortinget_votering_mot} stemmer
+              </p>
+              {sak.stortinget_vedtak && (
+                <p className="text-sm text-muted-foreground mt-1">{sak.stortinget_vedtak}</p>
+              )}
+            </div>
+
             <ResultBar 
               forCount={sak.stortinget_votering_for || 0}
               motCount={sak.stortinget_votering_mot || 0}
@@ -430,13 +469,6 @@ export default function SakDetalj() {
               size="lg"
               showLabels
             />
-            {sak.stortinget_vedtak && (
-              <div className="mt-4 p-3 rounded-xl bg-secondary">
-                <p className="text-sm">
-                  <span className="font-medium">Vedtak:</span> {sak.stortinget_vedtak}
-                </p>
-              </div>
-            )}
           </div>
         )}
 
@@ -447,7 +479,21 @@ export default function SakDetalj() {
               <Building2 className="h-5 w-5 text-primary" />
               <h3 className="font-semibold text-lg">Partienes stemmer</h3>
             </div>
-            <PartiVoteringList partiVotes={partiVotes} voteringCount={voteringCount} />
+            <PartiVoteringList partiVotes={partiVotes} voteringCount={voteringer.length} />
+          </div>
+        )}
+
+        {/* All voteringer list */}
+        {voteringer.length > 1 && (
+          <div className="premium-card p-5 animate-ios-slide-up">
+            <div className="flex items-center gap-2 mb-4">
+              <ListChecks className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-lg">Alle voteringer ({voteringer.length})</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Denne saken hadde {voteringer.length} separate avstemninger. Hovedvoteringen bestemmer om loven/forslaget ble vedtatt.
+            </p>
+            <VoteringList voteringer={voteringer} mainVoteringId={mainVoteringId || undefined} />
           </div>
         )}
       </div>
