@@ -74,6 +74,11 @@ const fetchVoteringerData = async (statusFilter: FilterStatus, kategoriFilter: F
 
   let filteredData = voteringerResult.data || [];
   
+  // BACKUP FILTER: Fjern voteringer uten AI-oppsummering (i tilfelle DB-filter ikke fungerer)
+  filteredData = filteredData.filter((v: any) => 
+    v.oppsummering && v.oppsummering.length > 0
+  );
+  
   // Filter by kategori (client-side since it's a joined field)
   if (kategoriFilter !== 'alle') {
     filteredData = filteredData.filter((v: any) => 
@@ -123,9 +128,9 @@ export default function Voteringer() {
   }, [search]);
 
   const { data: voteringer = [], isLoading } = useQuery({
-    queryKey: ['voteringer', statusFilter, kategoriFilter, debouncedSearch],
+    queryKey: ['voteringer-v2', statusFilter, kategoriFilter, debouncedSearch],
     queryFn: () => fetchVoteringerData(statusFilter, kategoriFilter, debouncedSearch),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 1, // 1 minute
   });
 
   const statusFilters: { value: FilterStatus; label: string }[] = [
@@ -160,7 +165,7 @@ export default function Voteringer() {
         <div>
           <h1 className="text-xl font-bold text-foreground">Viktige voteringer</h1>
           <p className="text-sm text-muted-foreground">
-            {voteringer.length} avstemninger om lover og budsjett
+            {voteringer.length} avstemninger med AI-oppsummering
           </p>
         </div>
 
