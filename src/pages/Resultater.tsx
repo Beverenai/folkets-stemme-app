@@ -186,10 +186,6 @@ export default function Resultater() {
                     const enighet = getEnighet(votering);
                     const displayText = votering.oppsummering || votering.forslag_tekst || votering.stortinget_saker?.tittel || 'Votering';
                     const kategori = votering.stortinget_saker?.kategori;
-                    const dato = votering.votering_dato 
-                      ? format(new Date(votering.votering_dato), 'd. MMM yyyy', { locale: nb })
-                      : 'Ukjent dato';
-
                     return (
                       <div key={votering.id} className="flex-[0_0_100%] min-w-0 px-4">
                         {/* Glassmorphism card - mobiloptimalisert */}
@@ -206,7 +202,11 @@ export default function Resultater() {
                               {votering.vedtatt ? 'Vedtatt' : 'Ikke vedtatt'}
                             </span>
                             <KategoriBadge kategori={kategori} size="sm" />
-                            <span className="text-xs text-muted-foreground ml-auto">{dato}</span>
+                            {votering.votering_dato && (
+                              <span className="text-xs text-muted-foreground ml-auto">
+                                {format(new Date(votering.votering_dato), 'd. MMM yyyy', { locale: nb })}
+                              </span>
+                            )}
                           </div>
 
                           {/* Tittel - mobiltilpasset */}
@@ -216,49 +216,62 @@ export default function Resultater() {
 
                           {/* Resultatseksjoner - kompakt */}
                           <div className="space-y-3 mb-4">
-                            {/* Folket */}
-                            {totalFolke > 0 && (
-                              <div className="space-y-1.5">
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="text-muted-foreground flex items-center gap-1">
-                                    <Users className="h-3 w-3" />
-                                    Folket ({totalFolke})
-                                  </span>
-                                </div>
+                            {/* Folket - alltid vis */}
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  Folket
+                                </span>
+                                {totalFolke > 0 && (
+                                  <span className="text-muted-foreground">({totalFolke} stemmer)</span>
+                                )}
+                              </div>
+                              {totalFolke > 0 ? (
                                 <ResultBar
                                   forCount={folkeFor}
                                   motCount={folkeMot}
                                   avholdendeCount={folkeAvholdende}
                                   showPercentages
                                 />
-                              </div>
-                            )}
+                              ) : (
+                                <div className="bg-muted/30 rounded-xl px-3 py-2 text-center">
+                                  <p className="text-xs text-muted-foreground">Vær den første til å stemme!</p>
+                                </div>
+                              )}
+                            </div>
 
-                            {/* Stortinget */}
-                            {(votering.resultat_for > 0 || votering.resultat_mot > 0) && (
-                              <div className="space-y-1.5">
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="text-muted-foreground">Stortinget</span>
+                            {/* Stortinget - alltid vis */}
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">🏛️ Stortinget</span>
+                                {(votering.resultat_for > 0 || votering.resultat_mot > 0) ? (
                                   <span className="text-muted-foreground">
                                     {votering.resultat_for} - {votering.resultat_mot}
                                   </span>
-                                </div>
+                                ) : (
+                                  <span className="text-muted-foreground/60 italic text-[11px]">Detaljert resultat utilgjengelig</span>
+                                )}
+                              </div>
+                              {(votering.resultat_for > 0 || votering.resultat_mot > 0) && (
                                 <ResultBar
                                   forCount={votering.resultat_for}
                                   motCount={votering.resultat_mot}
                                   avholdendeCount={votering.resultat_avholdende}
                                   showPercentages
                                 />
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
 
-                          {/* Parti-breakdown */}
-                          {votering.parti_stemmer && votering.parti_stemmer.length > 0 && (
-                            <div className="mb-4 pt-3 border-t border-border/20">
+                          {/* Parti-breakdown - alltid vis seksjon */}
+                          <div className="mb-4 pt-3 border-t border-border/20">
+                            {votering.parti_stemmer && votering.parti_stemmer.length > 0 ? (
                               <PartiBreakdown partiStemmer={votering.parti_stemmer} />
-                            </div>
-                          )}
+                            ) : (
+                              <p className="text-xs text-muted-foreground/60 text-center py-1">Partifordeling ikke tilgjengelig</p>
+                            )}
+                          </div>
 
                           {/* Enighet badge */}
                           {enighet !== null && (
