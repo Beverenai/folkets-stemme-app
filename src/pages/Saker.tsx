@@ -39,12 +39,14 @@ export default function Saker() {
 
   const fetchSaker = async () => {
     try {
+      // Only fetch saker with complete AI content (oppsummering + argumenter)
       let query = supabase
         .from('stortinget_saker')
         .select(`*, folke_stemmer(stemme, user_id)`)
         .in('behandlet_sesjon', ['2024-2025', '2025-2026'])
         .eq('er_viktig', true)
         .not('oppsummering', 'is', null)
+        .not('argumenter_for', 'eq', '[]')
         .order('created_at', { ascending: false });
 
       if (statusFilter !== 'alle') {
@@ -211,10 +213,10 @@ export default function Saker() {
           <div className="ios-card rounded-2xl p-8 text-center">
             <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
             <p className="text-muted-foreground">
-              {search ? 'Ingen saker funnet' : 'Ingen saker med AI-oppsummering ennå'}
+              {search ? 'Ingen saker funnet' : 'Ingen saker tilgjengelig ennå'}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
-              Nye saker blir klargjort automatisk
+              Nye saker legges til fortløpende
             </p>
           </div>
         )}
