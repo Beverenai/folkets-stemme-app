@@ -17,14 +17,14 @@ Deno.serve(async (req) => {
 
     console.log('Starting voting data sync...');
 
-    // Get all representanter
+    // Get all representanter with their party info
     const { data: representanter, error: repError } = await supabase
       .from('representanter')
-      .select('id, stortinget_id');
+      .select('id, stortinget_id, parti_forkortelse, parti');
 
     if (repError) throw repError;
 
-    const repMap = new Map(representanter?.map(r => [r.stortinget_id, r.id]) || []);
+    const repMap = new Map(representanter?.map(r => [r.stortinget_id, { id: r.id, parti_forkortelse: r.parti_forkortelse, parti: r.parti }]) || []);
     console.log(`Loaded ${repMap.size} representanter`);
 
     // Get saker that need voting data (not yet synced)
@@ -84,6 +84,9 @@ Deno.serve(async (req) => {
         let totalMot = 0;
         let totalAvholdende = 0;
 
+        // Track party votes for this sak
+        const partiVotes: Record<string, { for: number; mot: number; avholdende: number; navn: string }> = {};
+
         // Process first votering
         const votering = voteringListe[0];
         const voteringId = votering?.votering_id;
@@ -117,18 +120,33 @@ Deno.serve(async (req) => {
               else if (vote === 'mot') totalMot++;
               else totalAvholdende++;
 
-              const repUuid = repMap.get(repStortingetId);
-              if (!repUuid) continue;
+              const repInfo = repMap.get(repStortingetId);
+              if (!repInfo) continue;
+
+              // Count party votes
+              const partiForkortelse = repInfo.parti_forkortelse || 'IND';
+              const partiNavn = repInfo.parti || 'Uavhengig';
+              
+              if (!partiVotes[partiForkortelse]) {
+                partiVotes[partiForkortelse] = { for: 0, mot: 0, avholdende: 0, navn: partiNavn };
+              }
 
               let stemme = 'ikke_tilstede';
-              if (vote === 'for') stemme = 'for';
-              else if (vote === 'mot') stemme = 'mot';
-              else if (vote === 'avholdende' || vote === 'ikke_avgitt_stemme') stemme = 'avholdende';
+              if (vote === 'for') {
+                stemme = 'for';
+                partiVotes[partiForkortelse].for++;
+              } else if (vote === 'mot') {
+                stemme = 'mot';
+                partiVotes[partiForkortelse].mot++;
+              } else if (vote === 'avholdende' || vote === 'ikke_avgitt_stemme') {
+                stemme = 'avholdende';
+                partiVotes[partiForkortelse].avholdende++;
+              }
 
               const { data: existing } = await supabase
                 .from('representant_voteringer')
                 .select('id')
-                .eq('representant_id', repUuid)
+                .eq('representant_id', repInfo.id)
                 .eq('sak_id', sak.id)
                 .eq('votering_id', String(voteringId))
                 .maybeSingle();
@@ -137,7 +155,7 @@ Deno.serve(async (req) => {
                 const { error: insertError } = await supabase
                   .from('representant_voteringer')
                   .insert({
-                    representant_id: repUuid,
+                    representant_id: repInfo.id,
                     sak_id: sak.id,
                     votering_id: String(voteringId),
                     stemme,
@@ -148,6 +166,40 @@ Deno.serve(async (req) => {
             }
           }
         }
+
+        // Insert/update parti_voteringer
+        for (const [partiForkortelse, votes] of Object.entries(partiVotes)) {
+          const { data: existingPartiVote } = await supabase
+            .from('parti_voteringer')
+            .select('id')
+            .eq('sak_id', sak.id)
+            .eq('parti_forkortelse', partiForkortelse)
+            .maybeSingle();
+
+          if (existingPartiVote) {
+            await supabase
+              .from('parti_voteringer')
+              .update({
+                stemmer_for: votes.for,
+                stemmer_mot: votes.mot,
+                stemmer_avholdende: votes.avholdende,
+              })
+              .eq('id', existingPartiVote.id);
+          } else {
+            await supabase
+              .from('parti_voteringer')
+              .insert({
+                sak_id: sak.id,
+                parti_forkortelse: partiForkortelse,
+                parti_navn: votes.navn,
+                stemmer_for: votes.for,
+                stemmer_mot: votes.mot,
+                stemmer_avholdende: votes.avholdende,
+              });
+          }
+        }
+
+        console.log(`Inserted/updated ${Object.keys(partiVotes).length} parti_voteringer`);
 
         // Determine vedtak result
         let vedtakResultat = null;
@@ -173,7 +225,7 @@ Deno.serve(async (req) => {
           })
           .eq('id', sak.id);
 
-        console.log(`Updated sak: For=${totalFor}, Mot=${totalMot}`);
+        console.log(`Updated sak: For=${totalFor}, Mot=${totalMot}, Partier=${Object.keys(partiVotes).length}`);
         sakerProcessed++;
         
         // Rate limiting
