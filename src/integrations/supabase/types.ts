@@ -239,6 +239,7 @@ export type Database = {
           bilde_url: string | null
           created_at: string
           dokumentgruppe: string | null
+          er_viktig: boolean | null
           id: string
           kategori: string | null
           kort_tittel: string | null
@@ -265,6 +266,7 @@ export type Database = {
           bilde_url?: string | null
           created_at?: string
           dokumentgruppe?: string | null
+          er_viktig?: boolean | null
           id?: string
           kategori?: string | null
           kort_tittel?: string | null
@@ -291,6 +293,7 @@ export type Database = {
           bilde_url?: string | null
           created_at?: string
           dokumentgruppe?: string | null
+          er_viktig?: boolean | null
           id?: string
           kategori?: string | null
           kort_tittel?: string | null

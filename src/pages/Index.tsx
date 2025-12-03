@@ -46,11 +46,12 @@ export default function Index() {
     try {
       const sb = supabase as any;
       
-      // Fetch active voteringer
+      // Fetch active voteringer from important saker only
       const { data: voteringer } = await sb
         .from('voteringer')
-        .select(`*, stortinget_saker(tittel)`)
+        .select(`*, stortinget_saker!inner(tittel, kategori, er_viktig)`)
         .eq('status', 'pågående')
+        .eq('stortinget_saker.er_viktig', true)
         .order('votering_dato', { ascending: false })
         .limit(6);
 
