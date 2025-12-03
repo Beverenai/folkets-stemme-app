@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2 } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, Sparkles, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ArgumentsSection from '@/components/ArgumentsSection';
 import ResultBar from '@/components/ResultBar';
@@ -47,6 +47,7 @@ export default function SakDetalj() {
   const [loading, setLoading] = useState(true);
   const [userVote, setUserVote] = useState<string | null>(null);
   const [voteStats, setVoteStats] = useState<VoteStats>({ for: 0, mot: 0, avholdende: 0, total: 0 });
+  const [generatingAI, setGeneratingAI] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -155,6 +156,43 @@ export default function SakDetalj() {
     }
   };
 
+  const generateAIContent = async () => {
+    if (!sak || generatingAI) return;
+    
+    setGeneratingAI(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-sak-ai', {
+        body: { sakId: sak.id }
+      });
+
+      if (error) throw error;
+
+      if (data?.generated) {
+        setSak(prev => prev ? {
+          ...prev,
+          oppsummering: data.generated.oppsummering,
+          kategori: data.generated.kategori,
+          argumenter_for: data.generated.argumenter_for,
+          argumenter_mot: data.generated.argumenter_mot,
+        } : null);
+
+        toast({
+          title: 'AI-innhold generert!',
+          description: 'Oppsummering og argumenter er nå tilgjengelig',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error generating AI content:', error);
+      toast({
+        title: 'Feil ved AI-generering',
+        description: error.message || 'Kunne ikke generere innhold',
+        variant: 'destructive',
+      });
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
+
   if (loading) {
     return (
       <Layout hideHeader>
@@ -203,12 +241,30 @@ export default function SakDetalj() {
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <button 
-              onClick={handleShare}
-              className="h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center ios-press"
-            >
-              <Share2 className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* AI Generate button */}
+              <button 
+                onClick={generateAIContent}
+                disabled={generatingAI}
+                className={cn(
+                  "h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center ios-press",
+                  generatingAI && "opacity-50"
+                )}
+                title="Generer AI-innhold"
+              >
+                {generatingAI ? (
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-5 w-5 text-primary" />
+                )}
+              </button>
+              <button 
+                onClick={handleShare}
+                className="h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center ios-press"
+              >
+                <Share2 className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </header>
 
@@ -238,6 +294,35 @@ export default function SakDetalj() {
 
       {/* Content */}
       <div className="px-4 py-6 space-y-6 pb-tab-bar animate-ios-fade">
+        {/* AI Generate prompt - show when no AI content */}
+        {!sak.oppsummering && argumenterFor.length === 0 && argumenterMot.length === 0 && (
+          <button
+            onClick={generateAIContent}
+            disabled={generatingAI}
+            className="w-full premium-card p-5 animate-ios-slide-up text-left ios-press"
+          >
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                {generatingAI ? (
+                  <RefreshCw className="h-6 w-6 text-primary animate-spin" />
+                ) : (
+                  <Sparkles className="h-6 w-6 text-primary" />
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-[15px] mb-1">
+                  {generatingAI ? 'Genererer innhold...' : 'Generer AI-oppsummering'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {generatingAI 
+                    ? 'Vennligst vent mens vi analyserer saken' 
+                    : 'Trykk for å få en enkel forklaring og argumenter'}
+                </p>
+              </div>
+            </div>
+          </button>
+        )}
+
         {/* Summary card */}
         {(sak.oppsummering || sak.beskrivelse) && (
           <div className="premium-card p-5 animate-ios-slide-up">
