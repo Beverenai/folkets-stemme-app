@@ -55,9 +55,9 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
   const forParties = partiesWithStance.filter(p => p.stance === 'for').sort(sortByOrder);
   const motParties = partiesWithStance.filter(p => p.stance === 'mot').sort(sortByOrder);
 
-  // Calculate totals for the header
-  const totalFor = forParties.reduce((sum, p) => sum + p.stemmer_for, 0);
-  const totalMot = motParties.reduce((sum, p) => sum + p.stemmer_mot, 0);
+  // Calculate totals from ALL parties (not just majority-stance parties)
+  const totalFor = partiesWithStance.reduce((sum, p) => sum + p.stemmer_for, 0);
+  const totalMot = partiesWithStance.reduce((sum, p) => sum + p.stemmer_mot, 0);
 
   return (
     <div className="space-y-6">
