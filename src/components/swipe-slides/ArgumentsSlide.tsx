@@ -83,6 +83,11 @@ export default function ArgumentsSlide({ argumenterFor, argumenterMot }: Argumen
           </p>
         </div>
       )}
+
+      {/* AI Disclaimer */}
+      <p className="text-xs text-muted-foreground/70 text-center mt-2 italic">
+        Disse argumentene er generert av kunstig intelligens
+      </p>
     </div>
   );
 }

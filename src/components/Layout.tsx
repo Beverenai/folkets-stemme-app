@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 interface LayoutProps {
   children: ReactNode;
   hideHeader?: boolean;
+  hideNav?: boolean;
   title?: string;
 }
 
@@ -19,7 +20,7 @@ const navItems = [
   { href: '/profil', label: 'Min profil', icon: User },
 ];
 
-export default function Layout({ children, hideHeader, title }: LayoutProps) {
+export default function Layout({ children, hideHeader, hideNav, title }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -111,7 +112,7 @@ export default function Layout({ children, hideHeader, title }: LayoutProps) {
       </main>
 
       {/* Bottom Navigation - Mobile */}
-      <BottomNav />
+      {!hideNav && <BottomNav />}
     </div>
   );
 }

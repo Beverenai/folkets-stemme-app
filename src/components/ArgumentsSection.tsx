@@ -174,6 +174,11 @@ export default function ArgumentsSection({ argumenterFor, argumenterMot, onReadC
           </div>
         </div>
       )}
+
+      {/* AI Disclaimer */}
+      <p className="text-xs text-muted-foreground/70 text-center mt-4 italic">
+        Disse argumentene er generert av kunstig intelligens
+      </p>
     </div>
   );
 }

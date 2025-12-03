@@ -1,11 +1,14 @@
+import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
-import { BarChart3, Users, CheckCircle, XCircle, ChevronRight } from 'lucide-react';
+import { BarChart3, Users, CheckCircle, XCircle, Share2, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResultBar from '@/components/ResultBar';
+import useEmblaCarousel from 'embla-carousel-react';
+import { Button } from '@/components/ui/button';
 
 interface VoteringResult {
   id: string;
@@ -51,19 +54,37 @@ async function fetchResultater() {
 
 function ResultCardSkeleton() {
   return (
-    <div className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm">
-      <Skeleton className="h-4 w-3/4 mb-2" />
-      <Skeleton className="h-3 w-1/2 mb-4" />
-      <Skeleton className="h-2 w-full rounded-full" />
+    <div className="h-full flex flex-col items-center justify-center px-6">
+      <Skeleton className="h-6 w-3/4 mb-4" />
+      <Skeleton className="h-4 w-full mb-2" />
+      <Skeleton className="h-4 w-2/3 mb-6" />
+      <Skeleton className="h-3 w-full rounded-full mb-4" />
+      <Skeleton className="h-3 w-full rounded-full" />
     </div>
   );
 }
 
 export default function Resultater() {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   const { data: resultater = [], isLoading } = useQuery({
     queryKey: ['resultater'],
     queryFn: fetchResultater,
     staleTime: 1000 * 60 * 5,
+  });
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setCurrentIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  // Subscribe to embla events
+  useState(() => {
+    if (emblaApi) {
+      emblaApi.on('select', onSelect);
+      onSelect();
+    }
   });
 
   const getEnighet = (votering: VoteringResult) => {
@@ -79,127 +100,181 @@ export default function Resultater() {
     return folkFlertallFor === stortingetFor;
   };
 
-  const enigeCount = resultater.filter(r => getEnighet(r) === true).length;
-  const uenigeCount = resultater.filter(r => getEnighet(r) === false).length;
-  const totalMedStemmer = enigeCount + uenigeCount;
+  const handleShare = async (votering: VoteringResult) => {
+    const displayText = votering.oppsummering || votering.forslag_tekst || votering.stortinget_saker?.tittel || 'Votering';
+    const enighet = getEnighet(votering);
+    const enighetText = enighet === null ? '' : enighet ? '✅ Stortinget stemte som folket' : '❌ Stortinget stemte mot folket';
+    
+    const shareText = `${displayText}\n\n${enighetText}\n\nSe resultatene på Folkets Storting`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Avstemningsresultat',
+          text: shareText,
+          url: window.location.origin + `/votering/${votering.id}`
+        });
+      } catch (e) {
+        // User cancelled
+      }
+    } else {
+      navigator.clipboard.writeText(shareText);
+    }
+  };
+
+  const isAtEnd = currentIndex >= resultater.length;
 
   return (
-    <Layout title="Resultater">
-      <div className="px-4 py-4 space-y-5 animate-ios-fade">
+    <Layout title="Resultater" hideNav>
+      <div className="h-[calc(100vh-60px)] flex flex-col animate-ios-fade">
         {/* Header */}
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Avstemningsresultater</h1>
+        <div className="px-4 pt-4 pb-2">
+          <h1 className="text-xl font-bold text-foreground">Resultater</h1>
           <p className="text-sm text-muted-foreground">
-            Se hvordan Stortinget stemte sammenlignet med folket
+            Swipe for å se avstemningsresultater
           </p>
         </div>
 
-        {/* Stats */}
-        {totalMedStemmer > 0 && (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-vote-for/10 border border-vote-for/20 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="h-5 w-5 text-vote-for" />
-                <span className="text-2xl font-bold text-vote-for">{enigeCount}</span>
+        {/* Carousel */}
+        <div className="flex-1 overflow-hidden" ref={emblaRef}>
+          <div className="flex h-full">
+            {isLoading ? (
+              <div className="flex-[0_0_100%] min-w-0 h-full">
+                <ResultCardSkeleton />
               </div>
-              <p className="text-xs text-muted-foreground">Enige med folket</p>
-            </div>
-            <div className="bg-vote-mot/10 border border-vote-mot/20 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <XCircle className="h-5 w-5 text-vote-mot" />
-                <span className="text-2xl font-bold text-vote-mot">{uenigeCount}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Uenige med folket</p>
-            </div>
-          </div>
-        )}
+            ) : resultater.length > 0 ? (
+              <>
+                {resultater.map((votering, index) => {
+                  const stemmer = votering.folke_stemmer || [];
+                  const folkeFor = stemmer.filter(s => s.stemme === 'for').length;
+                  const folkeMot = stemmer.filter(s => s.stemme === 'mot').length;
+                  const folkeAvholdende = stemmer.filter(s => s.stemme === 'avholdende').length;
+                  const totalFolke = folkeFor + folkeMot + folkeAvholdende;
+                  const enighet = getEnighet(votering);
+                  const displayText = votering.oppsummering || votering.forslag_tekst || votering.stortinget_saker?.tittel || 'Votering';
 
-        {/* Results List */}
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map(i => (
-              <ResultCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : resultater.length > 0 ? (
-          <div className="space-y-3">
-            {resultater.map((votering, index) => {
-              const stemmer = votering.folke_stemmer || [];
-              const folkeFor = stemmer.filter(s => s.stemme === 'for').length;
-              const folkeMot = stemmer.filter(s => s.stemme === 'mot').length;
-              const folkeAvholdende = stemmer.filter(s => s.stemme === 'avholdende').length;
-              const totalFolke = folkeFor + folkeMot + folkeAvholdende;
-              const enighet = getEnighet(votering);
-              const displayText = votering.oppsummering || votering.forslag_tekst || votering.stortinget_saker?.tittel || 'Votering';
-
-              return (
-                <Link
-                  key={votering.id}
-                  to={`/votering/${votering.id}`}
-                  className="relative bg-card border border-border/50 rounded-2xl p-4 block glass-shine card-glow transition-all ios-press animate-ios-slide-up overflow-hidden"
-                  style={{ animationDelay: `${index * 0.03}s` }}
-                >
-                  <div className="absolute inset-0 glass-gradient rounded-2xl" />
-                  <div className="relative z-[1]">
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <p className="font-medium text-[15px] leading-snug line-clamp-2 text-foreground flex-1">
-                        {displayText}
-                      </p>
-                      <div className="flex items-center gap-2 shrink-0">
+                  return (
+                    <div key={votering.id} className="flex-[0_0_100%] min-w-0 h-full px-4 py-4">
+                      <div className="h-full flex flex-col bg-card border border-border/50 rounded-3xl p-6 shadow-lg overflow-hidden">
+                        {/* Enighet badge */}
                         {enighet !== null && (
-                          <span className={cn(
-                            'px-2 py-1 rounded-full text-[10px] font-medium',
+                          <div className={cn(
+                            'self-start px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 mb-4',
                             enighet ? 'bg-vote-for/20 text-vote-for' : 'bg-vote-mot/20 text-vote-mot'
                           )}>
-                            {enighet ? 'Enig' : 'Uenig'}
-                          </span>
+                            {enighet ? <CheckCircle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                            {enighet ? 'Enig med folket' : 'Uenig med folket'}
+                          </div>
                         )}
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+
+                        {/* Title */}
+                        <h2 className="text-lg font-bold leading-snug mb-4 line-clamp-4 flex-shrink-0">
+                          {displayText}
+                        </h2>
+
+                        {/* Results */}
+                        <div className="flex-1 flex flex-col justify-center space-y-6">
+                          {/* Folket */}
+                          {totalFolke > 0 && (
+                            <div>
+                              <div className="flex items-center justify-between text-sm mb-2">
+                                <span className="text-muted-foreground flex items-center gap-1.5">
+                                  <Users className="h-4 w-4" />
+                                  Folket ({totalFolke} stemmer)
+                                </span>
+                              </div>
+                              <ResultBar
+                                forCount={folkeFor}
+                                motCount={folkeMot}
+                                avholdendeCount={folkeAvholdende}
+                                showPercentages
+                              />
+                            </div>
+                          )}
+
+                          {/* Stortinget */}
+                          <div>
+                            <div className="flex items-center justify-between text-sm mb-2">
+                              <span className="text-muted-foreground">Stortinget</span>
+                              <span className={cn(
+                                'font-semibold',
+                                votering.vedtatt ? 'text-vote-for' : 'text-vote-mot'
+                              )}>
+                                {votering.vedtatt ? 'Vedtatt' : 'Ikke vedtatt'}
+                              </span>
+                            </div>
+                            <ResultBar
+                              forCount={votering.resultat_for}
+                              motCount={votering.resultat_mot}
+                              avholdendeCount={votering.resultat_avholdende}
+                              showPercentages
+                            />
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-3 mt-6 pt-4 border-t border-border/30">
+                          <Button
+                            variant="outline"
+                            className="flex-1 h-12 rounded-xl"
+                            onClick={() => handleShare(votering)}
+                          >
+                            <Share2 className="h-4 w-4 mr-2" />
+                            Del resultat
+                          </Button>
+                          <Button asChild className="flex-1 h-12 rounded-xl">
+                            <Link to={`/votering/${votering.id}`}>
+                              Se detaljer
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
                     </div>
+                  );
+                })}
 
-                    {totalFolke > 0 && (
-                      <div className="mb-2">
-                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          Folket ({totalFolke})
-                        </p>
-                        <ResultBar
-                          forCount={folkeFor}
-                          motCount={folkeMot}
-                          avholdendeCount={folkeAvholdende}
-                          size="sm"
-                        />
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        Stortinget: {votering.resultat_for} for, {votering.resultat_mot} mot
-                      </span>
-                      <span className={cn(
-                        'font-medium',
-                        votering.vedtatt ? 'text-vote-for' : 'text-vote-mot'
-                      )}>
-                        {votering.vedtatt ? 'Vedtatt' : 'Ikke vedtatt'}
-                      </span>
+                {/* End slide */}
+                <div className="flex-[0_0_100%] min-w-0 h-full px-4 py-4">
+                  <div className="h-full flex flex-col items-center justify-center bg-card border border-border/50 rounded-3xl p-6">
+                    <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                      <PartyPopper className="h-10 w-10 text-primary" />
                     </div>
+                    <h2 className="text-xl font-bold mb-2 text-center">Du har sett alle!</h2>
+                    <p className="text-muted-foreground text-center mb-6">
+                      Kom tilbake senere for nye resultater
+                    </p>
+                    <Button asChild variant="outline" className="rounded-xl">
+                      <Link to="/">Tilbake til forsiden</Link>
+                    </Button>
                   </div>
-                </Link>
-              );
-            })}
+                </div>
+              </>
+            ) : (
+              <div className="flex-[0_0_100%] min-w-0 h-full flex items-center justify-center">
+                <div className="text-center px-6">
+                  <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+                  <p className="text-muted-foreground">Ingen avsluttede voteringer ennå</p>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="bg-card border border-border/50 rounded-2xl p-8 text-center shadow-sm">
-            <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-            <p className="text-muted-foreground">Ingen avsluttede voteringer ennå</p>
-          </div>
-        )}
+        </div>
 
+        {/* Dot indicators */}
         {resultater.length > 0 && (
-          <p className="text-center text-xs text-muted-foreground pb-4">
-            Viser {resultater.length} avsluttede voteringer
-          </p>
+          <div className="flex justify-center gap-1.5 py-4">
+            {[...resultater, null].map((_, index) => (
+              <div
+                key={index}
+                className={cn(
+                  'h-2 rounded-full transition-all duration-300',
+                  index === currentIndex 
+                    ? 'w-6 bg-primary' 
+                    : 'w-2 bg-muted-foreground/30'
+                )}
+              />
+            ))}
+          </div>
         )}
       </div>
     </Layout>
