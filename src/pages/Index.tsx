@@ -5,8 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Vote, BarChart3, Clock, ChevronRight, RefreshCw } from 'lucide-react';
+import { ArrowRight, Vote, BarChart3, Clock, ChevronRight, RefreshCw, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import SakCard from '@/components/SakCard';
 
 interface Sak {
   id: string;
@@ -16,6 +17,9 @@ interface Sak {
   beskrivelse: string | null;
   tema: string | null;
   status: string;
+  oppsummering: string | null;
+  kategori: string | null;
+  bilde_url: string | null;
   folke_stemmer?: { stemme: string }[];
 }
 
@@ -29,12 +33,26 @@ export default function Index() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [aktiveSaker, setAktiveSaker] = useState<Sak[]>([]);
+  const [featuredSak, setFeaturedSak] = useState<Sak | null>(null);
   const [stats, setStats] = useState<Stats>({ totalSaker: 0, totalStemmer: 0, aktiveSaker: 0 });
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
   const fetchData = async () => {
     try {
+      // Fetch featured sak (most voted active case)
+      const { data: featured } = await supabase
+        .from('stortinget_saker')
+        .select(`*, folke_stemmer(stemme)`)
+        .eq('status', 'pågående')
+        .limit(1)
+        .maybeSingle();
+
+      if (featured) {
+        setFeaturedSak(featured);
+      }
+
+      // Fetch active cases
       const { data: saker } = await supabase
         .from('stortinget_saker')
         .select(`*, folke_stemmer(stemme)`)
@@ -43,6 +61,7 @@ export default function Index() {
 
       setAktiveSaker(saker || []);
 
+      // Fetch stats
       const { count: totalSaker } = await supabase.from('stortinget_saker').select('*', { count: 'exact', head: true });
       const { count: totalStemmer } = await supabase.from('folke_stemmer').select('*', { count: 'exact', head: true });
       const { count: aktiveSakerCount } = await supabase.from('stortinget_saker').select('*', { count: 'exact', head: true }).eq('status', 'pågående');
@@ -67,7 +86,6 @@ export default function Index() {
         description: `${data.inserted} nye saker lagt til, ${data.updated} oppdatert`,
       });
       
-      // Refresh data
       await fetchData();
     } catch (error) {
       console.error('Sync error:', error);
@@ -89,22 +107,22 @@ export default function Index() {
     <Layout title="Hjem">
       <div className="px-4 py-6 space-y-6 animate-ios-fade">
         {/* Hero Card */}
-        <div className="ios-card p-6 text-center">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary mb-4">
-            <span className="text-3xl">🏛️</span>
+        <div className="premium-card-glow p-6 text-center animate-ios-spring">
+          <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 mb-4 animate-float">
+            <span className="text-4xl">🏛️</span>
           </div>
-          <h1 className="text-2xl font-bold mb-2">
+          <h1 className="text-2xl font-bold mb-2 gradient-text">
             Folkets Storting
           </h1>
-          <p className="text-muted-foreground text-sm mb-6">
-            Stem på de samme sakene som politikerne
+          <p className="text-muted-foreground text-sm mb-6 max-w-xs mx-auto">
+            Stem på de samme sakene som politikerne og se hvordan folket mener
           </p>
           
           {!user && (
-            <Button asChild className="w-full h-12 text-base font-semibold ios-press">
+            <Button asChild className="w-full h-12 text-base font-semibold ios-press rounded-xl">
               <Link to="/auth">
+                <Sparkles className="mr-2 h-5 w-5" />
                 Kom i gang
-                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
           )}
@@ -112,36 +130,46 @@ export default function Index() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="ios-card p-4 text-center animate-ios-slide-up" style={{ animationDelay: '0.1s' }}>
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-2">
+          <div className="premium-card p-4 text-center animate-ios-slide-up stagger-1">
+            <div className="h-11 w-11 rounded-2xl bg-primary/15 flex items-center justify-center mx-auto mb-3">
               <Vote className="h-5 w-5 text-primary" />
             </div>
-            <p className="text-xl font-bold">{stats.totalStemmer}</p>
-            <p className="text-[11px] text-muted-foreground">Stemmer</p>
+            <p className="text-2xl font-bold">{stats.totalStemmer}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Stemmer</p>
           </div>
           
-          <div className="ios-card p-4 text-center animate-ios-slide-up" style={{ animationDelay: '0.15s' }}>
-            <div className="h-10 w-10 rounded-xl bg-ios-green/10 flex items-center justify-center mx-auto mb-2">
-              <Clock className="h-5 w-5 text-ios-green" />
+          <div className="premium-card p-4 text-center animate-ios-slide-up stagger-2">
+            <div className="h-11 w-11 rounded-2xl bg-vote-for/15 flex items-center justify-center mx-auto mb-3">
+              <Clock className="h-5 w-5 text-vote-for" />
             </div>
-            <p className="text-xl font-bold">{stats.aktiveSaker}</p>
-            <p className="text-[11px] text-muted-foreground">Aktive</p>
+            <p className="text-2xl font-bold">{stats.aktiveSaker}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Aktive</p>
           </div>
           
-          <div className="ios-card p-4 text-center animate-ios-slide-up" style={{ animationDelay: '0.2s' }}>
-            <div className="h-10 w-10 rounded-xl bg-ios-orange/10 flex items-center justify-center mx-auto mb-2">
+          <div className="premium-card p-4 text-center animate-ios-slide-up stagger-3">
+            <div className="h-11 w-11 rounded-2xl bg-ios-orange/15 flex items-center justify-center mx-auto mb-3">
               <BarChart3 className="h-5 w-5 text-ios-orange" />
             </div>
-            <p className="text-xl font-bold">{stats.totalSaker}</p>
-            <p className="text-[11px] text-muted-foreground">Totalt</p>
+            <p className="text-2xl font-bold">{stats.totalSaker}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Totalt</p>
           </div>
         </div>
 
+        {/* Featured Case */}
+        {featuredSak && (
+          <div className="animate-ios-slide-up stagger-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold">Aktuelt nå</h2>
+            </div>
+            <SakCard sak={featuredSak} variant="featured" />
+          </div>
+        )}
+
         {/* Active Cases */}
-        <div className="animate-ios-slide-up" style={{ animationDelay: '0.25s' }}>
+        <div className="animate-ios-slide-up stagger-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Aktive avstemninger</h2>
-            <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Aktive saker</h2>
+            <div className="flex items-center gap-3">
               <button 
                 onClick={syncFromStortinget}
                 disabled={syncing}
@@ -150,61 +178,30 @@ export default function Index() {
               >
                 <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
               </button>
-              <Link to="/saker" className="text-primary text-sm font-medium ios-touch">
+              <Link to="/saker" className="text-primary text-sm font-medium ios-touch flex items-center gap-1">
                 Se alle
+                <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
 
-          <div className="ios-card overflow-hidden divide-y divide-border">
+          <div className="premium-card overflow-hidden divide-y divide-border/30">
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="p-12 text-center">
+                <div className="h-10 w-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
               </div>
             ) : aktiveSaker.length > 0 ? (
-              aktiveSaker.map((sak, index) => {
-                const voteCount = sak.folke_stemmer?.length || 0;
-                return (
-                  <Link
-                    key={sak.id}
-                    to={`/sak/${sak.id}`}
-                    className="ios-list-item ios-touch"
-                    style={{ animationDelay: `${0.3 + index * 0.05}s` }}
-                  >
-                    <div className={cn(
-                      'h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0',
-                      index % 4 === 0 ? 'bg-primary/10' : 
-                      index % 4 === 1 ? 'bg-ios-green/10' :
-                      index % 4 === 2 ? 'bg-ios-orange/10' : 'bg-ios-purple/10'
-                    )}>
-                      <Vote className={cn(
-                        'h-5 w-5',
-                        index % 4 === 0 ? 'text-primary' :
-                        index % 4 === 1 ? 'text-ios-green' :
-                        index % 4 === 2 ? 'text-ios-orange' : 'text-ios-purple'
-                      )} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[15px] truncate">
-                        {sak.kort_tittel || sak.tittel}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {voteCount} {voteCount === 1 ? 'stemme' : 'stemmer'}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground/50" />
-                  </Link>
-                );
-              })
+              aktiveSaker.slice(0, 4).map((sak, index) => (
+                <SakCard key={sak.id} sak={sak} index={index} variant="compact" />
+              ))
             ) : (
-              <div className="p-8 text-center text-muted-foreground">
-                <Vote className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <div className="p-12 text-center text-muted-foreground">
+                <Vote className="h-12 w-12 mx-auto mb-4 opacity-30" />
                 <p className="text-sm mb-4">Ingen aktive saker</p>
                 <Button 
                   onClick={syncFromStortinget} 
                   disabled={syncing}
                   variant="outline"
-                  size="sm"
                   className="ios-press"
                 >
                   <RefreshCw className={cn('h-4 w-4 mr-2', syncing && 'animate-spin')} />
@@ -216,36 +213,25 @@ export default function Index() {
         </div>
 
         {/* How it works */}
-        <div className="animate-ios-slide-up" style={{ animationDelay: '0.35s' }}>
+        <div className="animate-ios-slide-up" style={{ animationDelay: '0.3s' }}>
           <h2 className="text-lg font-semibold mb-3">Slik fungerer det</h2>
-          <div className="ios-card overflow-hidden divide-y divide-border">
-            <div className="ios-list-item">
-              <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
-                1
+          <div className="premium-card overflow-hidden divide-y divide-border/30">
+            {[
+              { num: 1, title: 'Registrer deg', desc: 'Anonymt og sikkert', color: 'bg-primary text-primary-foreground' },
+              { num: 2, title: 'Les argumentene', desc: 'For og mot saken', color: 'bg-vote-for text-vote-for-foreground' },
+              { num: 3, title: 'Stem', desc: 'For, mot eller avstå', color: 'bg-ios-orange text-white' },
+              { num: 4, title: 'Sammenlign', desc: 'Folket vs. Stortinget', color: 'bg-ios-purple text-white' },
+            ].map((step, index) => (
+              <div key={step.num} className="flex items-center gap-4 p-4" style={{ animationDelay: `${0.35 + index * 0.05}s` }}>
+                <div className={cn('h-10 w-10 rounded-xl flex items-center justify-center text-sm font-bold', step.color)}>
+                  {step.num}
+                </div>
+                <div>
+                  <p className="font-medium text-[15px]">{step.title}</p>
+                  <p className="text-xs text-muted-foreground">{step.desc}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium text-[15px]">Registrer deg</p>
-                <p className="text-xs text-muted-foreground">Anonym og sikker</p>
-              </div>
-            </div>
-            <div className="ios-list-item">
-              <div className="h-8 w-8 rounded-full bg-ios-green text-white flex items-center justify-center text-sm font-semibold">
-                2
-              </div>
-              <div>
-                <p className="font-medium text-[15px]">Stem på saker</p>
-                <p className="text-xs text-muted-foreground">For, mot eller avholdende</p>
-              </div>
-            </div>
-            <div className="ios-list-item">
-              <div className="h-8 w-8 rounded-full bg-ios-orange text-white flex items-center justify-center text-sm font-semibold">
-                3
-              </div>
-              <div>
-                <p className="font-medium text-[15px]">Sammenlign</p>
-                <p className="text-xs text-muted-foreground">Se folket vs. Stortinget</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

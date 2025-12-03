@@ -212,12 +212,17 @@ export type Database = {
       }
       stortinget_saker: {
         Row: {
+          argumenter_for: Json | null
+          argumenter_mot: Json | null
           behandlet_sesjon: string | null
           beskrivelse: string | null
+          bilde_url: string | null
           created_at: string
           dokumentgruppe: string | null
           id: string
+          kategori: string | null
           kort_tittel: string | null
+          oppsummering: string | null
           sist_oppdatert_fra_stortinget: string | null
           status: string
           stortinget_id: string
@@ -230,12 +235,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          argumenter_for?: Json | null
+          argumenter_mot?: Json | null
           behandlet_sesjon?: string | null
           beskrivelse?: string | null
+          bilde_url?: string | null
           created_at?: string
           dokumentgruppe?: string | null
           id?: string
+          kategori?: string | null
           kort_tittel?: string | null
+          oppsummering?: string | null
           sist_oppdatert_fra_stortinget?: string | null
           status?: string
           stortinget_id: string
@@ -248,12 +258,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          argumenter_for?: Json | null
+          argumenter_mot?: Json | null
           behandlet_sesjon?: string | null
           beskrivelse?: string | null
+          bilde_url?: string | null
           created_at?: string
           dokumentgruppe?: string | null
           id?: string
+          kategori?: string | null
           kort_tittel?: string | null
+          oppsummering?: string | null
           sist_oppdatert_fra_stortinget?: string | null
           status?: string
           stortinget_id?: string

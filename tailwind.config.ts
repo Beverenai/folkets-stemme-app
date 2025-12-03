@@ -75,6 +75,7 @@ export default {
           purple: "hsl(var(--ios-purple))",
           pink: "hsl(var(--ios-pink))",
           teal: "hsl(var(--ios-teal))",
+          cyan: "hsl(var(--ios-cyan))",
         },
       },
       borderRadius: {
@@ -90,6 +91,7 @@ export default {
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
         xl: "var(--shadow-xl)",
+        glow: "var(--shadow-glow)",
       },
       keyframes: {
         "accordion-down": {
@@ -101,7 +103,8 @@ export default {
           to: { height: "0" },
         },
         "ios-spring": {
-          "0%": { transform: "scale(0.8)", opacity: "0" },
+          "0%": { transform: "scale(0.9)", opacity: "0" },
+          "50%": { transform: "scale(1.02)" },
           "100%": { transform: "scale(1)", opacity: "1" },
         },
         "ios-fade": {
@@ -114,16 +117,33 @@ export default {
         },
         "ios-bounce": {
           "0%, 100%": { transform: "scale(1)" },
-          "50%": { transform: "scale(1.05)" },
+          "50%": { transform: "scale(1.08)" },
+        },
+        "progress-fill": {
+          "0%": { width: "0%" },
+          "100%": { width: "var(--progress-width, 100%)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 20px hsla(174, 72%, 56%, 0.3)" },
+          "50%": { boxShadow: "0 0 40px hsla(174, 72%, 56%, 0.5)" },
+        },
+        "vote-success": {
+          "0%": { transform: "scale(1)" },
+          "25%": { transform: "scale(1.15)" },
+          "50%": { transform: "scale(0.95)" },
+          "100%": { transform: "scale(1)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "ios-spring": "ios-spring 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-        "ios-fade": "ios-fade 0.25s ease-out",
-        "ios-slide-up": "ios-slide-up 0.35s ease-out",
-        "ios-bounce": "ios-bounce 0.3s ease-out",
+        "ios-fade": "ios-fade 0.3s ease-out",
+        "ios-slide-up": "ios-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "ios-bounce": "ios-bounce 0.4s ease-out",
+        "progress-fill": "progress-fill 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "vote-success": "vote-success 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
       },
     },
   },
