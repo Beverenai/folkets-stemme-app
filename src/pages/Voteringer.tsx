@@ -44,13 +44,14 @@ const kategoriConfig: { value: FilterKategori; label: string; icon: React.ReactN
 const fetchVoteringerData = async (statusFilter: FilterStatus, kategoriFilter: FilterKategori, search: string) => {
   const sb = supabase as any;
   
-  // Build main query
+  // Build main query - kun voteringer med AI-oppsummering
   let query = sb
     .from('voteringer')
     .select(`
       *,
       stortinget_saker(tittel, stortinget_id, kategori, status)
     `)
+    .not('oppsummering', 'is', null)
     .order('votering_dato', { ascending: false, nullsFirst: false })
     .limit(50);
 
