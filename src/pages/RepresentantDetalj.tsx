@@ -183,10 +183,11 @@ export default function RepresentantDetalj() {
 
       {/* Profile header */}
       <div className="px-4 py-6 text-center">
-        <Avatar className="h-24 w-24 mx-auto mb-4 ring-4 ring-background shadow-lg">
+        <Avatar className="h-24 w-24 mx-auto mb-4 ring-4 ring-background shadow-lg overflow-hidden">
           <AvatarImage 
             src={representant.bilde_url || ''} 
             alt={`${representant.fornavn} ${representant.etternavn}`}
+            className="object-cover object-top"
           />
           <AvatarFallback className="text-2xl bg-muted">
             {representant.fornavn[0]}{representant.etternavn[0]}

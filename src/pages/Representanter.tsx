@@ -20,16 +20,17 @@ interface Representant {
   er_aktiv: boolean;
 }
 
+// Filter IDs must match database parti_forkortelse exactly (case-sensitive)
 const partier = [
   { id: 'alle', navn: 'Alle', farge: null },
   { id: 'A', navn: 'Ap', farge: PARTI_CONFIG['A'].farge },
   { id: 'H', navn: 'H', farge: PARTI_CONFIG['H'].farge },
-  { id: 'SP', navn: 'Sp', farge: PARTI_CONFIG['SP'].farge },
-  { id: 'FRP', navn: 'FrP', farge: PARTI_CONFIG['FRP'].farge },
+  { id: 'Sp', navn: 'Sp', farge: PARTI_CONFIG['SP'].farge },
+  { id: 'FrP', navn: 'FrP', farge: PARTI_CONFIG['FRP'].farge },
   { id: 'SV', navn: 'SV', farge: PARTI_CONFIG['SV'].farge },
   { id: 'R', navn: 'R', farge: PARTI_CONFIG['R'].farge },
   { id: 'V', navn: 'V', farge: PARTI_CONFIG['V'].farge },
-  { id: 'KRF', navn: 'KrF', farge: PARTI_CONFIG['KRF'].farge },
+  { id: 'KrF', navn: 'KrF', farge: PARTI_CONFIG['KRF'].farge },
   { id: 'MDG', navn: 'MDG', farge: PARTI_CONFIG['MDG'].farge },
 ];
 
@@ -138,10 +139,11 @@ export default function Representanter() {
                 to={`/representant/${rep.id}`}
                 className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 hover:bg-accent/50 transition-colors"
               >
-                <Avatar className="h-12 w-12">
+              <Avatar className="h-12 w-12 overflow-hidden">
                   <AvatarImage 
                     src={rep.bilde_url || ''} 
                     alt={`${rep.fornavn} ${rep.etternavn}`}
+                    className="object-cover object-top"
                   />
                   <AvatarFallback className="bg-muted text-muted-foreground">
                     {rep.fornavn[0]}{rep.etternavn[0]}
