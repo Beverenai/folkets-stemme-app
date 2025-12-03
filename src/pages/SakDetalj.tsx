@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, Sparkles, RefreshCw, Building2, ListChecks } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, Sparkles, RefreshCw, Building2, ListChecks, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ArgumentsSection from '@/components/ArgumentsSection';
 import ResultBar from '@/components/ResultBar';
 import VotingSection from '@/components/VotingSection';
 import PartiVoteringList from '@/components/PartiVoteringList';
 import VoteringList from '@/components/VoteringList';
+import RepresentantVoteList from '@/components/RepresentantVoteList';
 import { Json } from '@/integrations/supabase/types';
 
 interface Sak {
@@ -58,6 +59,18 @@ interface Votering {
   resultat_avholdende: number | null;
 }
 
+interface RepresentantVote {
+  id: string;
+  stemme: string;
+  representant: {
+    id: string;
+    fornavn: string;
+    etternavn: string;
+    parti_forkortelse: string | null;
+    bilde_url: string | null;
+  };
+}
+
 export default function SakDetalj() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -72,6 +85,7 @@ export default function SakDetalj() {
   const [partiVotes, setPartiVotes] = useState<PartiVote[]>([]);
   const [voteringer, setVoteringer] = useState<Votering[]>([]);
   const [mainVoteringId, setMainVoteringId] = useState<string | null>(null);
+  const [representantVotes, setRepresentantVotes] = useState<RepresentantVote[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -143,6 +157,30 @@ export default function SakDetalj() {
           ) || voteringerData[0];
           
           setMainVoteringId(mainVotering?.id || null);
+
+          // Fetch individual representative votes for main votering
+          if (mainVotering) {
+            const { data: repVoteData } = await supabase
+              .from('representant_voteringer')
+              .select(`
+                id,
+                stemme,
+                representant:representanter!inner(
+                  id, fornavn, etternavn, parti_forkortelse, bilde_url
+                )
+              `)
+              .eq('votering_uuid', mainVotering.id);
+            
+            if (repVoteData) {
+              // Transform the data to match RepresentantVote interface
+              const transformedVotes = repVoteData.map(v => ({
+                id: v.id,
+                stemme: v.stemme,
+                representant: Array.isArray(v.representant) ? v.representant[0] : v.representant
+              }));
+              setRepresentantVotes(transformedVotes);
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching sak:', error);
@@ -480,6 +518,17 @@ export default function SakDetalj() {
               <h3 className="font-semibold text-lg">Partienes stemmer</h3>
             </div>
             <PartiVoteringList partiVotes={partiVotes} voteringCount={voteringer.length} />
+          </div>
+        )}
+
+        {/* Individual representative votes */}
+        {representantVotes.length > 0 && (
+          <div className="premium-card p-5 animate-ios-slide-up">
+            <div className="flex items-center gap-2 mb-4">
+              <UserCheck className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-lg">Representantenes stemmer</h3>
+            </div>
+            <RepresentantVoteList votes={representantVotes} />
           </div>
         )}
 
