@@ -251,14 +251,13 @@ Deno.serve(async (req) => {
               }
             }
 
-            // Update votering with results
+            // Update votering with results (keep status from sak)
             await supabase
               .from('voteringer')
               .update({
                 resultat_for: voteringFor,
                 resultat_mot: voteringMot,
                 resultat_avholdende: voteringAvholdende,
-                status: 'avsluttet',
                 vedtatt: voteringFor > voteringMot,
               })
               .eq('id', voteringDbId);

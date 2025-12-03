@@ -151,7 +151,7 @@ export default function Voteringer() {
   };
 
   const featuredVotering = voteringer.find(v => 
-    v.status === 'pågående' || v.oppsummering
+    v.stortinget_saker?.status === 'pågående' || v.oppsummering
   );
 
   return (
