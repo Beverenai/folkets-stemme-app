@@ -33,7 +33,7 @@ function PartiLogo({ forkortelse, size = 'md' }: { forkortelse: string | null; s
   
   if (config.logo) {
     return (
-      <div className={`${sizeClasses} rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0`}>
+      <div className={`${sizeClasses} rounded-full overflow-hidden flex items-center justify-center flex-shrink-0`}>
         <img 
           src={config.logo} 
           alt={config.navn}

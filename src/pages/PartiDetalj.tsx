@@ -157,7 +157,7 @@ export default function PartiDetalj() {
         {/* Parti header with color */}
         <div className="px-4 py-8 text-center">
           {config.logo ? (
-            <div className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center bg-white p-3 overflow-hidden shadow-md">
+            <div className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center p-3 overflow-hidden">
               <img 
                 src={config.logo} 
                 alt={config.navn}
