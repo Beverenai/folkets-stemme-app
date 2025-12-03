@@ -12,6 +12,7 @@ import VotingSection from '@/components/VotingSection';
 import PartiVoteringList from '@/components/PartiVoteringList';
 import VoteringList from '@/components/VoteringList';
 import RepresentantVoteList from '@/components/RepresentantVoteList';
+import ShareCard from '@/components/ShareCard';
 import { Json } from '@/integrations/supabase/types';
 
 interface Sak {
@@ -85,6 +86,7 @@ export default function SakDetalj() {
   const [voteringer, setVoteringer] = useState<Votering[]>([]);
   const [mainVoteringId, setMainVoteringId] = useState<string | null>(null);
   const [representantVotes, setRepresentantVotes] = useState<RepresentantVote[]>([]);
+  const [shareOpen, setShareOpen] = useState(false);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -232,17 +234,8 @@ export default function SakDetalj() {
     }
   };
 
-  const handleShare = async () => {
-    try {
-      await navigator.share({
-        title: sak?.tittel,
-        text: sak?.oppsummering || sak?.beskrivelse || '',
-        url: window.location.href,
-      });
-    } catch {
-      await navigator.clipboard.writeText(window.location.href);
-      toast({ title: 'Lenke kopiert!' });
-    }
+  const handleShare = () => {
+    setShareOpen(true);
   };
 
   if (loading) {
@@ -442,7 +435,28 @@ export default function SakDetalj() {
               <VoteringList voteringer={voteringer} mainVoteringId={mainVoteringId || undefined} />
             </div>
           )}
+
+          {/* Prominent Share Button */}
+          <button
+            onClick={handleShare}
+            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 ios-press animate-ios-slide-up"
+          >
+            <Share2 className="h-5 w-5" />
+            Del resultat
+          </button>
         </div>
+
+        {/* Share Modal */}
+        <ShareCard
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          title={sak.kort_tittel || sak.tittel}
+          summary={sak.oppsummering || undefined}
+          forCount={voteStats.for}
+          motCount={voteStats.mot}
+          avholdendeCount={voteStats.avholdende}
+          url={window.location.href}
+        />
       </div>
     </Layout>
   );
