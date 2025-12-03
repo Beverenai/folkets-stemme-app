@@ -41,6 +41,7 @@ interface VoteringWithComparison {
     tittel: string;
     kort_tittel: string | null;
     status: string;
+    behandlet_sesjon: string | null;
   } | null;
   folkeStemmer?: {
     for: number;
@@ -50,6 +51,8 @@ interface VoteringWithComparison {
   };
   enig?: boolean;
 }
+
+const SESSIONS = ['2024-2025', '2023-2024', '2022-2023', '2021-2022'];
 
 interface VoteStats {
   total: number;
@@ -67,6 +70,7 @@ export default function RepresentantDetalj() {
   const [stats, setStats] = useState<VoteStats>({ total: 0, for: 0, mot: 0, avholdende: 0, ikke_tilstede: 0 });
   const [agreementScore, setAgreementScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -106,7 +110,8 @@ export default function RepresentantDetalj() {
           id,
           tittel,
           kort_tittel,
-          status
+          status,
+          behandlet_sesjon
         )
       `)
       .eq('representant_id', id)
@@ -384,12 +389,39 @@ export default function RepresentantDetalj() {
 
         {/* Voteringer tab */}
         <TabsContent value="voteringer" className="mt-4 space-y-3 pb-24">
-          {voteringer.length === 0 ? (
+          {/* Year filter */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <button
+              onClick={() => setSelectedSession(null)}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors',
+                !selectedSession ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+              )}
+            >
+              Alle år
+            </button>
+            {SESSIONS.map(session => (
+              <button
+                key={session}
+                onClick={() => setSelectedSession(session)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors',
+                  selectedSession === session ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {session}
+              </button>
+            ))}
+          </div>
+          
+          {voteringer.filter(v => !selectedSession || v.stortinget_saker?.behandlet_sesjon === selectedSession).length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">Ingen voteringer registrert ennå</p>
             </div>
           ) : (
-            voteringer.map((votering) => (
+            voteringer
+              .filter(v => !selectedSession || v.stortinget_saker?.behandlet_sesjon === selectedSession)
+              .map((votering) => (
               <Link
                 key={votering.id}
                 to={votering.sak_id ? `/sak/${votering.sak_id}` : '#'}

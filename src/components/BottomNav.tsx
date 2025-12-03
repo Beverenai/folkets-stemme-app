@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FileText, User } from 'lucide-react';
+import { Home, FileText, User, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Hjem', icon: Home },
   { href: '/voteringer', label: 'Stem', icon: FileText },
+  { href: '/lovbibliotek', label: 'Bibliotek', icon: BookOpen },
   { href: '/profil', label: 'Profil', icon: User },
 ];
 
