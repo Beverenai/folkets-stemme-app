@@ -156,31 +156,15 @@ export default function PartiDetalj() {
 
         {/* Parti header with color */}
         <div className="px-4 py-8 text-center">
-          {config.logo ? (
-            <div className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-white shadow-lg overflow-hidden p-2">
-              <img 
-                src={config.logo} 
-                alt={config.navn}
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  // Fallback to abbreviation if logo fails to load
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.innerHTML = `<span style="color: ${config.tekstFarge}; font-weight: bold; font-size: 1.5rem;">${config.forkortelse}</span>`;
-                  e.currentTarget.parentElement!.style.backgroundColor = config.farge;
-                }}
-              />
-            </div>
-          ) : (
-            <div 
-              className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center font-bold text-2xl shadow-lg"
-              style={{ 
-                backgroundColor: config.farge,
-                color: config.tekstFarge
-              }}
-            >
-              {config.forkortelse}
-            </div>
-          )}
+          <div 
+            className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center font-bold text-2xl shadow-lg"
+            style={{ 
+              backgroundColor: config.farge,
+              color: config.tekstFarge
+            }}
+          >
+            {config.forkortelse}
+          </div>
         
         <h1 className="text-2xl font-bold text-foreground mb-2">
           {config.navn}
