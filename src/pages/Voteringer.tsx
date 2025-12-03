@@ -34,7 +34,7 @@ export default function Voteringer() {
   const [voteringer, setVoteringer] = useState<Votering[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>('alle');
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>('pågående');
   const [syncing, setSyncing] = useState(false);
 
   const fetchVoteringer = async () => {

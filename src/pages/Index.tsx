@@ -7,66 +7,87 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Vote, BarChart3, Clock, ChevronRight, RefreshCw, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import SakCard from '@/components/SakCard';
+import VoteringCard from '@/components/VoteringCard';
 
-interface Sak {
+interface Votering {
   id: string;
-  stortinget_id: string;
-  tittel: string;
-  kort_tittel: string | null;
-  beskrivelse: string | null;
-  tema: string | null;
-  status: string;
+  stortinget_votering_id: string;
+  forslag_tekst: string | null;
   oppsummering: string | null;
-  kategori: string | null;
-  bilde_url: string | null;
-  folke_stemmer?: { stemme: string }[];
+  votering_dato: string | null;
+  status: string;
+  resultat_for: number;
+  resultat_mot: number;
+  resultat_avholdende: number;
+  vedtatt: boolean | null;
+  sak_id: string | null;
+  stortinget_saker?: {
+    tittel: string;
+  } | null;
+  folke_stemmer?: { stemme: string; user_id: string }[];
 }
 
 interface Stats {
-  totalSaker: number;
+  totalVoteringer: number;
   totalStemmer: number;
-  aktiveSaker: number;
+  aktiveVoteringer: number;
 }
 
 export default function Index() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [aktiveSaker, setAktiveSaker] = useState<Sak[]>([]);
-  const [featuredSak, setFeaturedSak] = useState<Sak | null>(null);
-  const [stats, setStats] = useState<Stats>({ totalSaker: 0, totalStemmer: 0, aktiveSaker: 0 });
+  const [aktiveVoteringer, setAktiveVoteringer] = useState<Votering[]>([]);
+  const [featuredVotering, setFeaturedVotering] = useState<Votering | null>(null);
+  const [stats, setStats] = useState<Stats>({ totalVoteringer: 0, totalStemmer: 0, aktiveVoteringer: 0 });
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
   const fetchData = async () => {
     try {
-      // Fetch featured sak (most voted active case)
-      const { data: featured } = await supabase
-        .from('stortinget_saker')
-        .select(`*, folke_stemmer(stemme)`)
+      const sb = supabase as any;
+      
+      // Fetch active voteringer
+      const { data: voteringer } = await sb
+        .from('voteringer')
+        .select(`*, stortinget_saker(tittel)`)
         .eq('status', 'pågående')
-        .limit(1)
-        .maybeSingle();
+        .order('votering_dato', { ascending: false })
+        .limit(6);
 
-      if (featured) {
-        setFeaturedSak(featured);
+      // Fetch folke_stemmer for these voteringer
+      const voteringIds = (voteringer || []).map((v: any) => v.id);
+      let folkeData: any[] = [];
+      if (voteringIds.length > 0) {
+        const { data: stemmer } = await sb
+          .from('folke_stemmer')
+          .select('stemme, user_id, votering_id')
+          .in('votering_id', voteringIds);
+        folkeData = stemmer || [];
       }
 
-      // Fetch active cases
-      const { data: saker } = await supabase
-        .from('stortinget_saker')
-        .select(`*, folke_stemmer(stemme)`)
-        .eq('status', 'pågående')
-        .limit(5);
+      // Merge folke_stemmer with voteringer
+      const voteringerWithStemmer = (voteringer || []).map((v: any) => ({
+        ...v,
+        folke_stemmer: folkeData.filter((s: any) => s.votering_id === v.id)
+      }));
 
-      setAktiveSaker(saker || []);
+      if (voteringerWithStemmer.length > 0) {
+        setFeaturedVotering(voteringerWithStemmer[0]);
+        setAktiveVoteringer(voteringerWithStemmer.slice(1));
+      } else {
+        setAktiveVoteringer([]);
+      }
 
       // Fetch stats
-      const { count: totalSaker } = await supabase.from('stortinget_saker').select('*', { count: 'exact', head: true });
-      const { count: totalStemmer } = await supabase.from('folke_stemmer').select('*', { count: 'exact', head: true });
-      const { count: aktiveSakerCount } = await supabase.from('stortinget_saker').select('*', { count: 'exact', head: true }).eq('status', 'pågående');
+      const { count: totalVoteringer } = await sb.from('voteringer').select('*', { count: 'exact', head: true });
+      const { count: totalStemmer } = await sb.from('folke_stemmer').select('*', { count: 'exact', head: true });
+      const { count: aktiveVoteringerCount } = await sb.from('voteringer').select('*', { count: 'exact', head: true }).eq('status', 'pågående');
 
-      setStats({ totalSaker: totalSaker || 0, totalStemmer: totalStemmer || 0, aktiveSaker: aktiveSakerCount || 0 });
+      setStats({ 
+        totalVoteringer: totalVoteringer || 0, 
+        totalStemmer: totalStemmer || 0, 
+        aktiveVoteringer: aktiveVoteringerCount || 0 
+      });
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -77,13 +98,13 @@ export default function Index() {
   const syncFromStortinget = async () => {
     setSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('sync-stortinget');
+      const { data, error } = await supabase.functions.invoke('sync-voteringer');
       
       if (error) throw error;
       
       toast({
         title: 'Synkronisering fullført',
-        description: `${data.inserted} nye saker lagt til, ${data.updated} oppdatert`,
+        description: `${data.processedCount || 0} saker behandlet`,
       });
       
       await fetchData();
@@ -91,7 +112,7 @@ export default function Index() {
       console.error('Sync error:', error);
       toast({
         title: 'Synkronisering feilet',
-        description: 'Kunne ikke hente saker fra Stortinget',
+        description: 'Kunne ikke hente voteringer fra Stortinget',
         variant: 'destructive',
       });
     } finally {
@@ -102,6 +123,21 @@ export default function Index() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const getUserVote = (votering: Votering) => {
+    if (!user || !votering.folke_stemmer) return null;
+    const vote = votering.folke_stemmer.find(v => v.user_id === user.id);
+    return vote?.stemme || null;
+  };
+
+  const getFolkeCounts = (votering: Votering) => {
+    const stemmer = votering.folke_stemmer || [];
+    return {
+      for: stemmer.filter(s => s.stemme === 'for').length,
+      mot: stemmer.filter(s => s.stemme === 'mot').length,
+      avholdende: stemmer.filter(s => s.stemme === 'avholdende').length,
+    };
+  };
 
   return (
     <Layout title="Hjem">
@@ -142,7 +178,7 @@ export default function Index() {
             <div className="h-11 w-11 rounded-2xl bg-vote-for/15 flex items-center justify-center mx-auto mb-3">
               <Clock className="h-5 w-5 text-vote-for" />
             </div>
-            <p className="text-2xl font-bold">{stats.aktiveSaker}</p>
+            <p className="text-2xl font-bold">{stats.aktiveVoteringer}</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">Aktive</p>
           </div>
           
@@ -150,25 +186,44 @@ export default function Index() {
             <div className="h-11 w-11 rounded-2xl bg-ios-orange/15 flex items-center justify-center mx-auto mb-3">
               <BarChart3 className="h-5 w-5 text-ios-orange" />
             </div>
-            <p className="text-2xl font-bold">{stats.totalSaker}</p>
+            <p className="text-2xl font-bold">{stats.totalVoteringer}</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">Totalt</p>
           </div>
         </div>
 
-        {/* Featured Case */}
-        {featuredSak && (
+        {/* Featured Votering */}
+        {featuredVotering && (
           <div className="animate-ios-slide-up stagger-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold">Aktuelt nå</h2>
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h2 className="text-lg font-semibold">Stem nå</h2>
+              </div>
             </div>
-            <SakCard sak={featuredSak} variant="featured" />
+            <VoteringCard
+              id={featuredVotering.id}
+              forslagTekst={featuredVotering.forslag_tekst}
+              oppsummering={featuredVotering.oppsummering}
+              status={featuredVotering.status}
+              voteringDato={featuredVotering.votering_dato}
+              resultatFor={featuredVotering.resultat_for}
+              resultatMot={featuredVotering.resultat_mot}
+              resultatAvholdende={featuredVotering.resultat_avholdende}
+              folkeFor={getFolkeCounts(featuredVotering).for}
+              folkeMot={getFolkeCounts(featuredVotering).mot}
+              folkeAvholdende={getFolkeCounts(featuredVotering).avholdende}
+              userVote={getUserVote(featuredVotering)}
+              vedtatt={featuredVotering.vedtatt}
+              sakTittel={featuredVotering.stortinget_saker?.tittel}
+              variant="featured"
+            />
           </div>
         )}
 
-        {/* Active Cases */}
+        {/* Active Voteringer */}
         <div className="animate-ios-slide-up stagger-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Aktive saker</h2>
+            <h2 className="text-lg font-semibold">Aktive voteringer</h2>
             <div className="flex items-center gap-3">
               <button 
                 onClick={syncFromStortinget}
@@ -178,7 +233,7 @@ export default function Index() {
               >
                 <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
               </button>
-              <Link to="/saker" className="text-primary text-sm font-medium ios-touch flex items-center gap-1">
+              <Link to="/voteringer" className="text-primary text-sm font-medium ios-touch flex items-center gap-1">
                 Se alle
                 <ChevronRight className="h-4 w-4" />
               </Link>
@@ -190,14 +245,32 @@ export default function Index() {
               <div className="p-12 text-center">
                 <div className="h-10 w-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
               </div>
-            ) : aktiveSaker.length > 0 ? (
-              aktiveSaker.slice(0, 4).map((sak, index) => (
-                <SakCard key={sak.id} sak={sak} index={index} variant="compact" />
+            ) : aktiveVoteringer.length > 0 ? (
+              aktiveVoteringer.slice(0, 4).map((votering, index) => (
+                <VoteringCard
+                  key={votering.id}
+                  id={votering.id}
+                  forslagTekst={votering.forslag_tekst}
+                  oppsummering={votering.oppsummering}
+                  status={votering.status}
+                  voteringDato={votering.votering_dato}
+                  resultatFor={votering.resultat_for}
+                  resultatMot={votering.resultat_mot}
+                  resultatAvholdende={votering.resultat_avholdende}
+                  folkeFor={getFolkeCounts(votering).for}
+                  folkeMot={getFolkeCounts(votering).mot}
+                  folkeAvholdende={getFolkeCounts(votering).avholdende}
+                  userVote={getUserVote(votering)}
+                  vedtatt={votering.vedtatt}
+                  sakTittel={votering.stortinget_saker?.tittel}
+                  index={index}
+                  variant="compact"
+                />
               ))
             ) : (
               <div className="p-12 text-center text-muted-foreground">
                 <Vote className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <p className="text-sm mb-4">Ingen aktive saker</p>
+                <p className="text-sm mb-4">Ingen aktive voteringer</p>
                 <Button 
                   onClick={syncFromStortinget} 
                   disabled={syncing}

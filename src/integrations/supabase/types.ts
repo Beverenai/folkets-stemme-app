@@ -18,23 +18,26 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          sak_id: string
+          sak_id: string | null
           stemme: string
           user_id: string
+          votering_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
-          sak_id: string
+          sak_id?: string | null
           stemme: string
           user_id: string
+          votering_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
-          sak_id?: string
+          sak_id?: string | null
           stemme?: string
           user_id?: string
+          votering_id?: string | null
         }
         Relationships: [
           {
@@ -42,6 +45,13 @@ export type Database = {
             columns: ["sak_id"]
             isOneToOne: false
             referencedRelation: "stortinget_saker"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "folke_stemmer_votering_id_fkey"
+            columns: ["votering_id"]
+            isOneToOne: false
+            referencedRelation: "voteringer"
             referencedColumns: ["id"]
           },
         ]
@@ -122,6 +132,7 @@ export type Database = {
           sak_id: string | null
           stemme: string
           votering_id: string | null
+          votering_uuid: string | null
         }
         Insert: {
           created_at?: string
@@ -130,6 +141,7 @@ export type Database = {
           sak_id?: string | null
           stemme: string
           votering_id?: string | null
+          votering_uuid?: string | null
         }
         Update: {
           created_at?: string
@@ -138,6 +150,7 @@ export type Database = {
           sak_id?: string | null
           stemme?: string
           votering_id?: string | null
+          votering_uuid?: string | null
         }
         Relationships: [
           {
@@ -152,6 +165,13 @@ export type Database = {
             columns: ["sak_id"]
             isOneToOne: false
             referencedRelation: "stortinget_saker"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "representant_voteringer_votering_uuid_fkey"
+            columns: ["votering_uuid"]
+            isOneToOne: false
+            referencedRelation: "voteringer"
             referencedColumns: ["id"]
           },
         ]
@@ -290,6 +310,62 @@ export type Database = {
           voteringer_synced_at?: string | null
         }
         Relationships: []
+      }
+      voteringer: {
+        Row: {
+          created_at: string
+          forslag_tekst: string | null
+          id: string
+          oppsummering: string | null
+          resultat_avholdende: number | null
+          resultat_for: number | null
+          resultat_mot: number | null
+          sak_id: string | null
+          status: string
+          stortinget_votering_id: string
+          updated_at: string
+          vedtatt: boolean | null
+          votering_dato: string | null
+        }
+        Insert: {
+          created_at?: string
+          forslag_tekst?: string | null
+          id?: string
+          oppsummering?: string | null
+          resultat_avholdende?: number | null
+          resultat_for?: number | null
+          resultat_mot?: number | null
+          sak_id?: string | null
+          status?: string
+          stortinget_votering_id: string
+          updated_at?: string
+          vedtatt?: boolean | null
+          votering_dato?: string | null
+        }
+        Update: {
+          created_at?: string
+          forslag_tekst?: string | null
+          id?: string
+          oppsummering?: string | null
+          resultat_avholdende?: number | null
+          resultat_for?: number | null
+          resultat_mot?: number | null
+          sak_id?: string | null
+          status?: string
+          stortinget_votering_id?: string
+          updated_at?: string
+          vedtatt?: boolean | null
+          votering_dato?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voteringer_sak_id_fkey"
+            columns: ["sak_id"]
+            isOneToOne: false
+            referencedRelation: "stortinget_saker"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
