@@ -6,6 +6,7 @@ import Layout from '@/components/Layout';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getPartiConfig } from '@/lib/partiConfig';
+import { getProxiedImageUrl } from '@/lib/imageProxy';
 
 interface Representant {
   id: string;
@@ -180,7 +181,7 @@ export default function Representanter() {
                     <PartiLogo forkortelse={rep.parti_forkortelse} size="sm" />
                     <Avatar className="h-10 w-10 flex-shrink-0">
                       <AvatarImage 
-                        src={rep.bilde_url || ''} 
+                        src={getProxiedImageUrl(rep.bilde_url)} 
                         alt={`${rep.fornavn} ${rep.etternavn}`}
                         className="object-cover object-top"
                       />
