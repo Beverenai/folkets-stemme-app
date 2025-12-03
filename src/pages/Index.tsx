@@ -4,10 +4,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Vote, BarChart3, Clock, ChevronRight, RefreshCw, Sparkles, Users } from 'lucide-react';
+import { Vote, BarChart3, Clock, ChevronRight, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import VoteringCard from '@/components/VoteringCard';
+import { formatDistanceToNow } from 'date-fns';
+import { nb } from 'date-fns/locale';
 
 interface Votering {
   id: string;
@@ -35,12 +36,11 @@ interface Stats {
 
 export default function Index() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [aktiveVoteringer, setAktiveVoteringer] = useState<Votering[]>([]);
   const [featuredVotering, setFeaturedVotering] = useState<Votering | null>(null);
   const [stats, setStats] = useState<Stats>({ totalVoteringer: 0, totalStemmer: 0, aktiveVoteringer: 0 });
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
@@ -89,35 +89,23 @@ export default function Index() {
         totalStemmer: totalStemmer || 0, 
         aktiveVoteringer: aktiveVoteringerCount || 0 
       });
+
+      // Fetch last sync time
+      const { data: syncLog } = await sb
+        .from('sync_log')
+        .select('completed_at')
+        .not('completed_at', 'is', null)
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (syncLog?.completed_at) {
+        setLastSync(syncLog.completed_at);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const syncFromStortinget = async () => {
-    setSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-voteringer');
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Synkronisering fullført',
-        description: `${data.processedCount || 0} saker behandlet`,
-      });
-      
-      await fetchData();
-    } catch (error) {
-      console.error('Sync error:', error);
-      toast({
-        title: 'Synkronisering feilet',
-        description: 'Kunne ikke hente voteringer fra Stortinget',
-        variant: 'destructive',
-      });
-    } finally {
-      setSyncing(false);
     }
   };
 
@@ -225,20 +213,10 @@ export default function Index() {
         <div className="animate-ios-slide-up stagger-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Aktive voteringer</h2>
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={syncFromStortinget}
-                disabled={syncing}
-                className="text-muted-foreground ios-touch p-1"
-                title="Oppdater fra Stortinget"
-              >
-                <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
-              </button>
-              <Link to="/voteringer" className="text-primary text-sm font-medium ios-touch flex items-center gap-1">
-                Se alle
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
+            <Link to="/voteringer" className="text-primary text-sm font-medium ios-touch flex items-center gap-1">
+              Se alle
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
 
           <div className="premium-card overflow-hidden divide-y divide-border/30">
@@ -271,19 +249,18 @@ export default function Index() {
             ) : (
               <div className="p-12 text-center text-muted-foreground">
                 <Vote className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <p className="text-sm mb-4">Ingen aktive voteringer</p>
-                <Button 
-                  onClick={syncFromStortinget} 
-                  disabled={syncing}
-                  variant="outline"
-                  className="ios-press"
-                >
-                  <RefreshCw className={cn('h-4 w-4 mr-2', syncing && 'animate-spin')} />
-                  {syncing ? 'Henter...' : 'Hent fra Stortinget'}
-                </Button>
+                <p className="text-sm">Ingen aktive voteringer akkurat nå</p>
+                <p className="text-xs mt-2">Data oppdateres automatisk</p>
               </div>
             )}
           </div>
+          
+          {/* Last sync indicator */}
+          {lastSync && (
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Oppdatert {formatDistanceToNow(new Date(lastSync), { addSuffix: true, locale: nb })}
+            </p>
+          )}
         </div>
 
         {/* Explore Politicians */}

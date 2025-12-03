@@ -314,6 +314,42 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_log: {
+        Row: {
+          ai_generated: number | null
+          completed_at: string | null
+          duration_ms: number | null
+          errors: Json | null
+          id: string
+          saker_synced: number | null
+          source: string | null
+          started_at: string | null
+          voteringer_synced: number | null
+        }
+        Insert: {
+          ai_generated?: number | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          saker_synced?: number | null
+          source?: string | null
+          started_at?: string | null
+          voteringer_synced?: number | null
+        }
+        Update: {
+          ai_generated?: number | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          errors?: Json | null
+          id?: string
+          saker_synced?: number | null
+          source?: string | null
+          started_at?: string | null
+          voteringer_synced?: number | null
+        }
+        Relationships: []
+      }
       voteringer: {
         Row: {
           created_at: string
