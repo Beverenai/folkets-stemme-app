@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Clock, CheckCircle, Users, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResultBar from './ResultBar';
+import KategoriBadge from './KategoriBadge';
 
 interface VoteringCardProps {
   id: string;
@@ -19,6 +20,7 @@ interface VoteringCardProps {
   vedtatt?: boolean | null;
   sakTittel?: string | null;
   stortingetId?: string | null;
+  kategori?: string | null;
   variant?: 'default' | 'compact' | 'featured';
   index?: number;
 }
@@ -39,6 +41,7 @@ export default function VoteringCard({
   vedtatt,
   sakTittel,
   stortingetId,
+  kategori,
   variant = 'default',
   index = 0,
 }: VoteringCardProps) {
@@ -84,7 +87,8 @@ export default function VoteringCard({
         to={`/votering/${id}`}
         className="premium-card-glow p-5 block ios-press animate-ios-slide-up"
       >
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          {kategori && <KategoriBadge kategori={kategori} size="sm" />}
           <span className={cn(
             'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium',
             isAvsluttet 

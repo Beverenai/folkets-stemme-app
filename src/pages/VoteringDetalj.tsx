@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import ResultBar from '@/components/ResultBar';
 import PartiVoteringList from '@/components/PartiVoteringList';
 import RepresentantVoteList from '@/components/RepresentantVoteList';
+import KategoriBadge from '@/components/KategoriBadge';
 
 interface Votering {
   id: string;
@@ -25,6 +26,7 @@ interface Votering {
   stortinget_saker?: {
     tittel: string;
     stortinget_id: string;
+    kategori: string | null;
   } | null;
 }
 
@@ -80,7 +82,7 @@ export default function VoteringDetalj() {
           .from('voteringer')
           .select(`
             *,
-            stortinget_saker(tittel, stortinget_id)
+            stortinget_saker(tittel, stortinget_id, kategori)
           `)
           .eq('id', id)
           .maybeSingle();
@@ -234,6 +236,7 @@ export default function VoteringDetalj() {
   const displayText = votering.oppsummering || votering.forslag_tekst || votering.stortinget_saker?.tittel || 'Votering';
   const hasStortingetResults = votering.resultat_for > 0 || votering.resultat_mot > 0;
   const stortingetId = votering.stortinget_saker?.stortinget_id;
+  const kategori = votering.stortinget_saker?.kategori;
 
   return (
     <Layout hideHeader>
@@ -257,8 +260,9 @@ export default function VoteringDetalj() {
       </header>
 
       <div className="px-4 py-6 space-y-6 pb-tab-bar animate-ios-fade">
-        {/* Status badge */}
-        <div className="flex items-center gap-2">
+        {/* Status badges */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {kategori && <KategoriBadge kategori={kategori} size="md" />}
           <span className={cn(
             'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
             isAvsluttet 
