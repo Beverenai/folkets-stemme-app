@@ -354,22 +354,26 @@ export default function RepresentantDetalj() {
       )}
 
       {/* Stats grid */}
-      <div className="grid grid-cols-4 gap-2 px-4 mb-6">
-        <div className="bg-card rounded-xl p-3 text-center border border-border/50">
-          <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-          <p className="text-xs text-muted-foreground">Totalt</p>
+      <div className="grid grid-cols-5 gap-1.5 px-4 mb-6">
+        <div className="bg-card rounded-xl p-2 text-center border border-border/50">
+          <p className="text-xl font-bold text-foreground">{stats.total}</p>
+          <p className="text-[10px] text-muted-foreground">Totalt</p>
         </div>
-        <div className="bg-card rounded-xl p-3 text-center border border-border/50">
-          <p className="text-2xl font-bold text-vote-for">{stats.for}</p>
-          <p className="text-xs text-muted-foreground">For</p>
+        <div className="bg-card rounded-xl p-2 text-center border border-border/50">
+          <p className="text-xl font-bold text-vote-for">{stats.for}</p>
+          <p className="text-[10px] text-muted-foreground">For</p>
         </div>
-        <div className="bg-card rounded-xl p-3 text-center border border-border/50">
-          <p className="text-2xl font-bold text-vote-mot">{stats.mot}</p>
-          <p className="text-xs text-muted-foreground">Mot</p>
+        <div className="bg-card rounded-xl p-2 text-center border border-border/50">
+          <p className="text-xl font-bold text-vote-mot">{stats.mot}</p>
+          <p className="text-[10px] text-muted-foreground">Mot</p>
         </div>
-        <div className="bg-card rounded-xl p-3 text-center border border-border/50">
-          <p className="text-2xl font-bold text-vote-avholdende">{stats.avholdende}</p>
-          <p className="text-xs text-muted-foreground">Avh.</p>
+        <div className="bg-card rounded-xl p-2 text-center border border-border/50">
+          <p className="text-xl font-bold text-vote-avholdende">{stats.avholdende}</p>
+          <p className="text-[10px] text-muted-foreground">Avh.</p>
+        </div>
+        <div className="bg-card rounded-xl p-2 text-center border border-border/50">
+          <p className="text-xl font-bold text-muted-foreground">{stats.ikke_tilstede}</p>
+          <p className="text-[10px] text-muted-foreground">Borte</p>
         </div>
       </div>
 
