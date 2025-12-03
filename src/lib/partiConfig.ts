@@ -78,7 +78,9 @@ export function getPartiConfig(forkortelse: string | null): PartiConfig {
   if (!forkortelse) {
     return PARTI_CONFIG['IND'];
   }
-  return PARTI_CONFIG[forkortelse.toUpperCase()] || PARTI_CONFIG['IND'];
+  // Handle both uppercase keys and actual database values
+  const upperKey = forkortelse.toUpperCase();
+  return PARTI_CONFIG[upperKey] || PARTI_CONFIG['IND'];
 }
 
 export function getPartiColor(forkortelse: string | null): string {

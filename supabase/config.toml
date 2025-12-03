@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.sync-representanter]
 verify_jwt = false
+
+[functions.sync-voteringer]
+verify_jwt = false

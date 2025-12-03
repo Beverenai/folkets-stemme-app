@@ -47,6 +47,14 @@ export function useDataSync() {
           console.error('Representanter sync failed:', representanterResult.reason);
         }
 
+        // Sync voting data after representatives are synced
+        const voteringerResult = await supabase.functions.invoke('sync-voteringer');
+        if (voteringerResult.error) {
+          console.error('Voteringer sync failed:', voteringerResult.error);
+        } else {
+          console.log('Voteringer sync completed:', voteringerResult.data?.message);
+        }
+
         // Update last sync time
         localStorage.setItem(LAST_SYNC_KEY, Date.now().toString());
       } catch (error) {
