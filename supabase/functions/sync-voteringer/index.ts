@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
               const { error: insertError } = await supabase
                 .from('representant_voteringer')
                 .upsert(votesToInsert, { 
-                  onConflict: 'representant_id,sak_id,votering_id',
+                  onConflict: 'representant_id,votering_uuid',
                   ignoreDuplicates: true 
                 });
 
