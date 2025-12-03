@@ -11,6 +11,7 @@ import Saker from "./pages/Saker";
 import SakDetalj from "./pages/SakDetalj";
 import Representanter from "./pages/Representanter";
 import RepresentantDetalj from "./pages/RepresentantDetalj";
+import PartiDetalj from "./pages/PartiDetalj";
 import Statistikk from "./pages/Statistikk";
 import Profil from "./pages/Profil";
 import NotFound from "./pages/NotFound";
@@ -29,6 +30,7 @@ function AppContent() {
         <Route path="/sak/:id" element={<SakDetalj />} />
         <Route path="/representanter" element={<Representanter />} />
         <Route path="/representant/:id" element={<RepresentantDetalj />} />
+        <Route path="/parti/:forkortelse" element={<PartiDetalj />} />
         <Route path="/statistikk" element={<Statistikk />} />
         <Route path="/profil" element={<Profil />} />
         <Route path="*" element={<NotFound />} />
