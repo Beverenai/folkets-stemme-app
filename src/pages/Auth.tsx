@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+import { cn } from '@/lib/utils';
 
-const emailSchema = z.string().email('Ugyldig e-postadresse');
-const passwordSchema = z.string().min(6, 'Passord må være minst 6 tegn');
+const emailSchema = z.string().email('Ugyldig e-post');
+const passwordSchema = z.string().min(6, 'Minst 6 tegn');
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,76 +26,37 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
-      navigate('/');
-    }
+    if (user) navigate('/');
   }, [user, navigate]);
 
   const validate = () => {
     const newErrors: { email?: string; password?: string } = {};
-    
-    try {
-      emailSchema.parse(email);
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        newErrors.email = e.errors[0].message;
-      }
-    }
-
-    try {
-      passwordSchema.parse(password);
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        newErrors.password = e.errors[0].message;
-      }
-    }
-
+    try { emailSchema.parse(email); } catch (e) { if (e instanceof z.ZodError) newErrors.email = e.errors[0].message; }
+    try { passwordSchema.parse(password); } catch (e) { if (e instanceof z.ZodError) newErrors.password = e.errors[0].message; }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validate()) return;
-    
     setLoading(true);
 
     try {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
-          toast({
-            title: 'Innlogging feilet',
-            description: error.message === 'Invalid login credentials' 
-              ? 'Feil e-post eller passord' 
-              : error.message,
-            variant: 'destructive',
-          });
+          toast({ title: 'Feil', description: error.message === 'Invalid login credentials' ? 'Feil e-post eller passord' : error.message, variant: 'destructive' });
         } else {
-          toast({
-            title: 'Velkommen tilbake!',
-            description: 'Du er nå logget inn.',
-          });
+          toast({ title: 'Velkommen!' });
           navigate('/');
         }
       } else {
         const { error } = await signUp(email, password, displayName);
         if (error) {
-          let message = error.message;
-          if (error.message.includes('already registered')) {
-            message = 'Denne e-postadressen er allerede registrert';
-          }
-          toast({
-            title: 'Registrering feilet',
-            description: message,
-            variant: 'destructive',
-          });
+          toast({ title: 'Feil', description: error.message.includes('already registered') ? 'E-post allerede registrert' : error.message, variant: 'destructive' });
         } else {
-          toast({
-            title: 'Velkommen!',
-            description: 'Kontoen din er opprettet. Du er nå logget inn.',
-          });
+          toast({ title: 'Velkommen!' });
           navigate('/');
         }
       }
@@ -104,143 +66,132 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-background safe-top safe-bottom">
+      {/* Header */}
+      <header className="glass border-b border-border sticky top-0 z-40">
+        <div className="flex items-center h-12 px-4">
+          <button onClick={() => navigate('/')} className="ios-touch -ml-2 p-2">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="flex-1 text-center font-semibold text-[17px]">
+            {isLogin ? 'Logg inn' : 'Registrer'}
+          </h1>
+          <div className="w-9" />
+        </div>
+      </header>
+
+      <div className="px-4 py-8 animate-ios-fade">
         {/* Logo */}
-        <div className="text-center mb-8 animate-slide-down">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl gradient-hero shadow-glow-primary mb-4">
+        <div className="text-center mb-8">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary mb-4">
             <span className="text-3xl">🏛️</span>
           </div>
-          <h1 className="font-display text-3xl font-bold">
-            <span className="text-primary">Folkets</span>{' '}
-            <span className="text-secondary">Storting</span>
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Din stemme teller - bli med i demokratiet
+          <h2 className="text-2xl font-bold">Folkets Storting</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            Din stemme teller
           </p>
         </div>
 
-        {/* Auth Card */}
-        <div className="bg-card rounded-2xl shadow-lg border border-border p-6 animate-scale-in">
-          {/* Tab Switcher */}
-          <div className="flex gap-2 p-1 bg-muted rounded-xl mb-6">
-            <button
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
-                isLogin
-                  ? 'bg-card shadow-sm text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Logg inn
-            </button>
-            <button
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
-                !isLogin
-                  ? 'bg-card shadow-sm text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Registrer
-            </button>
+        {/* Segmented Control */}
+        <div className="flex gap-1 p-1 bg-secondary rounded-xl mb-6">
+          <button
+            onClick={() => setIsLogin(true)}
+            className={cn(
+              'flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ios-press',
+              isLogin ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'
+            )}
+          >
+            Logg inn
+          </button>
+          <button
+            onClick={() => setIsLogin(false)}
+            className={cn(
+              'flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ios-press',
+              !isLogin ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'
+            )}
+          >
+            Registrer
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <div className="space-y-2">
+              <Label htmlFor="displayName" className="text-sm">Navn (valgfritt)</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="displayName"
+                  type="text"
+                  placeholder="Ditt navn"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="pl-11 h-12 bg-secondary border-0 rounded-xl"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm">E-post</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="din@epost.no"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={cn('pl-11 h-12 bg-secondary border-0 rounded-xl', errors.email && 'ring-2 ring-destructive')}
+                required
+              />
+            </div>
+            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Visningsnavn (valgfritt)</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="displayName"
-                    type="text"
-                    placeholder="Ditt navn"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-sm">Passord</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={cn('pl-11 pr-11 h-12 bg-secondary border-0 rounded-xl', errors.password && 'ring-2 ring-destructive')}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground ios-touch"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+          </div>
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 text-base font-semibold ios-press"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                {isLogin ? 'Logger inn...' : 'Registrerer...'}
+              </span>
+            ) : (
+              isLogin ? 'Logg inn' : 'Opprett konto'
             )}
+          </Button>
+        </form>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">E-post</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="din@epost.no"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={`pl-10 ${errors.email ? 'border-destructive' : ''}`}
-                  required
-                />
-              </div>
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Passord</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={`pl-10 pr-10 ${errors.password ? 'border-destructive' : ''}`}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full gradient-hero text-white hover:opacity-90 h-12 text-base font-semibold"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  {isLogin ? 'Logger inn...' : 'Registrerer...'}
-                </span>
-              ) : (
-                isLogin ? 'Logg inn' : 'Opprett konto'
-              )}
-            </Button>
-          </form>
-
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            {isLogin ? 'Har du ikke konto?' : 'Har du allerede konto?'}{' '}
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary font-medium hover:underline"
-            >
-              {isLogin ? 'Registrer deg' : 'Logg inn'}
-            </button>
-          </p>
-        </div>
-
-        {/* Info */}
         <p className="text-center text-xs text-muted-foreground mt-6">
           Ved å registrere deg godtar du at din stemme lagres anonymt.
-          <br />
-          Dine persondata deles aldri.
         </p>
       </div>
     </div>
