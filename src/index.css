@@ -370,3 +370,40 @@
     @apply bg-muted-foreground/40;
   }
 }
+
+/* NRK-inspired styles */
+.nrk-card {
+  @apply bg-card rounded-2xl border border-border/30 p-5 shadow-lg;
+}
+
+.nrk-card-white {
+  @apply bg-white dark:bg-card rounded-2xl p-5 shadow-lg;
+}
+
+.nrk-section-header {
+  @apply text-lg font-bold mb-4 flex items-center gap-2;
+}
+
+.nrk-badge {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
+}
+
+.nrk-stat-card {
+  @apply premium-card p-4 text-center;
+}
+
+.nrk-progress-bar {
+  @apply h-2.5 bg-secondary rounded-full overflow-hidden;
+}
+
+.nrk-filter-btn {
+  @apply px-4 py-2 rounded-full text-sm font-medium transition-all;
+}
+
+.nrk-filter-btn-active {
+  @apply bg-primary text-primary-foreground;
+}
+
+.nrk-filter-btn-inactive {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
