@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     console.log(`Found ${saker?.length || 0} saker to process`);
 
     let totalInserted = 0;
+    let voteringerCreated = 0;
     let sakerProcessed = 0;
 
     for (const sak of saker || []) {
@@ -87,12 +88,50 @@ Deno.serve(async (req) => {
         // Track party votes for this sak
         const partiVotes: Record<string, { for: number; mot: number; avholdende: number; navn: string }> = {};
 
-        // Process first votering
-        const votering = voteringListe[0];
-        const voteringId = votering?.votering_id;
-        
-        if (voteringId) {
+        // Process each votering individually (not just the first one)
+        for (const votering of voteringListe) {
+          const voteringId = votering?.votering_id;
+          const forslagTekst = votering?.votering_tema || votering?.kommentar || sak.tittel;
+          const voteringDato = votering?.votering_tid;
+          const vedtatt = votering?.vedtatt === true || votering?.vedtatt === 'true';
+          
+          if (!voteringId) continue;
+
           console.log(`Processing votering ${voteringId}`);
+
+          // Check if this votering already exists
+          const { data: existingVotering } = await supabase
+            .from('voteringer')
+            .select('id')
+            .eq('stortinget_votering_id', String(voteringId))
+            .maybeSingle();
+
+          let voteringDbId: string;
+
+          if (existingVotering) {
+            voteringDbId = existingVotering.id;
+          } else {
+            // Create new votering entry
+            const { data: newVotering, error: voteringError } = await supabase
+              .from('voteringer')
+              .insert({
+                stortinget_votering_id: String(voteringId),
+                sak_id: sak.id,
+                forslag_tekst: forslagTekst,
+                votering_dato: voteringDato ? new Date(voteringDato).toISOString() : null,
+                status: vedtatt !== null ? 'avsluttet' : 'pågående',
+                vedtatt: vedtatt,
+              })
+              .select('id')
+              .single();
+
+            if (voteringError) {
+              console.error('Error creating votering:', voteringError);
+              continue;
+            }
+            voteringDbId = newVotering.id;
+            voteringerCreated++;
+          }
 
           const resultatUrl = `https://data.stortinget.no/eksport/voteringsresultat?voteringid=${voteringId}&format=json`;
           const resultatRes = await fetch(resultatUrl);
@@ -106,7 +145,11 @@ Deno.serve(async (req) => {
               representantList = representantList ? [representantList] : [];
             }
 
-            console.log(`Found ${representantList.length} votes`);
+            console.log(`Found ${representantList.length} votes for votering ${voteringId}`);
+
+            let voteringFor = 0;
+            let voteringMot = 0;
+            let voteringAvholdende = 0;
 
             // Insert votes
             for (const repVote of representantList) {
@@ -116,9 +159,16 @@ Deno.serve(async (req) => {
               if (!repStortingetId || !vote) continue;
 
               // Count totals
-              if (vote === 'for') totalFor++;
-              else if (vote === 'mot') totalMot++;
-              else totalAvholdende++;
+              if (vote === 'for') {
+                voteringFor++;
+                totalFor++;
+              } else if (vote === 'mot') {
+                voteringMot++;
+                totalMot++;
+              } else {
+                voteringAvholdende++;
+                totalAvholdende++;
+              }
 
               const repInfo = repMap.get(repStortingetId);
               if (!repInfo) continue;
@@ -164,6 +214,18 @@ Deno.serve(async (req) => {
                 if (!insertError) totalInserted++;
               }
             }
+
+            // Update votering with results
+            await supabase
+              .from('voteringer')
+              .update({
+                resultat_for: voteringFor,
+                resultat_mot: voteringMot,
+                resultat_avholdende: voteringAvholdende,
+                status: 'avsluttet',
+                vedtatt: voteringFor > voteringMot,
+              })
+              .eq('id', voteringDbId);
           }
         }
 
@@ -225,7 +287,7 @@ Deno.serve(async (req) => {
           })
           .eq('id', sak.id);
 
-        console.log(`Updated sak: For=${totalFor}, Mot=${totalMot}, Partier=${Object.keys(partiVotes).length}`);
+        console.log(`Updated sak: For=${totalFor}, Mot=${totalMot}, Voteringer=${voteringerCreated}`);
         sakerProcessed++;
         
         // Rate limiting
@@ -241,7 +303,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const message = `Synkronisert ${totalInserted} voteringer fra ${sakerProcessed} saker`;
+    const message = `Synkronisert ${totalInserted} stemmer, ${voteringerCreated} nye voteringer fra ${sakerProcessed} saker`;
     console.log(message);
 
     return new Response(
@@ -249,6 +311,7 @@ Deno.serve(async (req) => {
         success: true, 
         message, 
         votesInserted: totalInserted, 
+        voteringerCreated,
         processedCount: sakerProcessed 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
