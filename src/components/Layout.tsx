@@ -1,13 +1,15 @@
 import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, BarChart3, User, LogOut, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { Home, FileText, BarChart3, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import BottomNav from '@/components/BottomNav';
 import { cn } from '@/lib/utils';
 
 interface LayoutProps {
   children: ReactNode;
+  hideHeader?: boolean;
+  title?: string;
 }
 
 const navItems = [
@@ -17,11 +19,10 @@ const navItems = [
   { href: '/profil', label: 'Min profil', icon: User },
 ];
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, hideHeader, title }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -30,23 +31,22 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
+      {/* iOS-style Header - Desktop */}
+      <header className="hidden md:block sticky top-0 z-50 glass border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
+          <div className="flex h-14 items-center justify-between">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-hero shadow-glow-primary">
-                <span className="text-xl font-bold text-white">🏛️</span>
+            <Link to="/" className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
+                <span className="text-lg">🏛️</span>
               </div>
-              <span className="hidden font-display text-xl font-bold sm:inline-block">
-                <span className="text-primary">Folkets</span>{' '}
-                <span className="text-secondary">Storting</span>
+              <span className="font-semibold text-lg">
+                Folkets Storting
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -55,10 +55,10 @@ export default function Layout({ children }: LayoutProps) {
                     key={item.href}
                     to={item.href}
                     className={cn(
-                      'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ios-press',
                       isActive
-                        ? 'bg-primary text-primary-foreground shadow-md'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -68,91 +68,50 @@ export default function Layout({ children }: LayoutProps) {
               })}
             </nav>
 
-            {/* Auth Buttons */}
+            {/* Auth */}
             <div className="flex items-center gap-2">
               {user ? (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleSignOut}
-                  className="hidden md:flex items-center gap-2"
+                  className="text-muted-foreground ios-press"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-4 w-4 mr-2" />
                   Logg ut
                 </Button>
               ) : (
                 <Button
                   onClick={() => navigate('/auth')}
-                  className="hidden md:flex gradient-hero text-white hover:opacity-90"
+                  size="sm"
+                  className="bg-primary text-primary-foreground ios-press"
                 >
                   Logg inn
                 </Button>
               )}
-
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg hover:bg-muted"
-              >
-                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
             </div>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-card animate-slide-down">
-            <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={cn(
-                      'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all',
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-              <div className="border-t border-border mt-2 pt-2">
-                {user ? (
-                  <button
-                    onClick={() => {
-                      handleSignOut();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 w-full"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    Logg ut
-                  </button>
-                ) : (
-                  <Link
-                    to="/auth"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium gradient-hero text-white"
-                  >
-                    Logg inn
-                  </Link>
-                )}
-              </div>
-            </nav>
-          </div>
-        )}
       </header>
 
+      {/* iOS-style Mobile Header */}
+      {!hideHeader && (
+        <header className="md:hidden sticky top-0 z-40 glass border-b border-border safe-top">
+          <div className="flex items-center justify-center h-12 px-4 relative">
+            <h1 className="font-semibold text-[17px]">
+              {title || 'Folkets Storting'}
+            </h1>
+          </div>
+        </header>
+      )}
+
       {/* Main Content */}
-      <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+      <main className="pb-tab-bar md:pb-0 min-h-[calc(100vh-4rem)]">
+        {children}
+      </main>
+
+      {/* Bottom Navigation - Mobile */}
+      <BottomNav />
     </div>
   );
 }
