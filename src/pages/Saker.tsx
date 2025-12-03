@@ -4,10 +4,9 @@ import { Json } from '@/integrations/supabase/types';
 import Layout from '@/components/Layout';
 import PremiumCaseCard from '@/components/PremiumCaseCard';
 import { Input } from '@/components/ui/input';
-import { Search, FileText, Sparkles } from 'lucide-react';
+import { Search, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-
 interface Sak {
   id: string;
   stortinget_id: string;
@@ -142,20 +141,11 @@ export default function Saker() {
           </div>
         ) : saker.length > 0 ? (
           <div className="space-y-4">
-            {/* Info message when few saker */}
-            {saker.length < 10 && (
-              <div className="bg-muted/50 rounded-xl p-3 text-sm text-muted-foreground flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary shrink-0" />
-                <span>Flere saker klargjøres med AI-oppsummeringer. Nye saker kommer automatisk.</span>
-              </div>
-            )}
-
             {/* Featured card */}
             {featuredSak && statusFilter === 'alle' && (
               <div className="mb-2">
                 <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-primary">Fremhevet sak</span>
+                  <span className="text-sm font-medium text-primary">Aktuelt</span>
                 </div>
                 <PremiumCaseCard
                   id={featuredSak.id}
