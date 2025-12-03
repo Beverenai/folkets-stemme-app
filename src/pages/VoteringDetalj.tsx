@@ -4,10 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, ThumbsUp, ThumbsDown, Minus, Building2 } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, ThumbsUp, ThumbsDown, Minus, Building2, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResultBar from '@/components/ResultBar';
 import PartiVoteringList from '@/components/PartiVoteringList';
+import RepresentantVoteList from '@/components/RepresentantVoteList';
 
 interface Votering {
   id: string;
@@ -42,6 +43,18 @@ interface PartiVote {
   stemmer_avholdende: number;
 }
 
+interface RepresentantVote {
+  id: string;
+  stemme: string;
+  representant: {
+    id: string;
+    fornavn: string;
+    etternavn: string;
+    parti_forkortelse: string | null;
+    bilde_url: string | null;
+  };
+}
+
 export default function VoteringDetalj() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -54,6 +67,7 @@ export default function VoteringDetalj() {
   const [voteStats, setVoteStats] = useState<VoteStats>({ for: 0, mot: 0, avholdende: 0, total: 0 });
   const [voting, setVoting] = useState(false);
   const [partiVotes, setPartiVotes] = useState<PartiVote[]>([]);
+  const [repVotes, setRepVotes] = useState<RepresentantVote[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -114,6 +128,20 @@ export default function VoteringDetalj() {
           if (partiData) {
             setPartiVotes(partiData);
           }
+        }
+
+        // Get representative votes for this votering
+        const { data: repData } = await sb
+          .from('representant_voteringer')
+          .select(`
+            id,
+            stemme,
+            representant:representanter(id, fornavn, etternavn, parti_forkortelse, bilde_url)
+          `)
+          .eq('votering_uuid', id);
+        
+        if (repData) {
+          setRepVotes(repData);
         }
       } catch (error) {
         console.error('Error fetching votering:', error);
@@ -387,6 +415,17 @@ export default function VoteringDetalj() {
               <h3 className="font-semibold text-lg">Partienes stemmer</h3>
             </div>
             <PartiVoteringList partiVotes={partiVotes} />
+          </div>
+        )}
+
+        {/* Representative votes */}
+        {repVotes.length > 0 && (
+          <div className="premium-card p-5 animate-ios-slide-up">
+            <div className="flex items-center gap-2 mb-4">
+              <UserCheck className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-lg">Representantenes stemmer</h3>
+            </div>
+            <RepresentantVoteList votes={repVotes} />
           </div>
         )}
 
