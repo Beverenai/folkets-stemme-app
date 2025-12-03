@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Share2 } from 'lucide-react';
+import { ChevronLeft, Share2 } from 'lucide-react';
 import ShareCard from '@/components/ShareCard';
 import SakSwipeView from '@/components/SakSwipeView';
 import { Json } from '@/integrations/supabase/types';
@@ -255,9 +255,10 @@ export default function SakDetalj() {
           <div className="flex items-center justify-between h-14 px-4">
             <button 
               onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/saker')} 
-              className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center ios-press"
+              className="flex items-center gap-0.5 text-primary ios-press -ml-1"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ChevronLeft className="h-7 w-7" />
+              <span className="text-[17px] font-normal">Tilbake</span>
             </button>
             <button 
               onClick={handleShare}

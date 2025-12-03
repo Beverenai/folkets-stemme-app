@@ -224,6 +224,19 @@
   .pb-tab-bar {
     padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
   }
+
+  /* iOS-style smooth scrolling */
+  .ios-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+  }
+
+  /* Fade mask for scroll areas */
+  .fade-mask-vertical {
+    mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent);
+  }
 }
 
 /* Premium animations */
