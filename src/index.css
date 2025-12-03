@@ -6,7 +6,89 @@
 
 @layer base {
   :root {
-    /* Premium Dark Theme - Default */
+    /* NRK-inspired Light Theme - Default */
+    --background: 220 30% 94%;          /* Lys blå-lavendel bakgrunn */
+    --foreground: 220 40% 15%;          /* Mørk marineblå tekst */
+
+    --card: 0 0% 100%;                  /* Hvite kort */
+    --card-foreground: 220 40% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 15%;
+
+    /* NRK Blå som primary */
+    --primary: 211 100% 36%;            /* NRK blå #0055b7 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 20% 88%;           /* Lysere grå-blå */
+    --secondary-foreground: 220 40% 20%;
+
+    --muted: 220 20% 88%;
+    --muted-foreground: 220 20% 46%;
+
+    --accent: 211 100% 95%;
+    --accent-foreground: 211 100% 36%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 85%;
+    --input: 220 20% 85%;
+    --ring: 211 100% 36%;
+
+    --radius: 1rem;
+
+    /* Vote colors - Vibrant iOS style */
+    --vote-for: 142 71% 40%;
+    --vote-for-foreground: 0 0% 100%;
+    --vote-mot: 0 72% 50%;
+    --vote-mot-foreground: 0 0% 100%;
+    --vote-avholdende: 45 93% 47%;
+    --vote-avholdende-foreground: 0 0% 0%;
+
+    /* iOS Colors */
+    --ios-blue: 211 100% 50%;
+    --ios-green: 142 71% 40%;
+    --ios-red: 0 72% 50%;
+    --ios-orange: 25 95% 53%;
+    --ios-yellow: 45 93% 47%;
+    --ios-purple: 271 91% 65%;
+    --ios-pink: 330 81% 60%;
+    --ios-teal: 174 72% 50%;
+    --ios-cyan: 187 92% 60%;
+
+    /* NRK Valg fargepalett */
+    --nrk-primary: 211 100% 36%;
+    --nrk-success: 125 71% 32%;
+    --nrk-danger: 0 70% 42%;
+    --nrk-neutral: 0 0% 62%;
+    --nrk-light-gray: 0 0% 95%;
+    --nrk-divider: 0 0% 91%;
+    --nrk-dark-text: 220 40% 15%;
+    --nrk-header: 220 45% 16%;          /* Mørk marineblå header */
+
+    /* Success/Warning */
+    --success: 142 71% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 0%;
+
+    /* Light theme shadows */
+    --shadow-sm: 0 1px 3px rgba(30, 42, 58, 0.06);
+    --shadow-md: 0 4px 12px rgba(30, 42, 58, 0.08);
+    --shadow-lg: 0 8px 24px rgba(30, 42, 58, 0.1);
+    --shadow-xl: 0 16px 48px rgba(30, 42, 58, 0.12);
+    --shadow-glow: 0 0 40px hsla(211, 100%, 36%, 0.15);
+
+    /* Safe areas for mobile */
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    --safe-area-inset-left: env(safe-area-inset-left);
+    --safe-area-inset-right: env(safe-area-inset-right);
+  }
+
+  /* Dark mode override */
+  .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
 
@@ -16,7 +98,6 @@
     --popover: 0 0% 11%;
     --popover-foreground: 0 0% 100%;
 
-    /* Premium Cyan accent */
     --primary: 174 72% 56%;
     --primary-foreground: 0 0% 0%;
 
@@ -36,91 +117,11 @@
     --input: 0 0% 18%;
     --ring: 174 72% 56%;
 
-    --radius: 1rem;
-
-    /* Vote colors - Vibrant iOS style */
-    --vote-for: 142 71% 45%;
-    --vote-for-foreground: 0 0% 100%;
-    --vote-mot: 0 72% 51%;
-    --vote-mot-foreground: 0 0% 100%;
-    --vote-avholdende: 45 93% 47%;
-    --vote-avholdende-foreground: 0 0% 0%;
-
-    /* Premium Colors */
-    --ios-blue: 211 100% 50%;
-    --ios-green: 142 71% 45%;
-    --ios-red: 0 72% 51%;
-    --ios-orange: 25 95% 53%;
-    --ios-yellow: 45 93% 47%;
-    --ios-purple: 271 91% 65%;
-    --ios-pink: 330 81% 60%;
-    --ios-teal: 174 72% 56%;
-    --ios-cyan: 187 92% 69%;
-
-    /* NRK Valg fargepalett */
-    --nrk-primary: 211 100% 36%;
-    --nrk-success: 125 71% 32%;
-    --nrk-danger: 0 70% 42%;
-    --nrk-neutral: 0 0% 62%;
-    --nrk-light-gray: 0 0% 95%;
-    --nrk-divider: 0 0% 91%;
-    --nrk-dark-text: 0 0% 12%;
-
-    /* Success/Warning */
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 45 93% 47%;
-    --warning-foreground: 0 0% 0%;
-
-    /* Premium shadows */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
     --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.7);
     --shadow-glow: 0 0 40px hsla(174, 72%, 56%, 0.3);
-
-    /* Safe areas for mobile */
-    --safe-area-inset-top: env(safe-area-inset-top);
-    --safe-area-inset-bottom: env(safe-area-inset-bottom);
-    --safe-area-inset-left: env(safe-area-inset-left);
-    --safe-area-inset-right: env(safe-area-inset-right);
-  }
-
-  /* Light mode override */
-  .light {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 0%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-
-    --primary: 174 72% 40%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 0 0% 20%;
-
-    --muted: 240 5% 96%;
-    --muted-foreground: 0 0% 45%;
-
-    --accent: 174 72% 96%;
-    --accent-foreground: 174 72% 40%;
-
-    --destructive: 0 100% 50%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 174 72% 40%;
-
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15);
-    --shadow-glow: 0 0 40px hsla(174, 72%, 40%, 0.15);
   }
 }
 
@@ -148,17 +149,23 @@
 }
 
 @layer utilities {
-  /* Premium glass effects */
+  /* Glass effects for NRK light theme */
   .glass {
-    @apply bg-card/80 backdrop-blur-xl border-border/50;
+    @apply bg-white/80 backdrop-blur-xl border-border/30;
   }
 
   .glass-heavy {
-    @apply bg-card/95 backdrop-blur-2xl;
+    @apply bg-white/95 backdrop-blur-2xl;
   }
 
   .glass-subtle {
-    @apply bg-card/40 backdrop-blur-lg;
+    @apply bg-white/40 backdrop-blur-lg;
+  }
+
+  /* NRK Header styling */
+  .nrk-header {
+    background-color: hsl(220, 45%, 16%);
+    color: white;
   }
 
   /* Premium card styles */
@@ -171,7 +178,7 @@
   }
 
   .premium-card-glow {
-    @apply premium-card shadow-[0_0_40px_hsla(174,72%,56%,0.15)];
+    @apply premium-card shadow-[0_0_40px_hsla(211,100%,36%,0.15)];
   }
 
   /* iOS-style list item */
@@ -191,7 +198,7 @@
 
   /* Gradient text */
   .gradient-text {
-    @apply bg-gradient-to-r from-primary to-ios-cyan bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-ios-blue bg-clip-text text-transparent;
   }
 
   /* Premium gradient backgrounds */
@@ -290,8 +297,8 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px hsla(174, 72%, 56%, 0.3); }
-  50% { box-shadow: 0 0 40px hsla(174, 72%, 56%, 0.5); }
+  0%, 100% { box-shadow: 0 0 20px hsla(211, 100%, 36%, 0.2); }
+  50% { box-shadow: 0 0 40px hsla(211, 100%, 36%, 0.4); }
 }
 
 @keyframes float {
@@ -333,7 +340,7 @@
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, hsla(174, 72%, 56%, 0.1), transparent);
+  background: linear-gradient(90deg, transparent, hsla(211, 100%, 36%, 0.1), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -399,7 +406,7 @@
 }
 
 .nrk-card-white {
-  @apply bg-white dark:bg-card rounded-2xl p-5 shadow-lg;
+  @apply bg-white rounded-2xl p-5 shadow-lg border border-border/20;
 }
 
 .nrk-section-header {
