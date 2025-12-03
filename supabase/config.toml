@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.generate-sak-ai]
 verify_jwt = false
 
+[functions.generate-votering-ai]
+verify_jwt = false
+
 [functions.sync-all]
 verify_jwt = false
 
