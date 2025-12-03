@@ -6,6 +6,57 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Classify sak based on title - determines if it's important for citizens
+function classifySak(tittel: string): { kategori: string; erViktig: boolean } {
+  const t = tittel.toLowerCase();
+  
+  // Lovendringer - VIKTIG (lover påvirker folk direkte)
+  if (
+    (t.includes('endringer i') && (t.includes('loven') || t.includes('lova') || t.includes('lov ('))) ||
+    t.startsWith('lov om') ||
+    t.includes('lovvedtak')
+  ) {
+    return { kategori: 'lovendring', erViktig: true };
+  }
+  
+  // Budsjett - VIKTIG (pengene til alt viktig)
+  if (t.includes('statsbudsjettet') || t.includes('budsjettet') || t.includes('prop. 1 s')) {
+    return { kategori: 'budsjett', erViktig: true };
+  }
+  
+  // Grunnlovsforslag - VIKTIG (endrer fundamentet)
+  if (t.includes('grunnlovsforslag') || t.includes('grunnlovsframlegg')) {
+    return { kategori: 'grunnlov', erViktig: true };
+  }
+  
+  // Stortingsmeldinger om viktige temaer - VIKTIG
+  if (t.includes('meld. st.')) {
+    return { kategori: 'melding', erViktig: true };
+  }
+  
+  // EØS-samtykke - mindre viktig for folk flest
+  if (t.includes('samtykke til') || t.includes('eøs-komiteens')) {
+    return { kategori: 'samtykke', erViktig: false };
+  }
+  
+  // Rapporter og beretninger - IKKE viktig
+  if (t.includes('årsrapport') || t.includes('årsmelding') || t.includes('beretning') || t.includes('riksrevisjonens')) {
+    return { kategori: 'rapport', erViktig: false };
+  }
+  
+  // Interne prosedyrer - IKKE viktig
+  if (t.includes('arbeidsordningen') || t.includes('valg av') || t.includes('suppleringsvalg')) {
+    return { kategori: 'prosedyre', erViktig: false };
+  }
+  
+  // Alt annet - sjekk for viktige ord
+  if (t.includes('reform') || t.includes('endring') || t.includes('tiltak')) {
+    return { kategori: 'politikk', erViktig: true };
+  }
+  
+  return { kategori: 'annet', erViktig: false };
+}
+
 // Parse XML to extract text content
 function getTextContent(xml: string, tag: string): string | null {
   const regex = new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, 'i');
@@ -33,6 +84,8 @@ interface StortingetSak {
   status: string;
   dokumentgruppe: string | null;
   behandlet_sesjon: string | null;
+  kategori: string;
+  er_viktig: boolean;
 }
 
 async function fetchStortingetSaker(sesjonId: string): Promise<StortingetSak[]> {
@@ -49,7 +102,6 @@ async function fetchStortingetSaker(sesjonId: string): Promise<StortingetSak[]> 
     
     if (!response.ok) {
       console.error(`Failed to fetch saker: ${response.status}`);
-      // Try XML format as fallback
       return await fetchStortingetSakerXML(sesjonId);
     }
     
@@ -62,6 +114,8 @@ async function fetchStortingetSaker(sesjonId: string): Promise<StortingetSak[]> 
     for (const sak of sakerListe) {
       if (!sak.id || !sak.tittel) continue;
       
+      const classification = classifySak(sak.tittel);
+      
       saker.push({
         stortinget_id: String(sak.id),
         tittel: sak.tittel || 'Ukjent tittel',
@@ -71,10 +125,13 @@ async function fetchStortingetSaker(sesjonId: string): Promise<StortingetSak[]> 
         status: sak.status === 'behandlet' ? 'avsluttet' : 'pågående',
         dokumentgruppe: sak.dokumentgruppe?.navn || null,
         behandlet_sesjon: sak.sesjon_id || sesjonId,
+        kategori: classification.kategori,
+        er_viktig: classification.erViktig,
       });
     }
     
-    console.log(`Parsed ${saker.length} saker from JSON`);
+    const viktigCount = saker.filter(s => s.er_viktig).length;
+    console.log(`Parsed ${saker.length} saker from JSON (${viktigCount} viktige)`);
     return saker;
   } catch (error) {
     console.error('Error fetching JSON, trying XML:', error);
@@ -108,6 +165,7 @@ async function fetchStortingetSakerXML(sesjonId: string): Promise<StortingetSak[
     if (!id || !tittel) continue;
     
     const statusText = getTextContent(sakXml, 'status') || '';
+    const classification = classifySak(tittel);
     
     saker.push({
       stortinget_id: id,
@@ -118,10 +176,13 @@ async function fetchStortingetSakerXML(sesjonId: string): Promise<StortingetSak[
       status: statusText.toLowerCase().includes('behandlet') ? 'avsluttet' : 'pågående',
       dokumentgruppe: getTextContent(sakXml, 'dokumentgruppe_navn'),
       behandlet_sesjon: getTextContent(sakXml, 'sesjon_id') || sesjonId,
+      kategori: classification.kategori,
+      er_viktig: classification.erViktig,
     });
   }
   
-  console.log(`Parsed ${saker.length} valid saker from XML`);
+  const viktigCount = saker.filter(s => s.er_viktig).length;
+  console.log(`Parsed ${saker.length} valid saker from XML (${viktigCount} viktige)`);
   return saker;
 }
 
@@ -173,6 +234,7 @@ serve(async (req) => {
 
     let totalInserted = 0;
     let totalUpdated = 0;
+    let viktigeInserted = 0;
     let errors: string[] = [];
 
     for (const sesjonId of sessions) {
@@ -184,17 +246,19 @@ serve(async (req) => {
           // Check if sak already exists
           const { data: existing } = await supabase
             .from('stortinget_saker')
-            .select('id, status')
+            .select('id, status, kategori')
             .eq('stortinget_id', sak.stortinget_id)
             .maybeSingle();
 
           if (existing) {
-            // Update if status changed
-            if (existing.status !== sak.status) {
+            // Update if status changed or kategori not set
+            if (existing.status !== sak.status || !existing.kategori) {
               const { error } = await supabase
                 .from('stortinget_saker')
                 .update({
                   status: sak.status,
+                  kategori: sak.kategori,
+                  er_viktig: sak.er_viktig,
                   sist_oppdatert_fra_stortinget: new Date().toISOString(),
                 })
                 .eq('id', existing.id);
@@ -214,6 +278,8 @@ serve(async (req) => {
                 status: sak.status,
                 dokumentgruppe: sak.dokumentgruppe,
                 behandlet_sesjon: sak.behandlet_sesjon,
+                kategori: sak.kategori,
+                er_viktig: sak.er_viktig,
                 sist_oppdatert_fra_stortinget: new Date().toISOString(),
               });
 
@@ -222,6 +288,7 @@ serve(async (req) => {
               errors.push(`${sak.stortinget_id}: ${error.message}`);
             } else {
               totalInserted++;
+              if (sak.er_viktig) viktigeInserted++;
             }
           }
         }
@@ -266,6 +333,7 @@ serve(async (req) => {
       success: true,
       message: `Synkronisering fullført`,
       inserted: totalInserted,
+      viktigeInserted: viktigeInserted,
       updated: totalUpdated,
       errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
     };

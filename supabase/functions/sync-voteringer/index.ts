@@ -27,10 +27,11 @@ Deno.serve(async (req) => {
     const repMap = new Map(representanter?.map(r => [r.stortinget_id, { id: r.id, parti_forkortelse: r.parti_forkortelse, parti: r.parti }]) || []);
     console.log(`Loaded ${repMap.size} representanter`);
 
-    // Get saker that need voting data (not yet synced)
+    // Get IMPORTANT saker that need voting data (not yet synced)
     const { data: saker, error: sakerError } = await supabase
       .from('stortinget_saker')
-      .select('id, stortinget_id, tittel, status')
+      .select('id, stortinget_id, tittel, status, kategori')
+      .eq('er_viktig', true)  // Only process important saker
       .is('voteringer_synced_at', null)
       .limit(20);
 

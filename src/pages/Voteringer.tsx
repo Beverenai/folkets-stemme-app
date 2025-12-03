@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import VoteringCard from '@/components/VoteringCard';
 import { Input } from '@/components/ui/input';
-import { Search, Vote, RefreshCw, Sparkles } from 'lucide-react';
+import { Search, Vote, RefreshCw, Sparkles, Scale, Coins, BookOpen, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/use-toast';
@@ -23,11 +23,21 @@ interface Votering {
   stortinget_saker?: {
     tittel: string;
     stortinget_id: string;
+    kategori: string | null;
   } | null;
   folke_stemmer?: { stemme: string; user_id: string }[];
 }
 
 type FilterStatus = 'alle' | 'pågående' | 'avsluttet';
+type FilterKategori = 'alle' | 'lovendring' | 'budsjett' | 'grunnlov' | 'melding';
+
+const kategoriConfig: { value: FilterKategori; label: string; icon: React.ReactNode }[] = [
+  { value: 'alle', label: 'Alle', icon: <FileText className="w-4 h-4" /> },
+  { value: 'lovendring', label: 'Lover', icon: <Scale className="w-4 h-4" /> },
+  { value: 'budsjett', label: 'Budsjett', icon: <Coins className="w-4 h-4" /> },
+  { value: 'grunnlov', label: 'Grunnlov', icon: <BookOpen className="w-4 h-4" /> },
+  { value: 'melding', label: 'Meldinger', icon: <FileText className="w-4 h-4" /> },
+];
 
 export default function Voteringer() {
   const { user } = useAuth();
@@ -35,17 +45,17 @@ export default function Voteringer() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('pågående');
+  const [kategoriFilter, setKategoriFilter] = useState<FilterKategori>('alle');
   const [syncing, setSyncing] = useState(false);
 
   const fetchVoteringer = async () => {
     try {
-      // Cast to any to bypass type checking for new table not yet in generated types
       const sb = supabase as any;
       let query = sb
         .from('voteringer')
         .select(`
           *,
-          stortinget_saker(tittel, stortinget_id)
+          stortinget_saker(tittel, stortinget_id, kategori)
         `)
         .order('votering_dato', { ascending: false, nullsFirst: false });
 
@@ -60,8 +70,16 @@ export default function Voteringer() {
       const { data, error } = await query.limit(50);
       if (error) throw error;
       
+      // Filter by kategori (client-side since it's a joined field)
+      let filteredData = data || [];
+      if (kategoriFilter !== 'alle') {
+        filteredData = filteredData.filter((v: any) => 
+          v.stortinget_saker?.kategori === kategoriFilter
+        );
+      }
+      
       // Also fetch folke_stemmer for these voteringer
-      const voteringIds = (data || []).map((v: any) => v.id);
+      const voteringIds = filteredData.map((v: any) => v.id);
       let folkeData: any[] = [];
       if (voteringIds.length > 0) {
         const { data: stemmer } = await sb
@@ -72,7 +90,7 @@ export default function Voteringer() {
       }
 
       // Merge folke_stemmer with voteringer
-      const voteringerWithStemmer = (data || []).map((v: any) => ({
+      const voteringerWithStemmer = filteredData.map((v: any) => ({
         ...v,
         folke_stemmer: folkeData.filter((s: any) => s.votering_id === v.id)
       }));
@@ -87,7 +105,7 @@ export default function Voteringer() {
 
   useEffect(() => {
     fetchVoteringer();
-  }, [statusFilter, search]);
+  }, [statusFilter, search, kategoriFilter]);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -97,7 +115,7 @@ export default function Voteringer() {
       
       toast({ 
         title: 'Synkronisering fullført',
-        description: `${data.processedCount || 0} saker behandlet`
+        description: `${data.processedCount || 0} viktige saker behandlet`
       });
       
       fetchVoteringer();
@@ -109,7 +127,7 @@ export default function Voteringer() {
     }
   };
 
-  const filters: { value: FilterStatus; label: string }[] = [
+  const statusFilters: { value: FilterStatus; label: string }[] = [
     { value: 'alle', label: 'Alle' },
     { value: 'pågående', label: 'Pågående' },
     { value: 'avsluttet', label: 'Avsluttet' },
@@ -140,9 +158,9 @@ export default function Voteringer() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">Voteringer</h1>
+            <h1 className="text-xl font-bold">Viktige voteringer</h1>
             <p className="text-sm text-muted-foreground">
-              {voteringer.length} avstemninger
+              {voteringer.length} avstemninger om lover og budsjett
             </p>
           </div>
           <button
@@ -165,9 +183,28 @@ export default function Voteringer() {
           />
         </div>
 
-        {/* Filter */}
+        {/* Category Filter */}
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+          {kategoriConfig.map((kat) => (
+            <button
+              key={kat.value}
+              onClick={() => setKategoriFilter(kat.value)}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl transition-all ios-press whitespace-nowrap',
+                kategoriFilter === kat.value
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-secondary text-muted-foreground'
+              )}
+            >
+              {kat.icon}
+              {kat.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Status Filter */}
         <div className="flex gap-1 p-1 bg-secondary rounded-xl">
-          {filters.map((filter) => (
+          {statusFilters.map((filter) => (
             <button
               key={filter.value}
               onClick={() => setStatusFilter(filter.value)}
@@ -192,7 +229,7 @@ export default function Voteringer() {
         ) : voteringer.length > 0 ? (
           <div className="space-y-4">
             {/* Featured */}
-            {featuredVotering && statusFilter === 'alle' && (
+            {featuredVotering && statusFilter === 'alle' && kategoriFilter === 'alle' && (
               <div className="mb-2">
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="w-4 h-4 text-primary" />
@@ -221,7 +258,7 @@ export default function Voteringer() {
             {/* List */}
             <div className="space-y-3">
               {voteringer
-                .filter(v => statusFilter !== 'alle' || v.id !== featuredVotering?.id)
+                .filter(v => (statusFilter !== 'alle' || kategoriFilter !== 'alle') || v.id !== featuredVotering?.id)
                 .map((votering, index) => {
                   const folkeCounts = getFolkeCounts(votering);
                   return (
@@ -251,14 +288,17 @@ export default function Voteringer() {
           <div className="ios-card rounded-2xl p-8 text-center">
             <Vote className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
             <p className="text-muted-foreground">
-              {search ? 'Ingen voteringer funnet' : 'Ingen voteringer ennå'}
+              {search ? 'Ingen voteringer funnet' : 'Ingen viktige voteringer ennå'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Trykk på oppdater-knappen for å hente fra Stortinget
             </p>
           </div>
         )}
 
         {voteringer.length > 0 && (
           <p className="text-center text-xs text-muted-foreground pb-4">
-            Viser {voteringer.length} {voteringer.length === 1 ? 'votering' : 'voteringer'}
+            Viser {voteringer.length} viktige {voteringer.length === 1 ? 'votering' : 'voteringer'}
           </p>
         )}
       </div>
