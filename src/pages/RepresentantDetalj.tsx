@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+import PartiBadge from '@/components/PartiBadge';
+import { getPartiNavn } from '@/lib/partiConfig';
 
 interface Representant {
   id: string;
@@ -111,21 +113,6 @@ export default function RepresentantDetalj() {
     }
   };
 
-  const getPartiColor = (parti: string | null) => {
-    const colors: Record<string, string> = {
-      'A': 'bg-red-500',
-      'H': 'bg-blue-600',
-      'SP': 'bg-green-600',
-      'FRP': 'bg-blue-900',
-      'SV': 'bg-pink-600',
-      'R': 'bg-red-700',
-      'V': 'bg-green-500',
-      'KRF': 'bg-yellow-500',
-      'MDG': 'bg-green-400',
-    };
-    return colors[parti || ''] || 'bg-muted';
-  };
-
   const getVoteIcon = (stemme: string) => {
     switch (stemme) {
       case 'for': return <ThumbsUp className="h-4 w-4 text-green-500" />;
@@ -212,9 +199,7 @@ export default function RepresentantDetalj() {
         
         <div className="flex items-center justify-center gap-2 mt-2">
           {representant.parti_forkortelse && (
-            <span className={`px-3 py-1 rounded-full text-sm text-white ${getPartiColor(representant.parti_forkortelse)}`}>
-              {representant.parti || representant.parti_forkortelse}
-            </span>
+            <PartiBadge parti={representant.parti_forkortelse} size="md" showFullName />
           )}
           {representant.fylke && (
             <span className="text-muted-foreground text-sm flex items-center gap-1">
