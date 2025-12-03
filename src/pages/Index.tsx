@@ -45,11 +45,14 @@ export default function Index() {
     try {
       const sb = supabase as any;
       
-      // Fetch viktige saker with folk votes
+      // Fetch viktige saker with folk votes - only those with complete AI content
       const { data: saker } = await sb
         .from('stortinget_saker')
-        .select('id, tittel, kort_tittel, oppsummering, kategori, status, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat')
+        .select('id, tittel, kort_tittel, oppsummering, kategori, status, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat, argumenter_for')
         .eq('er_viktig', true)
+        .not('oppsummering', 'is', null)
+        .not('argumenter_for', 'eq', '[]')
+        .in('behandlet_sesjon', ['2024-2025', '2025-2026'])
         .order('updated_at', { ascending: false })
         .limit(12);
 
