@@ -14,8 +14,8 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      {/* Blur background */}
-      <div className="absolute inset-0 bg-card/80 backdrop-blur-xl border-t border-border/50" />
+      {/* White background with subtle border */}
+      <div className="absolute inset-0 bg-white border-t border-border/50 shadow-lg" />
       
       {/* Content */}
       <div className="relative flex items-center justify-around h-20 px-2 safe-bottom">
@@ -35,7 +35,7 @@ export default function BottomNav() {
             >
               <div className={cn(
                 'relative p-2 rounded-xl transition-all duration-200',
-                isActive && 'bg-primary/15'
+                isActive && 'bg-primary/10'
               )}>
                 <Icon
                   className={cn(
