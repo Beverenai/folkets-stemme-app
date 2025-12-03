@@ -6,7 +6,79 @@
 
 @layer base {
   :root {
-    /* iOS Light Theme */
+    /* Premium Dark Theme - Default */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 100%;
+
+    /* Premium Cyan accent */
+    --primary: 174 72% 56%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 56%;
+
+    --accent: 174 72% 15%;
+    --accent-foreground: 174 72% 70%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 174 72% 56%;
+
+    --radius: 1rem;
+
+    /* Vote colors - Vibrant iOS style */
+    --vote-for: 142 71% 45%;
+    --vote-for-foreground: 0 0% 100%;
+    --vote-mot: 0 72% 51%;
+    --vote-mot-foreground: 0 0% 100%;
+    --vote-avholdende: 45 93% 47%;
+    --vote-avholdende-foreground: 0 0% 0%;
+
+    /* Premium Colors */
+    --ios-blue: 211 100% 50%;
+    --ios-green: 142 71% 45%;
+    --ios-red: 0 72% 51%;
+    --ios-orange: 25 95% 53%;
+    --ios-yellow: 45 93% 47%;
+    --ios-purple: 271 91% 65%;
+    --ios-pink: 330 81% 60%;
+    --ios-teal: 174 72% 56%;
+    --ios-cyan: 187 92% 69%;
+
+    /* Success/Warning */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 0%;
+
+    /* Premium shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.7);
+    --shadow-glow: 0 0 40px hsla(174, 72%, 56%, 0.3);
+
+    /* Safe areas for mobile */
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    --safe-area-inset-left: env(safe-area-inset-left);
+    --safe-area-inset-right: env(safe-area-inset-right);
+  }
+
+  /* Light mode override */
+  .light {
     --background: 0 0% 98%;
     --foreground: 0 0% 0%;
 
@@ -16,103 +88,30 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    /* iOS Blue */
-    --primary: 211 100% 50%;
+    --primary: 174 72% 40%;
     --primary-foreground: 0 0% 100%;
 
-    /* iOS Secondary Gray */
     --secondary: 240 5% 96%;
     --secondary-foreground: 0 0% 20%;
 
     --muted: 240 5% 96%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 211 100% 96%;
-    --accent-foreground: 211 100% 50%;
+    --accent: 174 72% 96%;
+    --accent-foreground: 174 72% 40%;
 
     --destructive: 0 100% 50%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 211 100% 50%;
+    --ring: 174 72% 40%;
 
-    --radius: 0.875rem;
-
-    /* Vote colors - iOS style */
-    --vote-for: 142 70% 45%;
-    --vote-for-foreground: 0 0% 100%;
-    --vote-mot: 0 85% 55%;
-    --vote-mot-foreground: 0 0% 100%;
-    --vote-avholdende: 45 100% 50%;
-    --vote-avholdende-foreground: 0 0% 15%;
-
-    /* iOS Colors */
-    --ios-blue: 211 100% 50%;
-    --ios-green: 142 70% 45%;
-    --ios-red: 0 85% 55%;
-    --ios-orange: 28 100% 50%;
-    --ios-yellow: 45 100% 50%;
-    --ios-purple: 280 80% 60%;
-    --ios-pink: 340 80% 60%;
-    --ios-teal: 180 70% 45%;
-
-    /* Success/Warning */
-    --success: 142 70% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 45 100% 50%;
-    --warning-foreground: 0 0% 15%;
-
-    /* iOS-style shadows */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
     --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15);
-
-    /* Safe areas for mobile */
-    --safe-area-inset-top: env(safe-area-inset-top);
-    --safe-area-inset-bottom: env(safe-area-inset-bottom);
-    --safe-area-inset-left: env(safe-area-inset-left);
-    --safe-area-inset-right: env(safe-area-inset-right);
-  }
-
-  .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 100%;
-
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary: 211 100% 55%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 90%;
-
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
-
-    --accent: 211 100% 15%;
-    --accent-foreground: 211 100% 70%;
-
-    --destructive: 0 100% 55%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 211 100% 55%;
-
-    --vote-for: 142 70% 50%;
-    --vote-mot: 0 85% 60%;
-    --vote-avholdende: 45 100% 55%;
-
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 40px hsla(174, 72%, 40%, 0.15);
   }
 }
 
@@ -140,33 +139,59 @@
 }
 
 @layer utilities {
-  /* iOS-style glass effect */
+  /* Premium glass effects */
   .glass {
-    @apply bg-card/80 backdrop-blur-xl;
+    @apply bg-card/80 backdrop-blur-xl border-border/50;
   }
 
   .glass-heavy {
     @apply bg-card/95 backdrop-blur-2xl;
   }
 
-  /* iOS-style card */
+  .glass-subtle {
+    @apply bg-card/40 backdrop-blur-lg;
+  }
+
+  /* Premium card styles */
   .ios-card {
-    @apply bg-card rounded-2xl shadow-sm;
+    @apply bg-card rounded-2xl border border-border/50 shadow-md;
+  }
+
+  .premium-card {
+    @apply bg-card rounded-3xl border border-border/30 shadow-lg overflow-hidden;
+  }
+
+  .premium-card-glow {
+    @apply premium-card shadow-[0_0_40px_hsla(174,72%,56%,0.15)];
   }
 
   /* iOS-style list item */
   .ios-list-item {
-    @apply flex items-center gap-3 px-4 py-3 bg-card active:bg-muted transition-colors;
+    @apply flex items-center gap-4 px-4 py-4 bg-card active:bg-secondary/50 transition-all duration-150;
   }
 
-  /* iOS-style button press effect */
+  /* Premium button press effect */
   .ios-press {
-    @apply active:scale-[0.97] transition-transform duration-100;
+    @apply active:scale-[0.97] transition-transform duration-150 ease-out;
   }
 
   /* iOS-style touch feedback */
   .ios-touch {
     @apply active:opacity-70 transition-opacity duration-100;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-ios-cyan bg-clip-text text-transparent;
+  }
+
+  /* Premium gradient backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary to-primary/80;
+  }
+
+  .gradient-card {
+    @apply bg-gradient-to-b from-card to-card/80;
   }
 
   /* Safe area padding */
@@ -188,27 +213,18 @@
 
   /* Tab bar height */
   .pb-tab-bar {
-    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
-  }
-
-  /* iOS-style animations */
-  .animate-ios-spring {
-    animation: ios-spring 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  .animate-ios-fade {
-    animation: ios-fade 0.25s ease-out;
-  }
-
-  .animate-ios-slide-up {
-    animation: ios-slide-up 0.35s ease-out;
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
+/* Premium animations */
 @keyframes ios-spring {
   0% {
-    transform: scale(0.8);
+    transform: scale(0.9);
     opacity: 0;
+  }
+  50% {
+    transform: scale(1.02);
   }
   100% {
     transform: scale(1);
@@ -236,6 +252,93 @@
   }
 }
 
+@keyframes ios-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes progress-fill {
+  0% { width: 0%; }
+  100% { width: var(--progress-width, 100%); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px hsla(174, 72%, 56%, 0.3); }
+  50% { box-shadow: 0 0 40px hsla(174, 72%, 56%, 0.5); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes scale-press {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes vote-success {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.15); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.animate-ios-spring {
+  animation: ios-spring 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-ios-fade {
+  animation: ios-fade 0.3s ease-out;
+}
+
+.animate-ios-slide-up {
+  animation: ios-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-ios-bounce {
+  animation: ios-bounce 0.4s ease-out;
+}
+
+.animate-progress-fill {
+  animation: progress-fill 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, hsla(174, 72%, 56%, 0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-scale-press {
+  animation: scale-press 0.2s ease-out;
+}
+
+.animate-vote-success {
+  animation: vote-success 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Staggered animations */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+
 /* iOS-style scrollbar (hide on mobile) */
 @media (max-width: 768px) {
   ::-webkit-scrollbar {
@@ -251,8 +354,8 @@
 /* Desktop scrollbar */
 @media (min-width: 769px) {
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
