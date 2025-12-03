@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Vote, BarChart3, Clock, ChevronRight } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowRight, Vote, BarChart3, Clock, ChevronRight, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Sak {
@@ -26,32 +27,61 @@ interface Stats {
 
 export default function Index() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [aktiveSaker, setAktiveSaker] = useState<Sak[]>([]);
   const [stats, setStats] = useState<Stats>({ totalSaker: 0, totalStemmer: 0, aktiveSaker: 0 });
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const { data: saker } = await supabase
+        .from('stortinget_saker')
+        .select(`*, folke_stemmer(stemme)`)
+        .eq('status', 'pågående')
+        .limit(5);
+
+      setAktiveSaker(saker || []);
+
+      const { count: totalSaker } = await supabase.from('stortinget_saker').select('*', { count: 'exact', head: true });
+      const { count: totalStemmer } = await supabase.from('folke_stemmer').select('*', { count: 'exact', head: true });
+      const { count: aktiveSakerCount } = await supabase.from('stortinget_saker').select('*', { count: 'exact', head: true }).eq('status', 'pågående');
+
+      setStats({ totalSaker: totalSaker || 0, totalStemmer: totalStemmer || 0, aktiveSaker: aktiveSakerCount || 0 });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const syncFromStortinget = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-stortinget');
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Synkronisering fullført',
+        description: `${data.inserted} nye saker lagt til, ${data.updated} oppdatert`,
+      });
+      
+      // Refresh data
+      await fetchData();
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast({
+        title: 'Synkronisering feilet',
+        description: 'Kunne ikke hente saker fra Stortinget',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const { data: saker } = await supabase
-          .from('stortinget_saker')
-          .select(`*, folke_stemmer(stemme)`)
-          .eq('status', 'pågående')
-          .limit(5);
-
-        setAktiveSaker(saker || []);
-
-        const { count: totalSaker } = await supabase.from('stortinget_saker').select('*', { count: 'exact', head: true });
-        const { count: totalStemmer } = await supabase.from('folke_stemmer').select('*', { count: 'exact', head: true });
-        const { count: aktiveSakerCount } = await supabase.from('stortinget_saker').select('*', { count: 'exact', head: true }).eq('status', 'pågående');
-
-        setStats({ totalSaker: totalSaker || 0, totalStemmer: totalStemmer || 0, aktiveSaker: aktiveSakerCount || 0 });
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchData();
   }, []);
 
@@ -111,9 +141,19 @@ export default function Index() {
         <div className="animate-ios-slide-up" style={{ animationDelay: '0.25s' }}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Aktive avstemninger</h2>
-            <Link to="/saker" className="text-primary text-sm font-medium ios-touch">
-              Se alle
-            </Link>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={syncFromStortinget}
+                disabled={syncing}
+                className="text-muted-foreground ios-touch p-1"
+                title="Oppdater fra Stortinget"
+              >
+                <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
+              </button>
+              <Link to="/saker" className="text-primary text-sm font-medium ios-touch">
+                Se alle
+              </Link>
+            </div>
           </div>
 
           <div className="ios-card overflow-hidden divide-y divide-border">
@@ -159,7 +199,17 @@ export default function Index() {
             ) : (
               <div className="p-8 text-center text-muted-foreground">
                 <Vote className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">Ingen aktive saker</p>
+                <p className="text-sm mb-4">Ingen aktive saker</p>
+                <Button 
+                  onClick={syncFromStortinget} 
+                  disabled={syncing}
+                  variant="outline"
+                  size="sm"
+                  className="ios-press"
+                >
+                  <RefreshCw className={cn('h-4 w-4 mr-2', syncing && 'animate-spin')} />
+                  {syncing ? 'Henter...' : 'Hent fra Stortinget'}
+                </Button>
               </div>
             )}
           </div>
