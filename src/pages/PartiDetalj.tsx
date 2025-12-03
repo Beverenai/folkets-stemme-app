@@ -132,27 +132,30 @@ export default function PartiDetalj() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-safe">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center justify-between p-4 pt-safe">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-primary"
-          >
-            <ChevronLeft className="h-5 w-5" />
-            <span>Tilbake</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Parti header with color */}
+    <div className="min-h-screen pb-safe relative">
+      {/* Subtle gradient background */}
       <div 
-        className="px-4 py-8 text-center"
+        className="fixed inset-0 pointer-events-none"
         style={{ 
-          background: `linear-gradient(180deg, ${config.farge}20 0%, transparent 100%)`
+          background: `radial-gradient(ellipse 100% 60% at 50% 0%, ${config.farge}15 0%, transparent 70%)`
         }}
-      >
+      />
+      <div className="relative bg-background/60">
+        {/* Header */}
+        <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-border/50" style={{ backgroundColor: `color-mix(in srgb, ${config.farge}08, hsl(var(--background)) 92%)` }}>
+          <div className="flex items-center justify-between p-4 pt-safe">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1 text-primary"
+            >
+              <ChevronLeft className="h-5 w-5" />
+              <span>Tilbake</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Parti header with color */}
+        <div className="px-4 py-8 text-center">
         <div 
           className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center font-bold text-2xl shadow-lg"
           style={{ 
@@ -330,6 +333,7 @@ export default function PartiDetalj() {
           )}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
