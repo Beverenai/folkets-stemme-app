@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import { useDataSync } from "@/hooks/useDataSync";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Saker from "./pages/Saker";
@@ -20,36 +19,28 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function AppContent() {
-  useDataSync();
-  
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/saker" element={<Saker />} />
-        <Route path="/sak/:id" element={<SakDetalj />} />
-        <Route path="/voteringer" element={<Voteringer />} />
-        <Route path="/votering/:id" element={<VoteringDetalj />} />
-        <Route path="/representanter" element={<Representanter />} />
-        <Route path="/representant/:id" element={<RepresentantDetalj />} />
-        <Route path="/parti/:forkortelse" element={<PartiDetalj />} />
-        <Route path="/statistikk" element={<Statistikk />} />
-        <Route path="/profil" element={<Profil />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <AppContent />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/saker" element={<Saker />} />
+            <Route path="/sak/:id" element={<SakDetalj />} />
+            <Route path="/voteringer" element={<Voteringer />} />
+            <Route path="/votering/:id" element={<VoteringDetalj />} />
+            <Route path="/representanter" element={<Representanter />} />
+            <Route path="/representant/:id" element={<RepresentantDetalj />} />
+            <Route path="/parti/:forkortelse" element={<PartiDetalj />} />
+            <Route path="/statistikk" element={<Statistikk />} />
+            <Route path="/profil" element={<Profil />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
