@@ -352,6 +352,8 @@ export type Database = {
       }
       voteringer: {
         Row: {
+          argumenter_for: Json | null
+          argumenter_mot: Json | null
           created_at: string
           forslag_tekst: string | null
           id: string
@@ -367,6 +369,8 @@ export type Database = {
           votering_dato: string | null
         }
         Insert: {
+          argumenter_for?: Json | null
+          argumenter_mot?: Json | null
           created_at?: string
           forslag_tekst?: string | null
           id?: string
@@ -382,6 +386,8 @@ export type Database = {
           votering_dato?: string | null
         }
         Update: {
+          argumenter_for?: Json | null
+          argumenter_mot?: Json | null
           created_at?: string
           forslag_tekst?: string | null
           id?: string
