@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import VoteringCard from '@/components/VoteringCard';
 import { Input } from '@/components/ui/input';
-import { Search, Vote, RefreshCw, Sparkles, Scale, Coins, BookOpen, FileText } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Search, Vote, Sparkles, Scale, Coins, BookOpen, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/components/ui/use-toast';
 
 interface Votering {
   id: string;
@@ -40,94 +41,91 @@ const kategoriConfig: { value: FilterKategori; label: string; icon: React.ReactN
   { value: 'melding', label: 'Meldinger', icon: <FileText className="w-4 h-4" /> },
 ];
 
+const fetchVoteringerData = async (statusFilter: FilterStatus, kategoriFilter: FilterKategori, search: string) => {
+  const sb = supabase as any;
+  
+  // Build main query
+  let query = sb
+    .from('voteringer')
+    .select(`
+      *,
+      stortinget_saker(tittel, stortinget_id, kategori, status)
+    `)
+    .order('votering_dato', { ascending: false, nullsFirst: false })
+    .limit(50);
+
+  // Filter by sak status
+  if (statusFilter !== 'alle') {
+    query = query.eq('stortinget_saker.status', statusFilter);
+  }
+
+  if (search) {
+    query = query.or(`forslag_tekst.ilike.%${search}%,oppsummering.ilike.%${search}%`);
+  }
+
+  // Fetch voteringer and all folke_stemmer in parallel
+  const [voteringerResult, stemmerResult] = await Promise.all([
+    query,
+    sb.from('folke_stemmer').select('stemme, user_id, votering_id')
+  ]);
+
+  if (voteringerResult.error) throw voteringerResult.error;
+
+  let filteredData = voteringerResult.data || [];
+  
+  // Filter by kategori (client-side since it's a joined field)
+  if (kategoriFilter !== 'alle') {
+    filteredData = filteredData.filter((v: any) => 
+      v.stortinget_saker?.kategori === kategoriFilter
+    );
+  }
+
+  const folkeData = stemmerResult.data || [];
+
+  // Merge folke_stemmer with voteringer
+  return filteredData.map((v: any) => ({
+    ...v,
+    folke_stemmer: folkeData.filter((s: any) => s.votering_id === v.id)
+  })) as Votering[];
+};
+
+function VoteringCardSkeleton() {
+  return (
+    <div className="bg-card rounded-2xl border border-border/50 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+        <Skeleton className="h-6 w-16 rounded-full" />
+      </div>
+      <Skeleton className="h-2 w-full rounded-full mb-3" />
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+    </div>
+  );
+}
+
 export default function Voteringer() {
   const { user } = useAuth();
-  const [voteringer, setVoteringer] = useState<Votering[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('pågående');
   const [kategoriFilter, setKategoriFilter] = useState<FilterKategori>('alle');
-  const [syncing, setSyncing] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const fetchVoteringer = async () => {
-    try {
-      const sb = supabase as any;
-      let query = sb
-        .from('voteringer')
-        .select(`
-          *,
-          stortinget_saker!inner(tittel, stortinget_id, kategori, status)
-        `)
-        .order('votering_dato', { ascending: false, nullsFirst: false });
-
-      // Filter by sak status instead of votering status
-      if (statusFilter !== 'alle') {
-        query = query.eq('stortinget_saker.status', statusFilter);
-      }
-
-      if (search) {
-        query = query.or(`forslag_tekst.ilike.%${search}%,oppsummering.ilike.%${search}%`);
-      }
-
-      const { data, error } = await query.limit(50);
-      if (error) throw error;
-      
-      // Filter by kategori (client-side since it's a joined field)
-      let filteredData = data || [];
-      if (kategoriFilter !== 'alle') {
-        filteredData = filteredData.filter((v: any) => 
-          v.stortinget_saker?.kategori === kategoriFilter
-        );
-      }
-      
-      // Also fetch folke_stemmer for these voteringer
-      const voteringIds = filteredData.map((v: any) => v.id);
-      let folkeData: any[] = [];
-      if (voteringIds.length > 0) {
-        const { data: stemmer } = await sb
-          .from('folke_stemmer')
-          .select('stemme, user_id, votering_id')
-          .in('votering_id', voteringIds);
-        folkeData = stemmer || [];
-      }
-
-      // Merge folke_stemmer with voteringer
-      const voteringerWithStemmer = filteredData.map((v: any) => ({
-        ...v,
-        folke_stemmer: folkeData.filter((s: any) => s.votering_id === v.id)
-      }));
-
-      setVoteringer(voteringerWithStemmer as Votering[]);
-    } catch (error) {
-      console.error('Error fetching voteringer:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Debounce search
   useEffect(() => {
-    fetchVoteringer();
-  }, [statusFilter, search, kategoriFilter]);
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-voteringer');
-      if (error) throw error;
-      
-      toast({ 
-        title: 'Synkronisering fullført',
-        description: `${data.processedCount || 0} viktige saker behandlet`
-      });
-      
-      fetchVoteringer();
-    } catch (error) {
-      console.error('Sync error:', error);
-      toast({ title: 'Synkronisering feilet', variant: 'destructive' });
-    } finally {
-      setSyncing(false);
-    }
-  };
+  const { data: voteringer = [], isLoading } = useQuery({
+    queryKey: ['voteringer', statusFilter, kategoriFilter, debouncedSearch],
+    queryFn: () => fetchVoteringerData(statusFilter, kategoriFilter, debouncedSearch),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   const statusFilters: { value: FilterStatus; label: string }[] = [
     { value: 'alle', label: 'Alle' },
@@ -155,23 +153,14 @@ export default function Voteringer() {
   );
 
   return (
-    <Layout title="Voteringer">
+    <Layout title="Stem">
       <div className="px-4 py-4 space-y-4 animate-ios-fade">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold">Viktige voteringer</h1>
-            <p className="text-sm text-muted-foreground">
-              {voteringer.length} avstemninger om lover og budsjett
-            </p>
-          </div>
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors ios-press disabled:opacity-50"
-          >
-            <RefreshCw className={cn("w-5 h-5", syncing && "animate-spin")} />
-          </button>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Viktige voteringer</h1>
+          <p className="text-sm text-muted-foreground">
+            {voteringer.length} avstemninger om lover og budsjett
+          </p>
         </div>
 
         {/* Search */}
@@ -181,7 +170,7 @@ export default function Voteringer() {
             placeholder="Søk i voteringer..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-11 bg-secondary border-0 rounded-xl"
+            className="pl-10 h-11 bg-card border border-border/50 rounded-xl"
           />
         </div>
 
@@ -195,7 +184,7 @@ export default function Voteringer() {
                 'flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl transition-all ios-press whitespace-nowrap',
                 kategoriFilter === kat.value
                   ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'bg-secondary text-muted-foreground'
+                  : 'bg-card border border-border/50 text-muted-foreground'
               )}
             >
               {kat.icon}
@@ -205,7 +194,7 @@ export default function Voteringer() {
         </div>
 
         {/* Status Filter */}
-        <div className="flex gap-1 p-1 bg-secondary rounded-xl">
+        <div className="flex gap-1 p-1 bg-card border border-border/50 rounded-xl">
           {statusFilters.map((filter) => (
             <button
               key={filter.value}
@@ -213,7 +202,7 @@ export default function Voteringer() {
               className={cn(
                 'flex-1 py-2 text-sm font-medium rounded-lg transition-all ios-press',
                 statusFilter === filter.value
-                  ? 'bg-card shadow-sm text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground'
               )}
             >
@@ -223,10 +212,11 @@ export default function Voteringer() {
         </div>
 
         {/* Content */}
-        {loading ? (
-          <div className="p-12 text-center">
-            <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-sm text-muted-foreground mt-3">Laster voteringer...</p>
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map(i => (
+              <VoteringCardSkeleton key={i} />
+            ))}
           </div>
         ) : voteringer.length > 0 ? (
           <div className="space-y-4">
@@ -287,13 +277,10 @@ export default function Voteringer() {
             </div>
           </div>
         ) : (
-          <div className="ios-card rounded-2xl p-8 text-center">
+          <div className="bg-card border border-border/50 rounded-2xl p-8 text-center shadow-sm">
             <Vote className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
             <p className="text-muted-foreground">
               {search ? 'Ingen voteringer funnet' : 'Ingen viktige voteringer ennå'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Trykk på oppdater-knappen for å hente fra Stortinget
             </p>
           </div>
         )}
