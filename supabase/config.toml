@@ -1,1 +1,4 @@
 project_id = "simgnodjhnpvyqqhwykg"
+
+[functions.sync-stortinget]
+verify_jwt = false
