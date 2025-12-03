@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Vote, BarChart3, Clock, ChevronRight, Sparkles, Users, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import VoteringCard from '@/components/VoteringCard';
 import KategoriBadge from '@/components/KategoriBadge';
 import { formatDistanceToNow } from 'date-fns';
 import { nb } from 'date-fns/locale';
+import { useState } from 'react';
 
 interface ViktigSak {
   id: string;
@@ -33,81 +34,113 @@ interface Stats {
 
 type KategoriFilter = 'alle' | 'lovendring' | 'budsjett' | 'grunnlov';
 
+async function fetchHomeData() {
+  const sb = supabase as any;
+  
+  // Parallel fetch all data
+  const [sakerRes, statsRes, syncRes] = await Promise.all([
+    // Fetch viktige saker
+    sb
+      .from('stortinget_saker')
+      .select('id, tittel, kort_tittel, oppsummering, kategori, status, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat, argumenter_for')
+      .eq('er_viktig', true)
+      .not('oppsummering', 'is', null)
+      .not('argumenter_for', 'eq', '[]')
+      .in('behandlet_sesjon', ['2024-2025', '2025-2026'])
+      .order('updated_at', { ascending: false })
+      .limit(12),
+    
+    // Fetch all stats in parallel
+    Promise.all([
+      sb.from('voteringer').select('*', { count: 'exact', head: true }),
+      sb.from('folke_stemmer').select('*', { count: 'exact', head: true }),
+      sb.from('stortinget_saker').select('*', { count: 'exact', head: true }).eq('status', 'pågående').eq('er_viktig', true)
+    ]),
+    
+    // Fetch last sync
+    sb
+      .from('sync_log')
+      .select('completed_at')
+      .not('completed_at', 'is', null)
+      .order('completed_at', { ascending: false })
+      .limit(1)
+      .single()
+  ]);
+
+  const saker = sakerRes.data || [];
+  const sakIds = saker.map((s: any) => s.id);
+  
+  // Fetch folk votes if we have saker
+  let folkeData: any[] = [];
+  if (sakIds.length > 0) {
+    const { data: stemmer } = await sb
+      .from('folke_stemmer')
+      .select('stemme, user_id, sak_id')
+      .in('sak_id', sakIds);
+    folkeData = stemmer || [];
+  }
+
+  // Merge folk votes with saker
+  const sakerWithStemmer = saker.map((s: any) => ({
+    ...s,
+    folke_stemmer: folkeData.filter((st: any) => st.sak_id === s.id)
+  }));
+
+  const [voteringRes, stemmerRes, aktiveRes] = statsRes;
+  
+  return {
+    viktigeSaker: sakerWithStemmer as ViktigSak[],
+    stats: {
+      totalVoteringer: voteringRes.count || 0,
+      totalStemmer: stemmerRes.count || 0,
+      aktiveVoteringer: aktiveRes.count || 0
+    } as Stats,
+    lastSync: syncRes.data?.completed_at || null
+  };
+}
+
+function StatCardSkeleton() {
+  return (
+    <div className="premium-card p-4 text-center">
+      <Skeleton className="h-11 w-11 rounded-2xl mx-auto mb-3" />
+      <Skeleton className="h-7 w-12 mx-auto mb-1" />
+      <Skeleton className="h-3 w-16 mx-auto" />
+    </div>
+  );
+}
+
+function SakCardSkeleton() {
+  return (
+    <div className="relative nrk-card glass-shine card-glow overflow-hidden">
+      <div className="absolute inset-0 glass-gradient rounded-2xl" />
+      <div className="relative z-[1]">
+        <div className="flex items-center justify-between mb-3">
+          <Skeleton className="h-5 w-20 rounded-full" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+        </div>
+        <Skeleton className="h-5 w-3/4 mb-2" />
+        <Skeleton className="h-4 w-full mb-1" />
+        <Skeleton className="h-4 w-2/3 mb-4" />
+        <Skeleton className="h-2.5 w-full rounded-full mb-3" />
+        <Skeleton className="h-2.5 w-full rounded-full" />
+      </div>
+    </div>
+  );
+}
+
 export default function Index() {
   const { user } = useAuth();
-  const [viktigeSaker, setViktigeSaker] = useState<ViktigSak[]>([]);
-  const [stats, setStats] = useState<Stats>({ totalVoteringer: 0, totalStemmer: 0, aktiveVoteringer: 0 });
-  const [loading, setLoading] = useState(true);
-  const [lastSync, setLastSync] = useState<string | null>(null);
   const [filter, setFilter] = useState<KategoriFilter>('alle');
 
-  const fetchData = async () => {
-    try {
-      const sb = supabase as any;
-      
-      // Fetch viktige saker with folk votes - only those with complete AI content
-      const { data: saker } = await sb
-        .from('stortinget_saker')
-        .select('id, tittel, kort_tittel, oppsummering, kategori, status, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat, argumenter_for')
-        .eq('er_viktig', true)
-        .not('oppsummering', 'is', null)
-        .not('argumenter_for', 'eq', '[]')
-        .in('behandlet_sesjon', ['2024-2025', '2025-2026'])
-        .order('updated_at', { ascending: false })
-        .limit(12);
+  const { data, isLoading } = useQuery({
+    queryKey: ['home-data'],
+    queryFn: fetchHomeData,
+    staleTime: 1000 * 60 * 5, // 5 min cache
+  });
 
-      // Fetch folk votes for these saker
-      const sakIds = (saker || []).map((s: any) => s.id);
-      let folkeData: any[] = [];
-      if (sakIds.length > 0) {
-        const { data: stemmer } = await sb
-          .from('folke_stemmer')
-          .select('stemme, user_id, sak_id')
-          .in('sak_id', sakIds);
-        folkeData = stemmer || [];
-      }
-
-      // Merge folk votes with saker
-      const sakerWithStemmer = (saker || []).map((s: any) => ({
-        ...s,
-        folke_stemmer: folkeData.filter((st: any) => st.sak_id === s.id)
-      }));
-
-      setViktigeSaker(sakerWithStemmer);
-
-      // Fetch stats
-      const { count: totalVoteringer } = await sb.from('voteringer').select('*', { count: 'exact', head: true });
-      const { count: totalStemmer } = await sb.from('folke_stemmer').select('*', { count: 'exact', head: true });
-      const { count: aktiveVoteringerCount } = await sb.from('stortinget_saker').select('*', { count: 'exact', head: true }).eq('status', 'pågående').eq('er_viktig', true);
-
-      setStats({ 
-        totalVoteringer: totalVoteringer || 0, 
-        totalStemmer: totalStemmer || 0, 
-        aktiveVoteringer: aktiveVoteringerCount || 0 
-      });
-
-      // Fetch last sync time
-      const { data: syncLog } = await sb
-        .from('sync_log')
-        .select('completed_at')
-        .not('completed_at', 'is', null)
-        .order('completed_at', { ascending: false })
-        .limit(1)
-        .single();
-      
-      if (syncLog?.completed_at) {
-        setLastSync(syncLog.completed_at);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const viktigeSaker = data?.viktigeSaker || [];
+  const stats = data?.stats || { totalVoteringer: 0, totalStemmer: 0, aktiveVoteringer: 0 };
+  const lastSync = data?.lastSync;
 
   const getFolkeCounts = (sak: ViktigSak) => {
     const stemmer = sak.folke_stemmer || [];
@@ -151,29 +184,48 @@ export default function Index() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="nrk-stat-card animate-ios-slide-up stagger-1">
-            <div className="h-11 w-11 rounded-2xl bg-primary/15 flex items-center justify-center mx-auto mb-3">
-              <Vote className="h-5 w-5 text-primary" />
-            </div>
-            <p className="text-2xl font-bold">{stats.totalStemmer}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Stemmer</p>
-          </div>
-          
-          <div className="nrk-stat-card animate-ios-slide-up stagger-2">
-            <div className="h-11 w-11 rounded-2xl bg-vote-for/15 flex items-center justify-center mx-auto mb-3">
-              <Clock className="h-5 w-5 text-vote-for" />
-            </div>
-            <p className="text-2xl font-bold">{stats.aktiveVoteringer}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Aktive</p>
-          </div>
-          
-          <div className="nrk-stat-card animate-ios-slide-up stagger-3">
-            <div className="h-11 w-11 rounded-2xl bg-ios-orange/15 flex items-center justify-center mx-auto mb-3">
-              <BarChart3 className="h-5 w-5 text-ios-orange" />
-            </div>
-            <p className="text-2xl font-bold">{stats.totalVoteringer}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Totalt</p>
-          </div>
+          {isLoading ? (
+            <>
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </>
+          ) : (
+            <>
+              <div className="relative nrk-stat-card animate-ios-slide-up stagger-1 glass-shine card-glow overflow-hidden">
+                <div className="absolute inset-0 glass-gradient rounded-3xl" />
+                <div className="relative z-[1]">
+                  <div className="h-11 w-11 rounded-2xl bg-primary/15 flex items-center justify-center mx-auto mb-3">
+                    <Vote className="h-5 w-5 text-primary" />
+                  </div>
+                  <p className="text-2xl font-bold">{stats.totalStemmer}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Stemmer</p>
+                </div>
+              </div>
+              
+              <div className="relative nrk-stat-card animate-ios-slide-up stagger-2 glass-shine card-glow overflow-hidden">
+                <div className="absolute inset-0 glass-gradient rounded-3xl" />
+                <div className="relative z-[1]">
+                  <div className="h-11 w-11 rounded-2xl bg-vote-for/15 flex items-center justify-center mx-auto mb-3">
+                    <Clock className="h-5 w-5 text-vote-for" />
+                  </div>
+                  <p className="text-2xl font-bold">{stats.aktiveVoteringer}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Aktive</p>
+                </div>
+              </div>
+              
+              <div className="relative nrk-stat-card animate-ios-slide-up stagger-3 glass-shine card-glow overflow-hidden">
+                <div className="absolute inset-0 glass-gradient rounded-3xl" />
+                <div className="relative z-[1]">
+                  <div className="h-11 w-11 rounded-2xl bg-ios-orange/15 flex items-center justify-center mx-auto mb-3">
+                    <BarChart3 className="h-5 w-5 text-ios-orange" />
+                  </div>
+                  <p className="text-2xl font-bold">{stats.totalVoteringer}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Totalt</p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Viktige Saker Nå - NRK Style */}
@@ -212,10 +264,12 @@ export default function Index() {
 
           {/* Saker list */}
           <div className="space-y-3">
-            {loading ? (
-              <div className="premium-card p-12 text-center">
-                <div className="h-10 w-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-              </div>
+            {isLoading ? (
+              <>
+                <SakCardSkeleton />
+                <SakCardSkeleton />
+                <SakCardSkeleton />
+              </>
             ) : filteredSaker.length > 0 ? (
               filteredSaker.slice(0, 5).map((sak, index) => {
                 const folkeCounts = getFolkeCounts(sak);
@@ -229,88 +283,91 @@ export default function Index() {
                   <Link
                     key={sak.id}
                     to={`/sak/${sak.id}`}
-                    className="nrk-card block ios-press animate-ios-slide-up"
+                    className="relative nrk-card block ios-press animate-ios-slide-up glass-shine card-glow overflow-hidden"
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
-                    {/* Header with kategori and status */}
-                    <div className="flex items-center justify-between mb-3">
-                      <KategoriBadge kategori={sak.kategori} size="sm" />
-                      <span className={cn(
-                        'px-2 py-1 rounded-full text-[10px] font-medium',
-                        isAvsluttet ? 'bg-secondary text-secondary-foreground' : 'bg-vote-for/20 text-vote-for'
-                      )}>
-                        {isAvsluttet ? 'Avsluttet' : 'Pågående'}
-                      </span>
-                    </div>
+                    <div className="absolute inset-0 glass-gradient rounded-2xl" />
+                    <div className="relative z-[1]">
+                      {/* Header with kategori and status */}
+                      <div className="flex items-center justify-between mb-3">
+                        <KategoriBadge kategori={sak.kategori} size="sm" />
+                        <span className={cn(
+                          'px-2 py-1 rounded-full text-[10px] font-medium',
+                          isAvsluttet ? 'bg-secondary text-secondary-foreground' : 'bg-vote-for/20 text-vote-for'
+                        )}>
+                          {isAvsluttet ? 'Avsluttet' : 'Pågående'}
+                        </span>
+                      </div>
 
-                    {/* Title */}
-                    <h3 className="font-semibold text-[15px] leading-snug mb-2 line-clamp-2">
-                      {sak.kort_tittel || sak.tittel}
-                    </h3>
+                      {/* Title */}
+                      <h3 className="font-semibold text-[15px] leading-snug mb-2 line-clamp-2">
+                        {sak.kort_tittel || sak.tittel}
+                      </h3>
 
-                    {/* Summary */}
-                    {sak.oppsummering && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                        {sak.oppsummering}
-                      </p>
-                    )}
-
-                    {/* Results */}
-                    <div className="space-y-3">
-                      {/* Folket */}
-                      {folkeCounts.total > 0 && (
-                        <div>
-                          <div className="flex items-center justify-between text-xs mb-1.5">
-                            <span className="text-muted-foreground flex items-center gap-1">
-                              <Users className="h-3 w-3" />
-                              Folket
-                            </span>
-                            <span className="font-semibold text-vote-for">{folkeForPct}% for</span>
-                          </div>
-                          <div className="nrk-progress-bar">
-                            <div className="flex h-full">
-                              <div 
-                                className="bg-vote-for h-full transition-all duration-500"
-                                style={{ width: `${folkeForPct}%` }}
-                              />
-                              <div 
-                                className="bg-vote-mot h-full transition-all duration-500"
-                                style={{ width: `${folkeCounts.total > 0 ? Math.round((folkeCounts.mot / folkeCounts.total) * 100) : 0}%` }}
-                              />
-                            </div>
-                          </div>
-                        </div>
+                      {/* Summary */}
+                      {sak.oppsummering && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                          {sak.oppsummering}
+                        </p>
                       )}
 
-                      {/* Stortinget */}
-                      {hasStortingetVotes && (
-                        <div>
-                          <div className="flex items-center justify-between text-xs mb-1.5">
-                            <span className="text-muted-foreground">Stortinget</span>
-                            <span className="font-semibold">{stortingetForPct}% for</span>
-                          </div>
-                          <div className="nrk-progress-bar">
-                            <div className="flex h-full">
-                              <div 
-                                className="bg-vote-for/70 h-full transition-all duration-500"
-                                style={{ width: `${stortingetForPct}%` }}
-                              />
-                              <div 
-                                className="bg-vote-mot/70 h-full transition-all duration-500"
-                                style={{ width: `${stortingetTotal > 0 ? Math.round(((sak.stortinget_votering_mot || 0) / stortingetTotal) * 100) : 0}%` }}
-                              />
+                      {/* Results */}
+                      <div className="space-y-3">
+                        {/* Folket */}
+                        {folkeCounts.total > 0 && (
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1.5">
+                              <span className="text-muted-foreground flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                Folket
+                              </span>
+                              <span className="font-semibold text-vote-for">{folkeForPct}% for</span>
+                            </div>
+                            <div className="nrk-progress-bar">
+                              <div className="flex h-full">
+                                <div 
+                                  className="bg-vote-for h-full transition-all duration-500"
+                                  style={{ width: `${folkeForPct}%` }}
+                                />
+                                <div 
+                                  className="bg-vote-mot h-full transition-all duration-500"
+                                  style={{ width: `${folkeCounts.total > 0 ? Math.round((folkeCounts.mot / folkeCounts.total) * 100) : 0}%` }}
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
 
-                    {/* Footer */}
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
-                      <span className="text-xs text-muted-foreground">
-                        {folkeCounts.total} stemmer fra folket
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        {/* Stortinget */}
+                        {hasStortingetVotes && (
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1.5">
+                              <span className="text-muted-foreground">Stortinget</span>
+                              <span className="font-semibold">{stortingetForPct}% for</span>
+                            </div>
+                            <div className="nrk-progress-bar">
+                              <div className="flex h-full">
+                                <div 
+                                  className="bg-vote-for/70 h-full transition-all duration-500"
+                                  style={{ width: `${stortingetForPct}%` }}
+                                />
+                                <div 
+                                  className="bg-vote-mot/70 h-full transition-all duration-500"
+                                  style={{ width: `${stortingetTotal > 0 ? Math.round(((sak.stortinget_votering_mot || 0) / stortingetTotal) * 100) : 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+                        <span className="text-xs text-muted-foreground">
+                          {folkeCounts.total} stemmer fra folket
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
                     </div>
                   </Link>
                 );
@@ -335,38 +392,45 @@ export default function Index() {
         <div className="grid grid-cols-2 gap-3 animate-ios-slide-up" style={{ animationDelay: '0.3s' }}>
           <Link 
             to="/representanter" 
-            className="premium-card p-4 ios-press"
+            className="relative premium-card p-4 ios-press glass-shine card-glow overflow-hidden"
           >
-            <div className="h-10 w-10 rounded-xl bg-ios-purple/15 flex items-center justify-center mb-2">
-              <Users className="h-5 w-5 text-ios-purple" />
+            <div className="absolute inset-0 glass-gradient rounded-3xl" />
+            <div className="relative z-[1]">
+              <div className="h-10 w-10 rounded-xl bg-ios-purple/15 flex items-center justify-center mb-2">
+                <Users className="h-5 w-5 text-ios-purple" />
+              </div>
+              <p className="font-semibold text-sm">Politikere</p>
+              <p className="text-xs text-muted-foreground">Utforsk representanter</p>
             </div>
-            <p className="font-semibold text-sm">Politikere</p>
-            <p className="text-xs text-muted-foreground">Utforsk representanter</p>
           </Link>
           
           <Link 
             to="/statistikk" 
-            className="premium-card p-4 ios-press"
+            className="relative premium-card p-4 ios-press glass-shine card-glow overflow-hidden"
           >
-            <div className="h-10 w-10 rounded-xl bg-ios-orange/15 flex items-center justify-center mb-2">
-              <BarChart3 className="h-5 w-5 text-ios-orange" />
+            <div className="absolute inset-0 glass-gradient rounded-3xl" />
+            <div className="relative z-[1]">
+              <div className="h-10 w-10 rounded-xl bg-ios-orange/15 flex items-center justify-center mb-2">
+                <BarChart3 className="h-5 w-5 text-ios-orange" />
+              </div>
+              <p className="font-semibold text-sm">Statistikk</p>
+              <p className="text-xs text-muted-foreground">Se analyser</p>
             </div>
-            <p className="font-semibold text-sm">Statistikk</p>
-            <p className="text-xs text-muted-foreground">Se analyser</p>
           </Link>
         </div>
 
         {/* How it works */}
         <div className="animate-ios-slide-up" style={{ animationDelay: '0.35s' }}>
           <h2 className="text-lg font-semibold mb-3">Slik fungerer det</h2>
-          <div className="premium-card overflow-hidden divide-y divide-border/30">
+          <div className="relative premium-card overflow-hidden divide-y divide-border/30 glass-shine">
+            <div className="absolute inset-0 glass-gradient rounded-3xl" />
             {[
               { num: 1, title: 'Registrer deg', desc: 'Anonymt og sikkert', color: 'bg-primary text-primary-foreground' },
               { num: 2, title: 'Les argumentene', desc: 'For og mot saken', color: 'bg-vote-for text-vote-for-foreground' },
               { num: 3, title: 'Stem', desc: 'For, mot eller avstå', color: 'bg-ios-orange text-white' },
               { num: 4, title: 'Sammenlign', desc: 'Folket vs. Stortinget', color: 'bg-ios-purple text-white' },
             ].map((step, index) => (
-              <div key={step.num} className="flex items-center gap-4 p-4" style={{ animationDelay: `${0.4 + index * 0.05}s` }}>
+              <div key={step.num} className="relative z-[1] flex items-center gap-4 p-4" style={{ animationDelay: `${0.4 + index * 0.05}s` }}>
                 <div className={cn('h-10 w-10 rounded-xl flex items-center justify-center text-sm font-bold', step.color)}>
                   {step.num}
                 </div>
