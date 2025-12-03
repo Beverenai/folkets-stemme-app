@@ -276,7 +276,7 @@ export default function RepresentantDetalj() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between p-4 pt-safe">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/representanter')}
             className="flex items-center gap-1 text-primary"
           >
             <ChevronLeft className="h-5 w-5" />

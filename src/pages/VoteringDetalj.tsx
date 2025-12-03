@@ -244,7 +244,7 @@ export default function VoteringDetalj() {
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 safe-top">
         <div className="flex items-center justify-between h-14 px-4">
           <button 
-            onClick={() => navigate(-1)} 
+            onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} 
             className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center ios-press"
           >
             <ArrowLeft className="h-5 w-5" />

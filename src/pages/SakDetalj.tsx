@@ -329,7 +329,7 @@ export default function SakDetalj() {
         <header className="absolute top-0 left-0 right-0 z-40 safe-top">
           <div className="flex items-center justify-between h-14 px-4">
             <button 
-              onClick={() => navigate(-1)} 
+              onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/saker')} 
               className="h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center ios-press"
             >
               <ArrowLeft className="h-5 w-5" />
