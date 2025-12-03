@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Users, ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSwipeBack } from '@/hooks/useSwipeBack';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
@@ -44,6 +45,8 @@ export default function PartiDetalj() {
   const [representanter, setRepresentanter] = useState<Representant[]>([]);
   const [stats, setStats] = useState<PartiStats>({ totalFor: 0, totalMot: 0, totalAvholdende: 0, antallSaker: 0 });
   const [loading, setLoading] = useState(true);
+
+  useSwipeBack({ targetPath: '/resultater' });
 
   const config = getPartiConfig(forkortelse || '');
 

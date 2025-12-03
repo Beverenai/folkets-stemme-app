@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
+import { useSwipeBack } from '@/hooks/useSwipeBack';
 import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, ThumbsUp, ThumbsDown, Minus, Building2, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResultBar from '@/components/ResultBar';
@@ -70,6 +71,8 @@ export default function VoteringDetalj() {
   const [voting, setVoting] = useState(false);
   const [partiVotes, setPartiVotes] = useState<PartiVote[]>([]);
   const [repVotes, setRepVotes] = useState<RepresentantVote[]>([]);
+
+  useSwipeBack({ targetPath: '/voteringer' });
 
   useEffect(() => {
     async function fetchData() {

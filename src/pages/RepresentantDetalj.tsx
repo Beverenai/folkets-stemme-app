@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, Mail, Calendar, MapPin, Building2, ThumbsUp, ThumbsDown, Minus, ChevronRight, Users, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSwipeBack } from '@/hooks/useSwipeBack';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
@@ -71,6 +72,8 @@ export default function RepresentantDetalj() {
   const [agreementScore, setAgreementScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
+
+  useSwipeBack({ targetPath: '/representanter' });
 
   useEffect(() => {
     if (id) {
