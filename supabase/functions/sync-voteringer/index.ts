@@ -171,9 +171,14 @@ Deno.serve(async (req) => {
             // Insert votes
             for (const repVote of representantList) {
               const repStortingetId = repVote?.representant?.id;
-              const vote = repVote?.votering?.toLowerCase();
+              // Handle vote as string, object with text, or extract from various formats
+              let voteRaw = repVote?.votering;
+              if (typeof voteRaw === 'object' && voteRaw !== null) {
+                voteRaw = voteRaw.tekst || voteRaw.value || voteRaw.vote || JSON.stringify(voteRaw);
+              }
+              const vote = typeof voteRaw === 'string' ? voteRaw.toLowerCase() : String(voteRaw || '').toLowerCase();
 
-              if (!repStortingetId || !vote) continue;
+              if (!repStortingetId || !vote || vote === 'null' || vote === 'undefined') continue;
 
               // Count totals
               if (vote === 'for') {
