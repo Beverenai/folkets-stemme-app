@@ -13,6 +13,7 @@ import VoteringDetalj from "./pages/VoteringDetalj";
 import Representanter from "./pages/Representanter";
 import RepresentantDetalj from "./pages/RepresentantDetalj";
 import PartiDetalj from "./pages/PartiDetalj";
+import Lovbibliotek from "./pages/Lovbibliotek";
 import Statistikk from "./pages/Statistikk";
 import Profil from "./pages/Profil";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/representanter" element={<Representanter />} />
             <Route path="/representant/:id" element={<RepresentantDetalj />} />
             <Route path="/parti/:forkortelse" element={<PartiDetalj />} />
+            <Route path="/lovbibliotek" element={<Lovbibliotek />} />
             <Route path="/statistikk" element={<Statistikk />} />
             <Route path="/profil" element={<Profil />} />
             <Route path="*" element={<NotFound />} />

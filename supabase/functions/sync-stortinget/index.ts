@@ -225,12 +225,24 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get current session (2024-2025) and previous
-    const currentYear = new Date().getFullYear();
-    const sessions = [
-      `${currentYear - 1}-${currentYear}`,
-      `${currentYear}-${currentYear + 1}`,
-    ];
+    // Parse request body for specific session, or use default 4-year range
+    let requestedSession: string | null = null;
+    try {
+      const body = await req.json();
+      requestedSession = body.session || null;
+    } catch {
+      // No body or invalid JSON, use defaults
+    }
+
+    // Get sessions to sync - either specific session or last 4 years
+    const sessions = requestedSession 
+      ? [requestedSession]
+      : [
+          '2021-2022',  // Start of current Storting period
+          '2022-2023',
+          '2023-2024',
+          '2024-2025',
+        ];
 
     let totalInserted = 0;
     let totalUpdated = 0;
