@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 import Layout from '@/components/Layout';
 import PremiumCaseCard from '@/components/PremiumCaseCard';
 import { Input } from '@/components/ui/input';
-import { Search, FileText, RefreshCw, Sparkles } from 'lucide-react';
+import { Search, FileText, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/components/ui/use-toast';
 
 interface Sak {
   id: string;
@@ -24,6 +24,8 @@ interface Sak {
   stortinget_votering_for: number | null;
   stortinget_votering_mot: number | null;
   stortinget_votering_avholdende: number | null;
+  argumenter_for: Json | null;
+  argumenter_mot: Json | null;
   folke_stemmer?: { stemme: string; user_id: string }[];
 }
 
@@ -35,13 +37,15 @@ export default function Saker() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('alle');
-  const [syncing, setSyncing] = useState(false);
 
   const fetchSaker = async () => {
     try {
       let query = supabase
         .from('stortinget_saker')
         .select(`*, folke_stemmer(stemme, user_id)`)
+        .in('behandlet_sesjon', ['2024-2025', '2025-2026'])
+        .eq('er_viktig', true)
+        .not('oppsummering', 'is', null)
         .order('created_at', { ascending: false });
 
       if (statusFilter !== 'alle') {
@@ -66,27 +70,7 @@ export default function Saker() {
     fetchSaker();
   }, [statusFilter, search]);
 
-  const handleSyncVoteringer = async () => {
-    setSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-voteringer');
-      if (error) throw error;
-      
-      toast({ 
-        title: 'Synkronisering fullført',
-        description: `${data.processedCount} saker behandlet, ${data.votesInserted} stemmer lagret`
-      });
-      
-      fetchSaker();
-    } catch (error) {
-      console.error('Sync error:', error);
-      toast({ title: 'Synkronisering feilet', variant: 'destructive' });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const filters: { value: FilterStatus; label: string; count?: number }[] = [
+  const filters: { value: FilterStatus; label: string }[] = [
     { value: 'alle', label: 'Alle' },
     { value: 'pågående', label: 'Pågående' },
     { value: 'avsluttet', label: 'Avsluttet' },
@@ -107,27 +91,18 @@ export default function Saker() {
     };
   };
 
-  // Get featured sak (one with most votes or AI summary)
-  const featuredSak = saker.find(s => s.oppsummering || (s.stortinget_votering_for && s.stortinget_votering_for > 0));
+  // Get featured sak (first one with AI summary)
+  const featuredSak = saker[0];
 
   return (
     <Layout title="Saker">
       <div className="px-4 py-4 space-y-4 animate-ios-fade">
-        {/* Header with sync button */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold">Stortingssaker</h1>
-            <p className="text-sm text-muted-foreground">
-              {saker.length} saker
-            </p>
-          </div>
-          <button
-            onClick={handleSyncVoteringer}
-            disabled={syncing}
-            className="p-2 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors ios-press disabled:opacity-50"
-          >
-            <RefreshCw className={cn("w-5 h-5", syncing && "animate-spin")} />
-          </button>
+        {/* Header */}
+        <div>
+          <h1 className="text-xl font-bold">Viktige saker</h1>
+          <p className="text-sm text-muted-foreground">
+            {saker.length} saker fra 2024-2026
+          </p>
         </div>
 
         {/* Search */}
@@ -167,6 +142,14 @@ export default function Saker() {
           </div>
         ) : saker.length > 0 ? (
           <div className="space-y-4">
+            {/* Info message when few saker */}
+            {saker.length < 10 && (
+              <div className="bg-muted/50 rounded-xl p-3 text-sm text-muted-foreground flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                <span>Flere saker klargjøres med AI-oppsummeringer. Nye saker kommer automatisk.</span>
+              </div>
+            )}
+
             {/* Featured card */}
             {featuredSak && statusFilter === 'alle' && (
               <div className="mb-2">
@@ -191,6 +174,8 @@ export default function Saker() {
                   folkeMot={getFolkeCounts(featuredSak).mot}
                   folkeAvholdende={getFolkeCounts(featuredSak).avholdende}
                   userVote={getUserVote(featuredSak)}
+                  argumenterFor={featuredSak.argumenter_for as string[] | null}
+                  argumenterMot={featuredSak.argumenter_mot as string[] | null}
                   variant="featured"
                   onVoteUpdate={fetchSaker}
                 />
@@ -222,6 +207,8 @@ export default function Saker() {
                       folkeMot={folkeCounts.mot}
                       folkeAvholdende={folkeCounts.avholdende}
                       userVote={getUserVote(sak)}
+                      argumenterFor={sak.argumenter_for as string[] | null}
+                      argumenterMot={sak.argumenter_mot as string[] | null}
                       index={index}
                       variant="card"
                       onVoteUpdate={fetchSaker}
@@ -234,7 +221,10 @@ export default function Saker() {
           <div className="ios-card rounded-2xl p-8 text-center">
             <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
             <p className="text-muted-foreground">
-              {search ? 'Ingen saker funnet' : 'Ingen saker ennå'}
+              {search ? 'Ingen saker funnet' : 'Ingen saker med AI-oppsummering ennå'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Nye saker blir klargjort automatisk
             </p>
           </div>
         )}

@@ -23,6 +23,8 @@ interface PremiumCaseCardProps {
   folkeMot?: number;
   folkeAvholdende?: number;
   userVote?: string | null;
+  argumenterFor?: string[] | null;
+  argumenterMot?: string[] | null;
   index?: number;
   variant?: 'featured' | 'card' | 'compact';
   onVoteUpdate?: () => void;
@@ -45,6 +47,8 @@ export default function PremiumCaseCard({
   folkeMot = 0,
   folkeAvholdende = 0,
   userVote,
+  argumenterFor,
+  argumenterMot,
   index = 0,
   variant = 'card',
   onVoteUpdate
@@ -154,6 +158,28 @@ export default function PremiumCaseCard({
     return null;
   };
 
+  // Arguments preview component
+  const ArgumentsPreview = () => {
+    if (!argumenterFor?.length && !argumenterMot?.length) return null;
+    
+    return (
+      <div className="space-y-1.5 text-xs">
+        {argumenterFor && argumenterFor.length > 0 && (
+          <div className="flex items-start gap-2">
+            <span className="text-vote-for shrink-0">✓</span>
+            <span className="text-muted-foreground line-clamp-1">{argumenterFor[0]}</span>
+          </div>
+        )}
+        {argumenterMot && argumenterMot.length > 0 && (
+          <div className="flex items-start gap-2">
+            <span className="text-vote-against shrink-0">✗</span>
+            <span className="text-muted-foreground line-clamp-1">{argumenterMot[0]}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Compact variant
   if (variant === 'compact') {
     return (
@@ -227,6 +253,9 @@ export default function PremiumCaseCard({
             {oppsummering && (
               <p className="text-sm text-muted-foreground line-clamp-2">{oppsummering}</p>
             )}
+
+            {/* Arguments preview */}
+            <ArgumentsPreview />
 
             {/* Quick vote buttons */}
             <div className="flex gap-2">
@@ -322,6 +351,11 @@ export default function PremiumCaseCard({
           {oppsummering && (
             <p className="text-sm text-muted-foreground line-clamp-2">{oppsummering}</p>
           )}
+        </div>
+
+        {/* Arguments preview */}
+        <div className="px-4 pb-3">
+          <ArgumentsPreview />
         </div>
 
         {/* Quick vote buttons */}
