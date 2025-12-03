@@ -5,13 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Vote, BarChart3, Clock, ChevronRight, Sparkles, Users, Filter } from 'lucide-react';
+import { Vote, BarChart3, Clock, ChevronRight, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import KategoriBadge from '@/components/KategoriBadge';
 import { formatDistanceToNow } from 'date-fns';
 import { nb } from 'date-fns/locale';
-import { useState } from 'react';
-
 interface ViktigSak {
   id: string;
   tittel: string;
@@ -31,8 +29,6 @@ interface Stats {
   totalStemmer: number;
   aktiveVoteringer: number;
 }
-
-type KategoriFilter = 'alle' | 'lovendring' | 'budsjett' | 'grunnlov';
 
 async function fetchHomeData() {
   const sb = supabase as any;
@@ -130,7 +126,6 @@ function SakCardSkeleton() {
 
 export default function Index() {
   const { user } = useAuth();
-  const [filter, setFilter] = useState<KategoriFilter>('alle');
 
   const { data, isLoading } = useQuery({
     queryKey: ['home-data'],
@@ -151,11 +146,6 @@ export default function Index() {
       total: stemmer.length,
     };
   };
-
-  const filteredSaker = viktigeSaker.filter(sak => {
-    if (filter === 'alle') return true;
-    return (sak.kategori || '').toLowerCase() === filter;
-  });
 
   return (
     <Layout title="Hjem">
@@ -241,27 +231,6 @@ export default function Index() {
             </Link>
           </div>
 
-          {/* Category filters */}
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2 -mx-4 px-4">
-            {[
-              { key: 'alle', label: 'Alle' },
-              { key: 'lovendring', label: 'Lovendring' },
-              { key: 'budsjett', label: 'Budsjett' },
-              { key: 'grunnlov', label: 'Grunnlov' },
-            ].map((item) => (
-              <button
-                key={item.key}
-                onClick={() => setFilter(item.key as KategoriFilter)}
-                className={cn(
-                  'nrk-filter-btn whitespace-nowrap',
-                  filter === item.key ? 'nrk-filter-btn-active' : 'nrk-filter-btn-inactive'
-                )}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
           {/* Saker list */}
           <div className="space-y-3">
             {isLoading ? (
@@ -270,8 +239,8 @@ export default function Index() {
                 <SakCardSkeleton />
                 <SakCardSkeleton />
               </>
-            ) : filteredSaker.length > 0 ? (
-              filteredSaker.slice(0, 5).map((sak, index) => {
+            ) : viktigeSaker.length > 0 ? (
+              viktigeSaker.slice(0, 5).map((sak, index) => {
                 const folkeCounts = getFolkeCounts(sak);
                 const hasStortingetVotes = (sak.stortinget_votering_for || 0) > 0 || (sak.stortinget_votering_mot || 0) > 0;
                 const isAvsluttet = sak.status === 'avsluttet';
@@ -374,8 +343,8 @@ export default function Index() {
               })
             ) : (
               <div className="premium-card p-12 text-center text-muted-foreground">
-                <Filter className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <p className="text-sm">Ingen saker i denne kategorien</p>
+                <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                <p className="text-sm">Ingen saker tilgjengelig</p>
               </div>
             )}
           </div>
