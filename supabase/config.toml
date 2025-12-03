@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.batch-generate-ai]
 verify_jwt = false
+
+[functions.proxy-image]
+verify_jwt = false

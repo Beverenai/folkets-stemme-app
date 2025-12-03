@@ -9,6 +9,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import PartiBadge from '@/components/PartiBadge';
 import { cn } from '@/lib/utils';
 import ResultBar from '@/components/ResultBar';
+import { getProxiedImageUrl } from '@/lib/imageProxy';
 
 interface Representant {
   id: string;
@@ -53,8 +54,6 @@ interface VoteringWithComparison {
   enig?: boolean;
 }
 
-const SESSIONS = ['2024-2025', '2023-2024', '2022-2023', '2021-2022'];
-
 interface VoteStats {
   total: number;
   for: number;
@@ -71,7 +70,6 @@ export default function RepresentantDetalj() {
   const [stats, setStats] = useState<VoteStats>({ total: 0, for: 0, mot: 0, avholdende: 0, ikke_tilstede: 0 });
   const [agreementScore, setAgreementScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
   useSwipeBack({ targetPath: '/representanter' });
 
@@ -100,7 +98,29 @@ export default function RepresentantDetalj() {
   const fetchVoteringerWithComparison = async () => {
     const sb = supabase as any;
     
-    // Fetch representative's votes
+    // First, get saker that have AI-generated arguments
+    const { data: sakerMedAI, error: sakerError } = await supabase
+      .from('stortinget_saker')
+      .select('id')
+      .not('argumenter_for', 'is', null);
+
+    if (sakerError) {
+      console.error('Error fetching saker med AI:', sakerError);
+      return;
+    }
+
+    // Filter out saker with empty arrays
+    const sakIdsWithAI = (sakerMedAI || [])
+      .filter((s: any) => s.id)
+      .map((s: any) => s.id);
+
+    if (sakIdsWithAI.length === 0) {
+      setVoteringer([]);
+      setStats({ total: 0, for: 0, mot: 0, avholdende: 0, ikke_tilstede: 0 });
+      return;
+    }
+
+    // Fetch representative's votes only for saker with AI arguments
     const { data: repVotes, error } = await supabase
       .from('representant_voteringer')
       .select(`
@@ -118,8 +138,8 @@ export default function RepresentantDetalj() {
         )
       `)
       .eq('representant_id', id)
-      .order('created_at', { ascending: false })
-      .limit(100);
+      .in('sak_id', sakIdsWithAI)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching voteringer:', error);
@@ -272,6 +292,7 @@ export default function RepresentantDetalj() {
   }
 
   const age = calculateAge(representant.fodt);
+  const proxiedImageUrl = getProxiedImageUrl(representant.bilde_url);
 
   return (
     <div className="min-h-screen bg-background pb-safe">
@@ -292,7 +313,7 @@ export default function RepresentantDetalj() {
       <div className="px-4 py-6 text-center">
         <Avatar className="h-24 w-24 mx-auto mb-4 ring-4 ring-background shadow-lg overflow-hidden">
           <AvatarImage 
-            src={representant.bilde_url || ''} 
+            src={proxiedImageUrl} 
             alt={`${representant.fornavn} ${representant.etternavn}`}
             className="object-cover object-top"
           />
@@ -396,39 +417,12 @@ export default function RepresentantDetalj() {
 
         {/* Voteringer tab */}
         <TabsContent value="voteringer" className="mt-4 space-y-3 pb-24">
-          {/* Year filter */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <button
-              onClick={() => setSelectedSession(null)}
-              className={cn(
-                'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors',
-                !selectedSession ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-              )}
-            >
-              Alle år
-            </button>
-            {SESSIONS.map(session => (
-              <button
-                key={session}
-                onClick={() => setSelectedSession(session)}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors',
-                  selectedSession === session ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                )}
-              >
-                {session}
-              </button>
-            ))}
-          </div>
-          
-          {voteringer.filter(v => !selectedSession || v.stortinget_saker?.behandlet_sesjon === selectedSession).length === 0 ? (
+          {voteringer.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">Ingen voteringer registrert ennå</p>
             </div>
           ) : (
-            voteringer
-              .filter(v => !selectedSession || v.stortinget_saker?.behandlet_sesjon === selectedSession)
-              .map((votering) => (
+            voteringer.map((votering) => (
               <Link
                 key={votering.id}
                 to={votering.sak_id ? `/sak/${votering.sak_id}` : '#'}
