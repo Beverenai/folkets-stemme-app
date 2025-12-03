@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
+import { useSwipeBack } from '@/hooks/useSwipeBack';
 import { ChevronLeft, Share2 } from 'lucide-react';
 import ShareCard from '@/components/ShareCard';
 import SakSwipeView from '@/components/SakSwipeView';
@@ -81,6 +82,8 @@ export default function SakDetalj() {
   const [mainVoteringId, setMainVoteringId] = useState<string | null>(null);
   const [representantVotes, setRepresentantVotes] = useState<RepresentantVote[]>([]);
   const [shareOpen, setShareOpen] = useState(false);
+
+  useSwipeBack({ targetPath: '/saker' });
 
   // Scroll to top on mount
   useEffect(() => {
