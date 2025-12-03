@@ -57,6 +57,15 @@
     --ios-teal: 174 72% 56%;
     --ios-cyan: 187 92% 69%;
 
+    /* NRK Valg fargepalett */
+    --nrk-primary: 211 100% 36%;
+    --nrk-success: 125 71% 32%;
+    --nrk-danger: 0 70% 42%;
+    --nrk-neutral: 0 0% 62%;
+    --nrk-light-gray: 0 0% 95%;
+    --nrk-divider: 0 0% 91%;
+    --nrk-dark-text: 0 0% 12%;
+
     /* Success/Warning */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
@@ -406,4 +415,35 @@
 
 .nrk-filter-btn-inactive {
   @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
+
+/* NRK Faktaboks */
+.nrk-faktaboks {
+  @apply rounded-2xl p-5;
+  background-color: hsl(var(--nrk-primary) / 0.05);
+  border: 1px solid hsl(var(--nrk-primary) / 0.2);
+}
+
+/* NRK Vote buttons */
+.nrk-vote-btn {
+  @apply relative overflow-hidden;
+}
+
+.nrk-vote-btn::after {
+  content: '';
+  @apply absolute inset-0 bg-white/0 transition-all duration-200;
+}
+
+.nrk-vote-btn:active::after {
+  @apply bg-white/10;
+}
+
+/* NRK Divider */
+.nrk-divider {
+  @apply h-px bg-border/50 my-4;
+}
+
+/* NRK Document type badge */
+.nrk-doc-badge {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-secondary text-secondary-foreground;
 }
