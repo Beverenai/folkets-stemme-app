@@ -254,7 +254,7 @@ export default function SakDetalj() {
         <header className="flex-shrink-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50 safe-top">
           <div className="flex items-center justify-between h-14 px-4">
             <button 
-              onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/saker')} 
+              onClick={() => navigate('/saker')} 
               className="flex items-center gap-0.5 text-primary ios-press -ml-1"
             >
               <ChevronLeft className="h-7 w-7" />

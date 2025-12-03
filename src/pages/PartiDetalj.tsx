@@ -145,7 +145,7 @@ export default function PartiDetalj() {
         <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-border/50" style={{ backgroundColor: `color-mix(in srgb, ${config.farge}08, hsl(var(--background)) 92%)` }}>
           <div className="flex items-center justify-between p-4 pt-safe">
             <button
-              onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')}
+              onClick={() => navigate('/resultater')}
               className="flex items-center gap-1 text-primary"
             >
               <ChevronLeft className="h-5 w-5" />
