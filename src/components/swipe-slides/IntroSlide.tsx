@@ -21,7 +21,7 @@ export default function IntroSlide({
     <div className="h-full flex flex-col px-4 pt-6 pb-20">
       <h2 className="text-xl font-bold text-primary mb-6">Sett deg inn i saken</h2>
       
-      <div className="premium-card p-5 flex-1 flex flex-col">
+      <div className="premium-card p-5 flex-1 flex flex-col min-h-0">
         <h3 className="text-lg font-semibold leading-tight mb-4">
           {kortTittel || tittel}
         </h3>
@@ -36,15 +36,22 @@ export default function IntroSlide({
           )}
         </div>
         
-        <p className="text-[15px] leading-relaxed text-foreground/90 flex-1">
-          {oppsummering || beskrivelse || 'Ingen oppsummering tilgjengelig.'}
-        </p>
+        {/* Scrollable text area with fade */}
+        <div className="relative flex-1 min-h-0">
+          <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-card to-transparent z-10 pointer-events-none" />
+          <div className="h-full overflow-y-auto ios-scroll py-2">
+            <p className="text-[15px] leading-relaxed text-foreground/90">
+              {oppsummering || beskrivelse || 'Ingen oppsummering tilgjengelig.'}
+            </p>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-card to-transparent z-10 pointer-events-none" />
+        </div>
         
         <a
           href={`https://www.stortinget.no/no/Saker-og-publikasjoner/Saker/Sak/?p=${stortingetId}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 ios-press"
+          className="mt-4 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 ios-press flex-shrink-0"
         >
           <ExternalLink className="h-4 w-4" />
           Les forslaget her
