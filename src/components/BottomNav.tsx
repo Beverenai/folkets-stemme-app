@@ -1,12 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FileText, User, BookOpen } from 'lucide-react';
+import { Home, Vote, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Hjem', icon: Home },
-  { href: '/voteringer', label: 'Stem', icon: FileText },
-  { href: '/lovbibliotek', label: 'Bibliotek', icon: BookOpen },
-  { href: '/profil', label: 'Profil', icon: User },
+  { href: '/voteringer', label: 'Stem', icon: Vote },
+  { href: '/resultater', label: 'Resultater', icon: BarChart3 },
 ];
 
 export default function BottomNav() {
@@ -15,7 +14,7 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
       {/* White background with subtle border */}
-      <div className="absolute inset-0 bg-white border-t border-border/50 shadow-lg" />
+      <div className="absolute inset-0 bg-card border-t border-border/50 shadow-lg" />
       
       {/* Content */}
       <div className="relative flex items-center justify-around h-20 px-2 safe-bottom">

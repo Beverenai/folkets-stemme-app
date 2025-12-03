@@ -17,6 +17,7 @@ import Lovbibliotek from "./pages/Lovbibliotek";
 import Statistikk from "./pages/Statistikk";
 import Profil from "./pages/Profil";
 import Onboarding from "./pages/Onboarding";
+import Resultater from "./pages/Resultater";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/lovbibliotek" element={<Lovbibliotek />} />
             <Route path="/statistikk" element={<Statistikk />} />
             <Route path="/profil" element={<Profil />} />
+            <Route path="/resultater" element={<Resultater />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

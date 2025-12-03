@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, Clock, CheckCircle, Users, ExternalLink } from 'lucide-react';
+import { ChevronRight, Clock, CheckCircle, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResultBar from './ResultBar';
 import KategoriBadge from './KategoriBadge';
@@ -56,11 +56,11 @@ export default function VoteringCard({
     return (
       <Link 
         to={`/votering/${id}`}
-        className="flex items-center gap-3 p-4 ios-press hover:bg-secondary/50 transition-colors"
+        className="flex items-center gap-3 p-4 bg-card border border-border/50 rounded-xl ios-press hover:shadow-md transition-all"
         style={{ animationDelay: `${index * 0.05}s` }}
       >
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-[15px] line-clamp-2">{displayText}</p>
+          <p className="font-medium text-[15px] line-clamp-2 text-foreground">{displayText}</p>
           {hasFolkeResults && (
             <div className="flex items-center gap-2 mt-1.5">
               <Users className="h-3 w-3 text-muted-foreground" />
@@ -85,7 +85,7 @@ export default function VoteringCard({
     return (
       <Link 
         to={`/votering/${id}`}
-        className="premium-card-glow p-5 block ios-press animate-ios-slide-up"
+        className="bg-card border-2 border-primary/20 rounded-2xl p-5 block ios-press animate-ios-slide-up shadow-md hover:shadow-lg transition-all"
       >
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           {kategori && <KategoriBadge kategori={kategori} size="sm" />}
@@ -108,7 +108,7 @@ export default function VoteringCard({
           )}
         </div>
 
-        <h3 className="font-semibold text-lg leading-snug mb-3 line-clamp-3">
+        <h3 className="font-semibold text-lg leading-snug mb-3 line-clamp-3 text-foreground">
           {displayText}
         </h3>
 
@@ -166,12 +166,12 @@ export default function VoteringCard({
   return (
     <Link 
       to={`/votering/${id}`}
-      className="premium-card p-4 block ios-press animate-ios-slide-up"
+      className="bg-card border border-border/50 rounded-2xl p-4 block ios-press animate-ios-slide-up shadow-sm hover:shadow-md transition-all"
       style={{ animationDelay: `${index * 0.05}s` }}
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-[15px] leading-snug line-clamp-2">
+          <p className="font-medium text-[15px] leading-snug line-clamp-2 text-foreground">
             {displayText}
           </p>
         </div>
