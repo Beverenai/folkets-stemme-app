@@ -4,11 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, Sparkles, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Users, ExternalLink, Share2, Sparkles, RefreshCw, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ArgumentsSection from '@/components/ArgumentsSection';
 import ResultBar from '@/components/ResultBar';
 import VotingSection from '@/components/VotingSection';
+import PartiVoteringList from '@/components/PartiVoteringList';
 import { Json } from '@/integrations/supabase/types';
 
 interface Sak {
@@ -37,6 +38,14 @@ interface VoteStats {
   total: number;
 }
 
+interface PartiVote {
+  parti_forkortelse: string;
+  parti_navn: string;
+  stemmer_for: number;
+  stemmer_mot: number;
+  stemmer_avholdende: number;
+}
+
 export default function SakDetalj() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -48,6 +57,7 @@ export default function SakDetalj() {
   const [userVote, setUserVote] = useState<string | null>(null);
   const [voteStats, setVoteStats] = useState<VoteStats>({ for: 0, mot: 0, avholdende: 0, total: 0 });
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [partiVotes, setPartiVotes] = useState<PartiVote[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -90,6 +100,16 @@ export default function SakDetalj() {
           if (userVoteData) {
             setUserVote(userVoteData.stemme);
           }
+        }
+
+        // Fetch party votes for this sak
+        const { data: partiData } = await supabase
+          .from('parti_voteringer')
+          .select('*')
+          .eq('sak_id', id);
+        
+        if (partiData) {
+          setPartiVotes(partiData);
         }
       } catch (error) {
         console.error('Error fetching sak:', error);
@@ -404,6 +424,17 @@ export default function SakDetalj() {
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Party breakdown */}
+        {partiVotes.length > 0 && (
+          <div className="premium-card p-5 animate-ios-slide-up">
+            <div className="flex items-center gap-2 mb-4">
+              <Building2 className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-lg">Partienes stemmer</h3>
+            </div>
+            <PartiVoteringList partiVotes={partiVotes} />
           </div>
         )}
       </div>
