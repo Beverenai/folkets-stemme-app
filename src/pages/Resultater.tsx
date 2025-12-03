@@ -136,51 +136,54 @@ export default function Resultater() {
                 <Link
                   key={votering.id}
                   to={`/votering/${votering.id}`}
-                  className="bg-card border border-border/50 rounded-2xl p-4 block shadow-sm hover:shadow-md transition-all ios-press animate-ios-slide-up"
+                  className="relative bg-card border border-border/50 rounded-2xl p-4 block glass-shine card-glow transition-all ios-press animate-ios-slide-up overflow-hidden"
                   style={{ animationDelay: `${index * 0.03}s` }}
                 >
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <p className="font-medium text-[15px] leading-snug line-clamp-2 text-foreground flex-1">
-                      {displayText}
-                    </p>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {enighet !== null && (
-                        <span className={cn(
-                          'px-2 py-1 rounded-full text-[10px] font-medium',
-                          enighet ? 'bg-vote-for/20 text-vote-for' : 'bg-vote-mot/20 text-vote-mot'
-                        )}>
-                          {enighet ? 'Enig' : 'Uenig'}
-                        </span>
-                      )}
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-
-                  {totalFolke > 0 && (
-                    <div className="mb-2">
-                      <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        Folket ({totalFolke})
+                  <div className="absolute inset-0 glass-gradient rounded-2xl" />
+                  <div className="relative z-[1]">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <p className="font-medium text-[15px] leading-snug line-clamp-2 text-foreground flex-1">
+                        {displayText}
                       </p>
-                      <ResultBar
-                        forCount={folkeFor}
-                        motCount={folkeMot}
-                        avholdendeCount={folkeAvholdende}
-                        size="sm"
-                      />
+                      <div className="flex items-center gap-2 shrink-0">
+                        {enighet !== null && (
+                          <span className={cn(
+                            'px-2 py-1 rounded-full text-[10px] font-medium',
+                            enighet ? 'bg-vote-for/20 text-vote-for' : 'bg-vote-mot/20 text-vote-mot'
+                          )}>
+                            {enighet ? 'Enig' : 'Uenig'}
+                          </span>
+                        )}
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
                     </div>
-                  )}
 
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
-                      Stortinget: {votering.resultat_for} for, {votering.resultat_mot} mot
-                    </span>
-                    <span className={cn(
-                      'font-medium',
-                      votering.vedtatt ? 'text-vote-for' : 'text-vote-mot'
-                    )}>
-                      {votering.vedtatt ? 'Vedtatt' : 'Ikke vedtatt'}
-                    </span>
+                    {totalFolke > 0 && (
+                      <div className="mb-2">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          Folket ({totalFolke})
+                        </p>
+                        <ResultBar
+                          forCount={folkeFor}
+                          motCount={folkeMot}
+                          avholdendeCount={folkeAvholdende}
+                          size="sm"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>
+                        Stortinget: {votering.resultat_for} for, {votering.resultat_mot} mot
+                      </span>
+                      <span className={cn(
+                        'font-medium',
+                        votering.vedtatt ? 'text-vote-for' : 'text-vote-mot'
+                      )}>
+                        {votering.vedtatt ? 'Vedtatt' : 'Ikke vedtatt'}
+                      </span>
+                    </div>
                   </div>
                 </Link>
               );

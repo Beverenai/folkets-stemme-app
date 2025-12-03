@@ -56,10 +56,11 @@ export default function VoteringCard({
     return (
       <Link 
         to={`/votering/${id}`}
-        className="flex items-center gap-3 p-4 bg-card border border-border/50 rounded-xl ios-press hover:shadow-md transition-all"
+        className="relative flex items-center gap-3 p-4 bg-card border border-border/50 rounded-xl ios-press glass-shine card-glow transition-all"
         style={{ animationDelay: `${index * 0.05}s` }}
       >
-        <div className="flex-1 min-w-0">
+        <div className="absolute inset-0 glass-gradient rounded-xl" />
+        <div className="relative flex-1 min-w-0 z-[1]">
           <p className="font-medium text-[15px] line-clamp-2 text-foreground">{displayText}</p>
           {hasFolkeResults && (
             <div className="flex items-center gap-2 mt-1.5">
@@ -68,7 +69,7 @@ export default function VoteringCard({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="relative flex items-center gap-2 z-[1]">
           <span className={cn(
             'px-2 py-1 rounded-full text-[10px] font-medium',
             isAvsluttet ? 'bg-secondary text-secondary-foreground' : 'bg-vote-for/20 text-vote-for'
@@ -85,79 +86,82 @@ export default function VoteringCard({
     return (
       <Link 
         to={`/votering/${id}`}
-        className="bg-card border-2 border-primary/20 rounded-2xl p-5 block ios-press animate-ios-slide-up shadow-md hover:shadow-lg transition-all"
+        className="relative bg-card border-2 border-primary/20 rounded-2xl p-5 block ios-press animate-ios-slide-up glass-shine card-glow transition-all overflow-hidden"
       >
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          {kategori && <KategoriBadge kategori={kategori} size="sm" />}
-          <span className={cn(
-            'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium',
-            isAvsluttet 
-              ? 'bg-secondary text-secondary-foreground' 
-              : 'bg-vote-for/20 text-vote-for'
-          )}>
-            {isAvsluttet ? <CheckCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-            {isAvsluttet ? 'Avsluttet' : 'Pågående'}
-          </span>
-          {vedtatt !== null && vedtatt !== undefined && (
+        <div className="absolute inset-0 glass-gradient rounded-2xl" />
+        <div className="relative z-[1]">
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            {kategori && <KategoriBadge kategori={kategori} size="sm" />}
             <span className={cn(
-              'px-2.5 py-1 rounded-full text-xs font-medium',
-              vedtatt ? 'bg-vote-for/20 text-vote-for' : 'bg-vote-mot/20 text-vote-mot'
+              'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium',
+              isAvsluttet 
+                ? 'bg-secondary text-secondary-foreground' 
+                : 'bg-vote-for/20 text-vote-for'
             )}>
-              {vedtatt ? 'Vedtatt' : 'Ikke vedtatt'}
+              {isAvsluttet ? <CheckCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+              {isAvsluttet ? 'Avsluttet' : 'Pågående'}
             </span>
+            {vedtatt !== null && vedtatt !== undefined && (
+              <span className={cn(
+                'px-2.5 py-1 rounded-full text-xs font-medium',
+                vedtatt ? 'bg-vote-for/20 text-vote-for' : 'bg-vote-mot/20 text-vote-mot'
+              )}>
+                {vedtatt ? 'Vedtatt' : 'Ikke vedtatt'}
+              </span>
+            )}
+          </div>
+
+          <h3 className="font-semibold text-lg leading-snug mb-3 line-clamp-3 text-foreground">
+            {displayText}
+          </h3>
+
+          {/* Folkets resultat */}
+          {hasFolkeResults && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                <span className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  Folket ({totalFolke} stemmer)
+                </span>
+              </div>
+              <ResultBar 
+                forCount={folkeFor}
+                motCount={folkeMot}
+                avholdendeCount={folkeAvholdende}
+                size="sm"
+                animated
+              />
+            </div>
           )}
-        </div>
 
-        <h3 className="font-semibold text-lg leading-snug mb-3 line-clamp-3 text-foreground">
-          {displayText}
-        </h3>
+          {/* Stortingets resultat */}
+          {hasStortingetResults && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Stortinget</p>
+              <ResultBar 
+                forCount={resultatFor}
+                motCount={resultatMot}
+                avholdendeCount={resultatAvholdende}
+                size="sm"
+              />
+            </div>
+          )}
 
-        {/* Folkets resultat */}
-        {hasFolkeResults && (
-          <div className="mb-4">
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-              <span className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                Folket ({totalFolke} stemmer)
+          {userVote && (
+            <div className="mt-3 pt-3 border-t border-border/50">
+              <span className="text-xs text-muted-foreground">
+                Din stemme: <span className={cn(
+                  'font-medium',
+                  userVote === 'for' && 'text-vote-for',
+                  userVote === 'mot' && 'text-vote-mot',
+                  userVote === 'avholdende' && 'text-vote-avholdende'
+                )}>
+                  {userVote === 'for' ? 'For' : userVote === 'mot' ? 'Mot' : 'Avstår'}
+                </span>
               </span>
             </div>
-            <ResultBar 
-              forCount={folkeFor}
-              motCount={folkeMot}
-              avholdendeCount={folkeAvholdende}
-              size="sm"
-              animated
-            />
-          </div>
-        )}
-
-        {/* Stortingets resultat */}
-        {hasStortingetResults && (
-          <div>
-            <p className="text-xs text-muted-foreground mb-2">Stortinget</p>
-            <ResultBar 
-              forCount={resultatFor}
-              motCount={resultatMot}
-              avholdendeCount={resultatAvholdende}
-              size="sm"
-            />
-          </div>
-        )}
-
-        {userVote && (
-          <div className="mt-3 pt-3 border-t border-border/50">
-            <span className="text-xs text-muted-foreground">
-              Din stemme: <span className={cn(
-                'font-medium',
-                userVote === 'for' && 'text-vote-for',
-                userVote === 'mot' && 'text-vote-mot',
-                userVote === 'avholdende' && 'text-vote-avholdende'
-              )}>
-                {userVote === 'for' ? 'For' : userVote === 'mot' ? 'Mot' : 'Avstår'}
-              </span>
-            </span>
-          </div>
-        )}
+          )}
+        </div>
       </Link>
     );
   }
@@ -166,44 +170,47 @@ export default function VoteringCard({
   return (
     <Link 
       to={`/votering/${id}`}
-      className="bg-card border border-border/50 rounded-2xl p-4 block ios-press animate-ios-slide-up shadow-sm hover:shadow-md transition-all"
+      className="relative bg-card border border-border/50 rounded-2xl p-4 block ios-press animate-ios-slide-up glass-shine card-glow transition-all overflow-hidden"
       style={{ animationDelay: `${index * 0.05}s` }}
     >
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-[15px] leading-snug line-clamp-2 text-foreground">
-            {displayText}
-          </p>
+      <div className="absolute inset-0 glass-gradient rounded-2xl" />
+      <div className="relative z-[1]">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-[15px] leading-snug line-clamp-2 text-foreground">
+              {displayText}
+            </p>
+          </div>
+          <span className={cn(
+            'shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium',
+            isAvsluttet 
+              ? 'bg-secondary text-secondary-foreground' 
+              : 'bg-vote-for/20 text-vote-for'
+          )}>
+            {isAvsluttet ? 'Avsluttet' : 'Aktiv'}
+          </span>
         </div>
-        <span className={cn(
-          'shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium',
-          isAvsluttet 
-            ? 'bg-secondary text-secondary-foreground' 
-            : 'bg-vote-for/20 text-vote-for'
-        )}>
-          {isAvsluttet ? 'Avsluttet' : 'Aktiv'}
-        </span>
-      </div>
 
-      {hasFolkeResults && (
-        <div className="mb-2">
-          <ResultBar 
-            forCount={folkeFor}
-            motCount={folkeMot}
-            avholdendeCount={folkeAvholdende}
-            size="sm"
-          />
-        </div>
-      )}
-
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Users className="h-3 w-3" />
-          {totalFolke} stemmer
-        </span>
-        {hasStortingetResults && (
-          <span>{resultatFor} for, {resultatMot} mot</span>
+        {hasFolkeResults && (
+          <div className="mb-2">
+            <ResultBar 
+              forCount={folkeFor}
+              motCount={folkeMot}
+              avholdendeCount={folkeAvholdende}
+              size="sm"
+            />
+          </div>
         )}
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            {totalFolke} stemmer
+          </span>
+          {hasStortingetResults && (
+            <span>{resultatFor} for, {resultatMot} mot</span>
+          )}
+        </div>
       </div>
     </Link>
   );

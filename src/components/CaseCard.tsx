@@ -39,7 +39,7 @@ export default function CaseCard({
     return (
       <Link
         to={`/sak/${id}`}
-        className="block premium-card overflow-hidden ios-press animate-ios-slide-up"
+        className="block premium-card overflow-hidden ios-press animate-ios-slide-up glass-shine"
         style={{ animationDelay: `${index * 0.05}s` }}
       >
         {/* Hero image or gradient */}
@@ -81,7 +81,7 @@ export default function CaseCard({
         </div>
 
         {/* Content */}
-        <div className="p-5 -mt-12 relative">
+        <div className="p-5 -mt-12 relative z-[2]">
           <h3 className="font-bold text-lg mb-2 line-clamp-2">
             {kortTittel || tittel}
           </h3>
@@ -120,11 +120,12 @@ export default function CaseCard({
     return (
       <Link
         to={`/sak/${id}`}
-        className="flex items-center gap-4 p-4 ios-touch animate-ios-slide-up"
+        className="relative flex items-center gap-4 p-4 ios-touch animate-ios-slide-up bg-card rounded-xl glass-shine card-glow overflow-hidden"
         style={{ animationDelay: `${index * 0.05}s` }}
       >
+        <div className="absolute inset-0 glass-gradient rounded-xl" />
         <div className={cn(
-          'h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0',
+          'relative z-[1] h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0',
           index % 4 === 0 ? 'bg-primary/15' : 
           index % 4 === 1 ? 'bg-vote-for/15' :
           index % 4 === 2 ? 'bg-ios-orange/15' : 'bg-ios-purple/15'
@@ -132,7 +133,7 @@ export default function CaseCard({
           <span className="text-xl">🏛️</span>
         </div>
         
-        <div className="flex-1 min-w-0">
+        <div className="relative z-[1] flex-1 min-w-0">
           <p className="font-medium text-[15px] truncate mb-1">
             {kortTittel || tittel}
           </p>
@@ -150,7 +151,7 @@ export default function CaseCard({
           </div>
         </div>
         
-        <ChevronRight className="h-5 w-5 text-muted-foreground/50 flex-shrink-0" />
+        <ChevronRight className="relative z-[1] h-5 w-5 text-muted-foreground/50 flex-shrink-0" />
       </Link>
     );
   }
@@ -159,10 +160,10 @@ export default function CaseCard({
   return (
     <Link
       to={`/sak/${id}`}
-      className="block premium-card p-4 ios-press animate-ios-slide-up"
+      className="block premium-card p-4 ios-press animate-ios-slide-up glass-shine"
       style={{ animationDelay: `${index * 0.05}s` }}
     >
-      <div className="flex items-start gap-4">
+      <div className="relative z-[2] flex items-start gap-4">
         <div className={cn(
           'h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0',
           index % 4 === 0 ? 'bg-primary/15' : 
