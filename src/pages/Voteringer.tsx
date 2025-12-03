@@ -44,7 +44,7 @@ const kategoriConfig: { value: FilterKategori; label: string; icon: React.ReactN
 const fetchVoteringerData = async (statusFilter: FilterStatus, kategoriFilter: FilterKategori, search: string) => {
   const sb = supabase as any;
   
-  // Build main query - kun voteringer med AI-oppsummering
+  // Build main query - kun KOMPLETTE voteringer (AI-oppsummering + stemmer + dato)
   let query = sb
     .from('voteringer')
     .select(`
@@ -52,6 +52,8 @@ const fetchVoteringerData = async (statusFilter: FilterStatus, kategoriFilter: F
       stortinget_saker(tittel, stortinget_id, kategori, status)
     `)
     .not('oppsummering', 'is', null)
+    .not('votering_dato', 'is', null)
+    .gt('resultat_for', 0)
     .order('votering_dato', { ascending: false, nullsFirst: false })
     .limit(50);
 
@@ -74,9 +76,12 @@ const fetchVoteringerData = async (statusFilter: FilterStatus, kategoriFilter: F
 
   let filteredData = voteringerResult.data || [];
   
-  // BACKUP FILTER: Fjern voteringer uten AI-oppsummering (i tilfelle DB-filter ikke fungerer)
+  // BACKUP FILTER: Kun komplette voteringer (AI-oppsummering + stemmer + dato)
   filteredData = filteredData.filter((v: any) => 
-    v.oppsummering && v.oppsummering.length > 0
+    v.oppsummering && 
+    v.oppsummering.length > 0 &&
+    v.votering_dato &&
+    (v.resultat_for > 0 || v.resultat_mot > 0)
   );
   
   // Filter by kategori (client-side since it's a joined field)
