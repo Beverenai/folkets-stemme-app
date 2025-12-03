@@ -26,6 +26,36 @@ interface PartiData {
 
 const allePartier = ['A', 'H', 'Sp', 'FrP', 'SV', 'R', 'V', 'KrF', 'MDG', 'PF'];
 
+// Mini party logo/badge component
+function PartiLogo({ forkortelse, size = 'md' }: { forkortelse: string | null; size?: 'sm' | 'md' }) {
+  const config = getPartiConfig(forkortelse);
+  const sizeClasses = size === 'sm' ? 'w-6 h-6 text-[8px]' : 'w-10 h-10 text-xs';
+  
+  if (config.logo) {
+    return (
+      <div className={`${sizeClasses} rounded-full overflow-hidden bg-white flex items-center justify-center flex-shrink-0`}>
+        <img 
+          src={config.logo} 
+          alt={config.navn}
+          className="w-[85%] h-[85%] object-contain"
+        />
+      </div>
+    );
+  }
+  
+  return (
+    <div
+      className={`${sizeClasses} rounded-full flex items-center justify-center font-bold flex-shrink-0`}
+      style={{ 
+        backgroundColor: config.farge,
+        color: config.tekstFarge 
+      }}
+    >
+      {config.forkortelse}
+    </div>
+  );
+}
+
 export default function Representanter() {
   const [activeTab, setActiveTab] = useState<'representanter' | 'partier'>('representanter');
   const [representanter, setRepresentanter] = useState<Representant[]>([]);
@@ -145,12 +175,9 @@ export default function Representanter() {
                   <Link
                     key={rep.id}
                     to={`/representant/${rep.id}`}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 active:bg-accent transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 active:bg-accent transition-colors relative"
                   >
-                    <div
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: getPartiConfig(rep.parti_forkortelse).farge }}
-                    />
+                    <PartiLogo forkortelse={rep.parti_forkortelse} size="sm" />
                     <Avatar className="h-10 w-10 flex-shrink-0">
                       <AvatarImage 
                         src={rep.bilde_url || ''} 
@@ -202,15 +229,7 @@ export default function Representanter() {
                       to={`/parti/${parti.forkortelse}`}
                       className="flex items-center gap-3 px-4 py-3.5 hover:bg-accent/50 active:bg-accent transition-colors relative"
                     >
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
-                        style={{ 
-                          backgroundColor: config.farge,
-                          color: config.tekstFarge 
-                        }}
-                      >
-                        {config.forkortelse}
-                      </div>
+                      <PartiLogo forkortelse={parti.forkortelse} />
                       
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-[15px] text-foreground">

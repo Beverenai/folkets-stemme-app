@@ -5,16 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
-import { getPartiConfig, PARTI_CONFIG } from '@/lib/partiConfig';
-
-// Helper to lighten/darken a hex color
-function adjustColor(hex: string, amount: number): string {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const r = Math.min(255, Math.max(0, (num >> 16) + amount));
-  const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
-  const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
-  return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
-}
+import { getPartiConfig } from '@/lib/partiConfig';
 import PartiBadge from '@/components/PartiBadge';
 
 interface PartiVotering {
@@ -166,12 +157,7 @@ export default function PartiDetalj() {
         {/* Parti header with color */}
         <div className="px-4 py-8 text-center">
           {config.logo ? (
-            <div 
-              className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center bg-white p-3 relative overflow-hidden"
-              style={{ 
-                boxShadow: `0 8px 32px ${config.farge}40, 0 4px 12px ${config.farge}25`
-              }}
-            >
+            <div className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center bg-white p-3 overflow-hidden shadow-md">
               <img 
                 src={config.logo} 
                 alt={config.navn}
@@ -180,20 +166,13 @@ export default function PartiDetalj() {
             </div>
           ) : (
             <div 
-              className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center font-bold text-3xl relative overflow-hidden"
+              className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center font-bold text-3xl shadow-md"
               style={{ 
-                background: `linear-gradient(145deg, ${config.farge}, ${adjustColor(config.farge, -30)})`,
-                color: config.tekstFarge,
-                boxShadow: `0 8px 32px ${config.farge}50, 0 4px 12px ${config.farge}30, inset 0 1px 0 ${adjustColor(config.farge, 40)}40`
+                backgroundColor: config.farge,
+                color: config.tekstFarge
               }}
             >
-              <div 
-                className="absolute inset-0 opacity-30"
-                style={{
-                  background: `linear-gradient(180deg, white 0%, transparent 50%)`
-                }}
-              />
-              <span className="relative z-10 drop-shadow-sm">{config.forkortelse}</span>
+              {config.forkortelse}
             </div>
           )}
         
