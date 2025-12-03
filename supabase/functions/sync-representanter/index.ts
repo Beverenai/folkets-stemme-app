@@ -22,6 +22,9 @@ function parseNetDate(dateStr: string | null | undefined): string | null {
   return null;
 }
 
+// Sessions to fetch historical representatives from
+const SESSIONS = ['2021-2022', '2022-2023', '2023-2024', '2024-2025'];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -32,78 +35,146 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Starting representanter sync...');
+    console.log('Starting representanter sync (including historical)...');
 
-    // Fetch current representatives from Stortinget API
-    const response = await fetch('https://data.stortinget.no/eksport/dagensrepresentanter?format=json');
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch representanter: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const representanter = data.dagensrepresentanter_liste || [];
-    
-    console.log(`Fetched ${representanter.length} representanter from Stortinget`);
-
+    // Track all representanter we process
+    const processedIds = new Set<string>();
     let inserted = 0;
     let updated = 0;
 
-    for (const rep of representanter) {
-      const personId = rep.id || rep.person?.id;
-      if (!personId) continue;
+    // First: Fetch current (active) representatives
+    console.log('Fetching active representatives...');
+    const activeResponse = await fetch('https://data.stortinget.no/eksport/dagensrepresentanter?format=json');
+    
+    if (activeResponse.ok) {
+      const activeData = await activeResponse.json();
+      const activeRepresentanter = activeData.dagensrepresentanter_liste || [];
+      
+      console.log(`Found ${activeRepresentanter.length} active representanter`);
 
-      // Build image URL
-      const bildeUrl = `https://data.stortinget.no/eksport/personbilde?personid=${personId}&storession=stor`;
+      for (const rep of activeRepresentanter) {
+        const personId = rep.id || rep.person?.id;
+        if (!personId) continue;
+        
+        processedIds.add(personId);
+        const bildeUrl = `https://data.stortinget.no/eksport/personbilde?personid=${personId}&storession=stor`;
 
-      const representantData = {
-        stortinget_id: personId,
-        fornavn: rep.fornavn || rep.person?.fornavn || '',
-        etternavn: rep.etternavn || rep.person?.etternavn || '',
-        parti: rep.parti?.navn || rep.parti_navn || null,
-        parti_forkortelse: rep.parti?.id || rep.parti_id || null,
-        fylke: rep.fylke?.navn || rep.fylke_navn || null,
-        kjonn: rep.kjoenn || rep.kjonn || null,
-        fodt: parseNetDate(rep.foedselsdato),
-        bilde_url: bildeUrl,
-        epost: rep.epost || null,
-        komite: rep.komite?.navn || null,
-        er_aktiv: true,
-        updated_at: new Date().toISOString(),
-      };
+        const representantData = {
+          stortinget_id: personId,
+          fornavn: rep.fornavn || rep.person?.fornavn || '',
+          etternavn: rep.etternavn || rep.person?.etternavn || '',
+          parti: rep.parti?.navn || rep.parti_navn || null,
+          parti_forkortelse: rep.parti?.id || rep.parti_id || null,
+          fylke: rep.fylke?.navn || rep.fylke_navn || null,
+          kjonn: rep.kjoenn || rep.kjonn || null,
+          fodt: parseNetDate(rep.foedselsdato),
+          bilde_url: bildeUrl,
+          epost: rep.epost || null,
+          komite: rep.komite?.navn || null,
+          er_aktiv: true,
+          updated_at: new Date().toISOString(),
+        };
 
-      // Upsert representant
-      const { error } = await supabase
-        .from('representanter')
-        .upsert(representantData, { onConflict: 'stortinget_id' });
-
-      if (error) {
-        console.error(`Error upserting ${representantData.fornavn} ${representantData.etternavn}:`, error);
-      } else {
-        // Check if it was insert or update by querying
         const { data: existing } = await supabase
           .from('representanter')
-          .select('created_at, updated_at')
+          .select('id')
           .eq('stortinget_id', personId)
-          .single();
-        
-        if (existing && existing.created_at === existing.updated_at) {
-          inserted++;
-        } else {
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from('representanter')
+            .update(representantData)
+            .eq('stortinget_id', personId);
           updated++;
+        } else {
+          await supabase
+            .from('representanter')
+            .insert(representantData);
+          inserted++;
         }
       }
     }
 
-    console.log(`Sync complete: ${inserted} inserted, ${updated} updated`);
+    // Second: Fetch historical representatives from each session
+    for (const sesjonId of SESSIONS) {
+      console.log(`Fetching historical representatives from ${sesjonId}...`);
+      
+      try {
+        const url = `https://data.stortinget.no/eksport/representanter?sesjonid=${sesjonId}&format=json`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          console.log(`Failed to fetch representanter for ${sesjonId}: ${response.status}`);
+          continue;
+        }
+
+        const data = await response.json();
+        const representanter = data.representanter_liste || [];
+        
+        console.log(`Found ${representanter.length} representanter from ${sesjonId}`);
+        let sessionInserted = 0;
+
+        for (const rep of representanter) {
+          const personId = rep.id || rep.person?.id;
+          if (!personId || processedIds.has(personId)) continue;
+          
+          processedIds.add(personId);
+          const bildeUrl = `https://data.stortinget.no/eksport/personbilde?personid=${personId}&storession=stor`;
+
+          const representantData = {
+            stortinget_id: personId,
+            fornavn: rep.fornavn || rep.person?.fornavn || '',
+            etternavn: rep.etternavn || rep.person?.etternavn || '',
+            parti: rep.parti?.navn || rep.parti_navn || null,
+            parti_forkortelse: rep.parti?.id || rep.parti_id || null,
+            fylke: rep.fylke?.navn || rep.fylke_navn || null,
+            kjonn: rep.kjoenn || rep.kjonn || null,
+            fodt: parseNetDate(rep.foedselsdato),
+            bilde_url: bildeUrl,
+            epost: rep.epost || null,
+            komite: rep.komite?.navn || null,
+            er_aktiv: false, // Historical representatives are NOT active
+            updated_at: new Date().toISOString(),
+          };
+
+          const { data: existing } = await supabase
+            .from('representanter')
+            .select('id')
+            .eq('stortinget_id', personId)
+            .maybeSingle();
+
+          if (!existing) {
+            const { error } = await supabase
+              .from('representanter')
+              .insert(representantData);
+            
+            if (!error) {
+              inserted++;
+              sessionInserted++;
+            }
+          }
+        }
+        
+        console.log(`Inserted ${sessionInserted} new historical reps from ${sesjonId}`);
+        
+        // Small delay between sessions
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+      } catch (sessionError) {
+        console.error(`Error processing session ${sesjonId}:`, sessionError);
+      }
+    }
+
+    console.log(`Sync complete: ${inserted} inserted, ${updated} updated, ${processedIds.size} total`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Synkronisert ${representanter.length} representanter`,
+        message: `Synkronisert ${processedIds.size} representanter (inkl. historiske)`,
         inserted,
         updated,
-        total: representanter.length
+        total: processedIds.size
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
