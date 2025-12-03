@@ -24,10 +24,9 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
 
   // Determine stance for each party based on majority vote
   const partiesWithStance = partiVotes
-    .filter(p => p.parti_forkortelse !== 'Uav') // Filter out independent
+    .filter(p => p.parti_forkortelse !== 'Uav')
     .map((parti) => {
       const config = getPartiConfig(parti.parti_forkortelse);
-      const total = parti.stemmer_for + parti.stemmer_mot + parti.stemmer_avholdende;
       
       // Determine stance based on majority
       let stance: 'for' | 'mot' | 'delt' = 'delt';
@@ -37,17 +36,10 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
         stance = 'mot';
       }
       
-      // Calculate percentage
-      const forPercent = total > 0 ? Math.round((parti.stemmer_for / total) * 100) : 0;
-      const motPercent = total > 0 ? Math.round((parti.stemmer_mot / total) * 100) : 0;
-      
       return {
         ...parti,
         config,
         stance,
-        total,
-        forPercent,
-        motPercent,
       };
     });
 
@@ -63,24 +55,38 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
   const forParties = partiesWithStance.filter(p => p.stance === 'for').sort(sortByOrder);
   const motParties = partiesWithStance.filter(p => p.stance === 'mot').sort(sortByOrder);
 
+  // Calculate totals for the header
+  const totalFor = forParties.reduce((sum, p) => sum + p.stemmer_for, 0);
+  const totalMot = motParties.reduce((sum, p) => sum + p.stemmer_mot, 0);
+
   return (
-    <div className="space-y-5">
-      {/* Summary - NRK inspired grouped view */}
-      <div className="flex items-stretch gap-4 p-4 bg-secondary/30 rounded-2xl">
+    <div className="space-y-6">
+      {/* NRK-inspired grouped view */}
+      <div className="flex items-stretch gap-4">
         {/* For side */}
-        <div className="flex-1 flex flex-col">
-          <span className="text-xs font-semibold text-vote-for uppercase tracking-wide mb-3">
-            Flertall for
-          </span>
-          <div className="flex flex-wrap gap-2">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg font-bold text-vote-for">{totalFor}</span>
+            <span className="text-xs font-semibold text-vote-for uppercase tracking-wide">
+              For
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
             {forParties.map(p => (
               <div
                 key={p.parti_forkortelse}
-                className="h-11 w-11 rounded-lg flex items-center justify-center text-xs font-bold shadow-sm"
-                style={{ backgroundColor: p.config.farge, color: p.config.tekstFarge }}
-                title={`${p.config.navn}: ${p.forPercent}% for`}
+                className="flex flex-col items-center"
               >
-                {p.config.forkortelse}
+                <div
+                  className="h-10 w-10 rounded-lg flex items-center justify-center text-[11px] font-bold shadow-sm"
+                  style={{ backgroundColor: p.config.farge, color: p.config.tekstFarge }}
+                  title={p.config.navn}
+                >
+                  {p.config.forkortelse}
+                </div>
+                <span className="text-[10px] font-semibold text-vote-for mt-1">
+                  {p.stemmer_for}
+                </span>
               </div>
             ))}
             {forParties.length === 0 && (
@@ -93,19 +99,29 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
         <div className="w-px bg-border/50 self-stretch" />
 
         {/* Mot side */}
-        <div className="flex-1 flex flex-col items-end">
-          <span className="text-xs font-semibold text-vote-mot uppercase tracking-wide mb-3">
-            Flertall mot
-          </span>
-          <div className="flex flex-wrap gap-2 justify-end">
+        <div className="flex-1">
+          <div className="flex items-center justify-end gap-2 mb-3">
+            <span className="text-xs font-semibold text-vote-mot uppercase tracking-wide">
+              Mot
+            </span>
+            <span className="text-lg font-bold text-vote-mot">{totalMot}</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5 justify-end">
             {motParties.map(p => (
               <div
                 key={p.parti_forkortelse}
-                className="h-11 w-11 rounded-lg flex items-center justify-center text-xs font-bold shadow-sm"
-                style={{ backgroundColor: p.config.farge, color: p.config.tekstFarge }}
-                title={`${p.config.navn}: ${p.motPercent}% mot`}
+                className="flex flex-col items-center"
               >
-                {p.config.forkortelse}
+                <div
+                  className="h-10 w-10 rounded-lg flex items-center justify-center text-[11px] font-bold shadow-sm"
+                  style={{ backgroundColor: p.config.farge, color: p.config.tekstFarge }}
+                  title={p.config.navn}
+                >
+                  {p.config.forkortelse}
+                </div>
+                <span className="text-[10px] font-semibold text-vote-mot mt-1">
+                  {p.stemmer_mot}
+                </span>
               </div>
             ))}
             {motParties.length === 0 && (
@@ -115,67 +131,50 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
         </div>
       </div>
 
-      {/* Note about data */}
+      {/* Note about multiple voteringer */}
       {voteringCount && voteringCount > 1 && (
         <p className="text-[11px] text-muted-foreground text-center">
-          Basert på {voteringCount} voteringer i denne saken
+          Viser stemmer fra hovedvoteringen. Se alle {voteringCount} voteringer nedenfor.
         </p>
       )}
 
-      {/* Detailed breakdown */}
-      <div className="space-y-1">
+      {/* Detailed breakdown - compact list */}
+      <div className="space-y-1 pt-2 border-t border-border/50">
+        <p className="text-xs font-medium text-muted-foreground mb-2">Detaljert oversikt</p>
         {partiesWithStance.sort(sortByOrder).map((parti) => (
           <div 
             key={parti.parti_forkortelse}
-            className="flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/30 transition-colors"
+            className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/30 transition-colors"
           >
             {/* Party badge */}
             <div
-              className="h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-sm"
+              className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
               style={{ backgroundColor: parti.config.farge, color: parti.config.tekstFarge }}
             >
               {parti.config.forkortelse}
             </div>
 
-            {/* Party name and stance */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-[15px] truncate">{parti.config.navn}</span>
-                <span
-                  className={cn(
-                    'text-xs px-2 py-0.5 rounded font-semibold shrink-0',
-                    parti.stance === 'for' && 'bg-vote-for/20 text-vote-for',
-                    parti.stance === 'mot' && 'bg-vote-mot/20 text-vote-mot',
-                    parti.stance === 'delt' && 'bg-vote-avholdende/20 text-vote-avholdende'
-                  )}
-                >
-                  {parti.stance === 'for' ? 'For' : parti.stance === 'mot' ? 'Mot' : 'Delt'}
-                </span>
-              </div>
+            {/* Party name */}
+            <span className="flex-1 text-sm font-medium truncate">{parti.config.navn}</span>
 
-              {/* Percentage display */}
-              <p className="text-xs text-muted-foreground">
-                <span className="text-vote-for font-medium">{parti.forPercent}% for</span>
-                <span className="mx-2">•</span>
-                <span className="text-vote-mot font-medium">{parti.motPercent}% mot</span>
-              </p>
+            {/* Vote counts */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-vote-for font-semibold w-6 text-right">{parti.stemmer_for}</span>
+              <span className="text-muted-foreground">-</span>
+              <span className="text-vote-mot font-semibold w-6">{parti.stemmer_mot}</span>
             </div>
 
-            {/* Vote ratio bar - wider for better visibility */}
-            <div className="w-24 h-3 bg-secondary rounded-full overflow-hidden flex shrink-0">
-              {parti.total > 0 && (
-                <>
-                  <div
-                    className="h-full bg-vote-for transition-all"
-                    style={{ width: `${parti.forPercent}%` }}
-                  />
-                  <div
-                    className="h-full bg-vote-mot transition-all"
-                    style={{ width: `${parti.motPercent}%` }}
-                  />
-                </>
+            {/* Stance badge */}
+            <span
+              className={cn(
+                'text-[10px] px-2 py-0.5 rounded font-semibold shrink-0 w-10 text-center',
+                parti.stance === 'for' && 'bg-vote-for/20 text-vote-for',
+                parti.stance === 'mot' && 'bg-vote-mot/20 text-vote-mot',
+                parti.stance === 'delt' && 'bg-vote-avholdende/20 text-vote-avholdende'
               )}
-            </div>
+            >
+              {parti.stance === 'for' ? 'For' : parti.stance === 'mot' ? 'Mot' : 'Delt'}
+            </span>
           </div>
         ))}
       </div>

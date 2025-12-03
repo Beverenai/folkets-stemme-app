@@ -53,6 +53,34 @@ function normalizeVote(voteData: any): string {
   return 'ikke_tilstede';
 }
 
+// Find the main/final votering for a sak
+// Priority: "Lovens overskrift og loven i sin helhet" > last votering with highest votes
+function findMainVotering(voteringListe: any[]): any | null {
+  if (!voteringListe || voteringListe.length === 0) return null;
+  
+  // Look for the main law votering first
+  const mainKeywords = [
+    'lovens overskrift og loven i sin helhet',
+    'loven i sin helhet',
+    'hele loven',
+    'lovforslaget i sin helhet',
+    'forslaget i sin helhet',
+    'innstillingen i sin helhet',
+    'romertall i'
+  ];
+  
+  for (const keyword of mainKeywords) {
+    const found = voteringListe.find(v => {
+      const tema = (v?.votering_tema || '').toLowerCase();
+      return tema.includes(keyword);
+    });
+    if (found) return found;
+  }
+  
+  // Fallback: return the last votering (typically the final vote)
+  return voteringListe[voteringListe.length - 1];
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -111,7 +139,6 @@ Deno.serve(async (req) => {
 
         const voteringerData = await voteringerRes.json();
         
-        // Debug: Log the structure
         console.log('Voteringer response keys:', Object.keys(voteringerData));
         
         let voteringListe = voteringerData?.sak_votering_liste?.sak_votering 
@@ -137,11 +164,18 @@ Deno.serve(async (req) => {
 
         console.log(`Found ${voteringListe.length} voteringer`);
 
-        let totalFor = 0;
-        let totalMot = 0;
-        let totalAvholdende = 0;
+        // Find the MAIN votering for this sak
+        const mainVotering = findMainVotering(voteringListe);
+        const mainVoteringId = mainVotering?.votering_id;
+        console.log(`Main votering: ${mainVoteringId} - "${mainVotering?.votering_tema?.substring(0, 50)}..."`);
 
-        // Track party votes for this sak (aggregated across all voteringer)
+        // Process all voteringer but only use main one for sak-level stats
+        let mainFor = 0;
+        let mainMot = 0;
+        let mainAvholdende = 0;
+        let mainVedtatt = false;
+
+        // Track party votes ONLY from main votering
         const partiVotes: Record<string, { for: number; mot: number; avholdende: number; navn: string }> = {};
 
         for (const votering of voteringListe) {
@@ -149,6 +183,7 @@ Deno.serve(async (req) => {
           const forslagTekst = votering?.votering_tema || votering?.kommentar || sak.tittel;
           const voteringDato = votering?.votering_tid;
           const vedtatt = votering?.vedtatt === true || votering?.vedtatt === 'true';
+          const isMainVotering = voteringId === mainVoteringId;
           
           // Use the counts directly from the API if available
           const apiAntallFor = parseInt(votering?.antall_for) || 0;
@@ -157,7 +192,7 @@ Deno.serve(async (req) => {
           
           if (!voteringId) continue;
 
-          console.log(`Processing votering ${voteringId} - API counts: for=${apiAntallFor}, mot=${apiAntallMot}`);
+          console.log(`Processing votering ${voteringId} (main: ${isMainVotering}) - API counts: for=${apiAntallFor}, mot=${apiAntallMot}`);
 
           // Check if this votering already exists
           const { data: existingVotering } = await supabase
@@ -202,9 +237,6 @@ Deno.serve(async (req) => {
           if (resultatRes.ok) {
             const resultatData = await resultatRes.json();
             
-            // Debug: Log the structure
-            console.log('Resultat response keys:', Object.keys(resultatData));
-            
             let representantList = resultatData?.voteringsresultat_liste?.representant_voteringsresultat 
               || resultatData?.voteringsresultat_liste;
             
@@ -214,11 +246,6 @@ Deno.serve(async (req) => {
 
             console.log(`Found ${representantList.length} individual votes for votering ${voteringId}`);
 
-            // Debug first vote to see structure
-            if (representantList.length > 0) {
-              console.log('Sample vote structure:', JSON.stringify(representantList[0], null, 2));
-            }
-
             let voteringFor = 0;
             let voteringMot = 0;
             let voteringAvholdende = 0;
@@ -227,8 +254,6 @@ Deno.serve(async (req) => {
 
             for (const repVote of representantList) {
               const repStortingetId = repVote?.representant?.id;
-              
-              // Extract vote from the votering field (numeric code from Stortinget API)
               const stemme = normalizeVote(repVote?.votering);
 
               if (!repStortingetId) continue;
@@ -243,21 +268,22 @@ Deno.serve(async (req) => {
               }
 
               const repInfo = repMap.get(repStortingetId);
-              
-              // Get party info from rep or from vote data
               const partiForkortelse = repInfo?.parti_forkortelse || repVote?.representant?.parti?.id || 'IND';
               const partiNavn = repInfo?.parti || repVote?.representant?.parti?.navn || 'Uavhengig';
               
-              if (!partiVotes[partiForkortelse]) {
-                partiVotes[partiForkortelse] = { for: 0, mot: 0, avholdende: 0, navn: partiNavn };
-              }
+              // ONLY track party votes from main votering
+              if (isMainVotering) {
+                if (!partiVotes[partiForkortelse]) {
+                  partiVotes[partiForkortelse] = { for: 0, mot: 0, avholdende: 0, navn: partiNavn };
+                }
 
-              if (stemme === 'for') {
-                partiVotes[partiForkortelse].for++;
-              } else if (stemme === 'mot') {
-                partiVotes[partiForkortelse].mot++;
-              } else if (stemme === 'avholdende') {
-                partiVotes[partiForkortelse].avholdende++;
+                if (stemme === 'for') {
+                  partiVotes[partiForkortelse].for++;
+                } else if (stemme === 'mot') {
+                  partiVotes[partiForkortelse].mot++;
+                } else if (stemme === 'avholdende') {
+                  partiVotes[partiForkortelse].avholdende++;
+                }
               }
 
               // Only insert if rep exists in our DB
@@ -290,7 +316,7 @@ Deno.serve(async (req) => {
               }
             }
 
-            // Update votering with results - prefer API counts, fallback to parsed counts
+            // Update votering with results
             const finalFor = apiAntallFor > 0 ? apiAntallFor : voteringFor;
             const finalMot = apiAntallMot > 0 ? apiAntallMot : voteringMot;
             const finalAvholdende = apiAntallIkkeTilstede > 0 ? apiAntallIkkeTilstede : voteringAvholdende;
@@ -305,14 +331,23 @@ Deno.serve(async (req) => {
               })
               .eq('id', voteringDbId);
 
-            totalFor += finalFor;
-            totalMot += finalMot;
-            totalAvholdende += finalAvholdende;
+            // Store main votering stats for sak-level display
+            if (isMainVotering) {
+              mainFor = finalFor;
+              mainMot = finalMot;
+              mainAvholdende = finalAvholdende;
+              mainVedtatt = finalFor > finalMot;
+            }
           }
         }
 
-        // Batch insert/update parti_voteringer
-        const partiVotesToUpsert = Object.entries(partiVotes).map(([partiForkortelse, votes]) => ({
+        // Delete old party votes and insert fresh ones (only from main votering)
+        await supabase
+          .from('parti_voteringer')
+          .delete()
+          .eq('sak_id', sak.id);
+
+        const partiVotesToInsert = Object.entries(partiVotes).map(([partiForkortelse, votes]) => ({
           sak_id: sak.id,
           parti_forkortelse: partiForkortelse,
           parti_navn: votes.navn,
@@ -321,42 +356,39 @@ Deno.serve(async (req) => {
           stemmer_avholdende: votes.avholdende,
         }));
 
-        if (partiVotesToUpsert.length > 0) {
+        if (partiVotesToInsert.length > 0) {
           await supabase
             .from('parti_voteringer')
-            .upsert(partiVotesToUpsert, { 
-              onConflict: 'sak_id,parti_forkortelse',
-              ignoreDuplicates: false 
-            });
-          console.log(`Upserted ${partiVotesToUpsert.length} parti_voteringer`);
+            .insert(partiVotesToInsert);
+          console.log(`Inserted ${partiVotesToInsert.length} parti_voteringer from main votering`);
         }
 
-        // Determine vedtak result
+        // Determine vedtak result from MAIN votering only
         let vedtakResultat = null;
-        if (totalFor > 0 || totalMot > 0) {
-          if (totalFor > totalMot) {
+        if (mainFor > 0 || mainMot > 0) {
+          if (mainFor > mainMot) {
             vedtakResultat = 'vedtatt';
-          } else if (totalMot > totalFor) {
+          } else if (mainMot > mainFor) {
             vedtakResultat = 'ikke_vedtatt';
           } else {
             vedtakResultat = 'uavgjort';
           }
         }
 
-        // Update sak with voting totals
+        // Update sak with MAIN votering totals (not aggregated)
         await supabase
           .from('stortinget_saker')
           .update({
-            stortinget_votering_for: totalFor,
-            stortinget_votering_mot: totalMot,
-            stortinget_votering_avholdende: totalAvholdende,
+            stortinget_votering_for: mainFor,
+            stortinget_votering_mot: mainMot,
+            stortinget_votering_avholdende: mainAvholdende,
             vedtak_resultat: vedtakResultat,
             status: 'avsluttet',
             voteringer_synced_at: new Date().toISOString(),
           })
           .eq('id', sak.id);
 
-        console.log(`Updated sak: For=${totalFor}, Mot=${totalMot}, Avholdende=${totalAvholdende}`);
+        console.log(`Updated sak with MAIN votering: For=${mainFor}, Mot=${mainMot}, Vedtatt=${mainVedtatt}`);
         sakerProcessed++;
         
         await new Promise(resolve => setTimeout(resolve, 100));
