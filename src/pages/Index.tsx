@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Vote, BarChart3, Clock, ChevronRight, RefreshCw, Sparkles } from 'lucide-react';
+import { Vote, BarChart3, Clock, ChevronRight, RefreshCw, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SakCard from '@/components/SakCard';
 
@@ -212,8 +212,25 @@ export default function Index() {
           </div>
         </div>
 
-        {/* How it works */}
+        {/* Explore Politicians */}
         <div className="animate-ios-slide-up" style={{ animationDelay: '0.3s' }}>
+          <Link 
+            to="/representanter" 
+            className="premium-card p-4 flex items-center gap-4 ios-press"
+          >
+            <div className="h-12 w-12 rounded-2xl bg-ios-purple/15 flex items-center justify-center">
+              <Users className="h-6 w-6 text-ios-purple" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-[15px]">Utforsk politikere</p>
+              <p className="text-[13px] text-muted-foreground">Se representanter og partier</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </Link>
+        </div>
+
+        {/* How it works */}
+        <div className="animate-ios-slide-up" style={{ animationDelay: '0.35s' }}>
           <h2 className="text-lg font-semibold mb-3">Slik fungerer det</h2>
           <div className="premium-card overflow-hidden divide-y divide-border/30">
             {[
@@ -222,7 +239,7 @@ export default function Index() {
               { num: 3, title: 'Stem', desc: 'For, mot eller avstå', color: 'bg-ios-orange text-white' },
               { num: 4, title: 'Sammenlign', desc: 'Folket vs. Stortinget', color: 'bg-ios-purple text-white' },
             ].map((step, index) => (
-              <div key={step.num} className="flex items-center gap-4 p-4" style={{ animationDelay: `${0.35 + index * 0.05}s` }}>
+              <div key={step.num} className="flex items-center gap-4 p-4" style={{ animationDelay: `${0.4 + index * 0.05}s` }}>
                 <div className={cn('h-10 w-10 rounded-xl flex items-center justify-center text-sm font-bold', step.color)}>
                   {step.num}
                 </div>
