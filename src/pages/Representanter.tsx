@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ChevronRight, Users } from 'lucide-react';
+import { Search, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import PartiBadge from '@/components/PartiBadge';
-import PartiKort from '@/components/PartiKort';
-import { getPartiConfig, PARTI_CONFIG } from '@/lib/partiConfig';
+import { getPartiConfig } from '@/lib/partiConfig';
 
 interface Representant {
   id: string;
@@ -24,28 +22,8 @@ interface Representant {
 interface PartiData {
   forkortelse: string;
   antallRepresentanter: number;
-  stemmeStats?: {
-    for: number;
-    mot: number;
-    avholdende: number;
-  };
 }
 
-// Filter IDs must match database parti_forkortelse exactly (case-sensitive)
-const partierFilter = [
-  { id: 'alle', navn: 'Alle', farge: null },
-  { id: 'A', navn: 'Ap', farge: PARTI_CONFIG['A'].farge },
-  { id: 'H', navn: 'H', farge: PARTI_CONFIG['H'].farge },
-  { id: 'Sp', navn: 'Sp', farge: PARTI_CONFIG['SP'].farge },
-  { id: 'FrP', navn: 'FrP', farge: PARTI_CONFIG['FRP'].farge },
-  { id: 'SV', navn: 'SV', farge: PARTI_CONFIG['SV'].farge },
-  { id: 'R', navn: 'R', farge: PARTI_CONFIG['R'].farge },
-  { id: 'V', navn: 'V', farge: PARTI_CONFIG['V'].farge },
-  { id: 'KrF', navn: 'KrF', farge: PARTI_CONFIG['KRF'].farge },
-  { id: 'MDG', navn: 'MDG', farge: PARTI_CONFIG['MDG'].farge },
-];
-
-// All parties for the Partier tab
 const allePartier = ['A', 'H', 'Sp', 'FrP', 'SV', 'R', 'V', 'KrF', 'MDG', 'PF'];
 
 export default function Representanter() {
@@ -54,7 +32,6 @@ export default function Representanter() {
   const [partiData, setPartiData] = useState<PartiData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [partiFilter, setPartiFilter] = useState('alle');
 
   useEffect(() => {
     if (activeTab === 'representanter') {
@@ -62,7 +39,7 @@ export default function Representanter() {
     } else {
       fetchPartiData();
     }
-  }, [activeTab, partiFilter, search]);
+  }, [activeTab, search]);
 
   const fetchRepresentanter = async () => {
     setLoading(true);
@@ -71,10 +48,6 @@ export default function Representanter() {
       .select('*')
       .eq('er_aktiv', true)
       .order('etternavn', { ascending: true });
-
-    if (partiFilter !== 'alle') {
-      query = query.eq('parti_forkortelse', partiFilter);
-    }
 
     if (search) {
       query = query.or(`fornavn.ilike.%${search}%,etternavn.ilike.%${search}%`);
@@ -93,7 +66,6 @@ export default function Representanter() {
   const fetchPartiData = async () => {
     setLoading(true);
 
-    // Fetch representant counts per party
     const { data: repCounts } = await supabase
       .from('representanter')
       .select('parti_forkortelse')
@@ -106,28 +78,11 @@ export default function Representanter() {
       }
     });
 
-    // Fetch aggregated voting stats per party
-    const { data: voteringStats } = await supabase
-      .from('parti_voteringer')
-      .select('parti_forkortelse, stemmer_for, stemmer_mot, stemmer_avholdende');
-
-    const statsByParti: Record<string, { for: number; mot: number; avholdende: number }> = {};
-    (voteringStats || []).forEach(v => {
-      if (!statsByParti[v.parti_forkortelse]) {
-        statsByParti[v.parti_forkortelse] = { for: 0, mot: 0, avholdende: 0 };
-      }
-      statsByParti[v.parti_forkortelse].for += v.stemmer_for;
-      statsByParti[v.parti_forkortelse].mot += v.stemmer_mot;
-      statsByParti[v.parti_forkortelse].avholdende += v.stemmer_avholdende;
-    });
-
-    // Build parti data array
     const data: PartiData[] = allePartier
       .filter(forkortelse => countsByParti[forkortelse] > 0)
       .map(forkortelse => ({
         forkortelse,
         antallRepresentanter: countsByParti[forkortelse] || 0,
-        stemmeStats: statsByParti[forkortelse],
       }))
       .sort((a, b) => b.antallRepresentanter - a.antallRepresentanter);
 
@@ -137,15 +92,15 @@ export default function Representanter() {
 
   return (
     <Layout title="Politikere">
-      <div className="space-y-4">
-        {/* Segmented control tabs */}
+      <div className="px-4 py-4 space-y-4">
+        {/* Segmented control */}
         <div className="bg-muted/50 p-1 rounded-xl flex">
           <button
             onClick={() => setActiveTab('representanter')}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
               activeTab === 'representanter'
                 ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-muted-foreground'
             }`}
           >
             Representanter
@@ -155,7 +110,7 @@ export default function Representanter() {
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
               activeTab === 'partier'
                 ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-muted-foreground'
             }`}
           >
             Partier
@@ -164,14 +119,6 @@ export default function Representanter() {
 
         {activeTab === 'representanter' ? (
           <>
-            {/* Header */}
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              <span className="text-sm text-muted-foreground">
-                {representanter.length} representanter
-              </span>
-            </div>
-
             {/* Søkefelt */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -183,80 +130,52 @@ export default function Representanter() {
               />
             </div>
 
-            {/* Parti-filter */}
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-              {partierFilter.map((parti) => (
-                <button
-                  key={parti.id}
-                  onClick={() => setPartiFilter(parti.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                    partiFilter === parti.id
-                      ? 'ring-2 ring-offset-2 ring-offset-background'
-                      : 'opacity-80 hover:opacity-100'
-                  }`}
-                  style={parti.farge ? {
-                    backgroundColor: parti.farge,
-                    color: getPartiConfig(parti.id).tekstFarge,
-                    ...(partiFilter === parti.id ? { ringColor: parti.farge } : {})
-                  } : {
-                    backgroundColor: partiFilter === parti.id ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
-                    color: partiFilter === parti.id ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))'
-                  }}
-                >
-                  {parti.navn}
-                </button>
-              ))}
-            </div>
-
-            {/* Liste */}
+            {/* iOS Grouped List */}
             {loading ? (
               <div className="flex justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>
             ) : representanter.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">
-                  {search || partiFilter !== 'alle' 
-                    ? 'Ingen representanter funnet' 
-                    : 'Laster representanter...'}
-                </p>
+              <div className="text-center py-12 text-muted-foreground">
+                Ingen representanter funnet
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="bg-card rounded-2xl overflow-hidden border border-border/50">
                 {representanter.map((rep, index) => (
                   <Link
                     key={rep.id}
                     to={`/representant/${rep.id}`}
-                    className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 hover:bg-accent/50 transition-all animate-fade-in"
-                    style={{ animationDelay: `${index * 30}ms` }}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 active:bg-accent transition-colors"
                   >
-                    <Avatar className="h-12 w-12 overflow-hidden">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: getPartiConfig(rep.parti_forkortelse).farge }}
+                    />
+                    <Avatar className="h-10 w-10 flex-shrink-0">
                       <AvatarImage 
                         src={rep.bilde_url || ''} 
                         alt={`${rep.fornavn} ${rep.etternavn}`}
                         className="object-cover object-top"
                       />
-                      <AvatarFallback className="bg-muted text-muted-foreground">
+                      <AvatarFallback className="bg-muted text-muted-foreground text-sm">
                         {rep.fornavn[0]}{rep.etternavn[0]}
                       </AvatarFallback>
                     </Avatar>
                     
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground truncate">
+                      <p className="font-medium text-[15px] text-foreground truncate">
                         {rep.fornavn} {rep.etternavn}
                       </p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {rep.parti_forkortelse && (
-                          <PartiBadge parti={rep.parti_forkortelse} size="sm" />
-                        )}
-                        {rep.fylke && (
-                          <span className="truncate">{rep.fylke}</span>
-                        )}
-                      </div>
+                      <p className="text-[13px] text-muted-foreground truncate">
+                        {rep.fylke}
+                      </p>
                     </div>
                     
-                    <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground/50 flex-shrink-0" />
+                    
+                    {index < representanter.length - 1 && (
+                      <div className="absolute left-[4.5rem] right-0 bottom-0 h-px bg-border/50" />
+                    )}
                   </Link>
                 ))}
               </div>
@@ -264,38 +183,52 @@ export default function Representanter() {
           </>
         ) : (
           <>
-            {/* Partier tab */}
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              <span className="text-sm text-muted-foreground">
-                {partiData.length} partier på Stortinget
-              </span>
-            </div>
-
+            {/* Partier - iOS Grouped List */}
             {loading ? (
               <div className="flex justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>
             ) : partiData.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">Ingen partier funnet</p>
+              <div className="text-center py-12 text-muted-foreground">
+                Ingen partier funnet
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {partiData.map((parti, index) => (
-                  <div 
-                    key={parti.forkortelse} 
-                    className="animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <PartiKort
-                      forkortelse={parti.forkortelse}
-                      antallRepresentanter={parti.antallRepresentanter}
-                      stemmeStats={parti.stemmeStats}
-                    />
-                  </div>
-                ))}
+              <div className="bg-card rounded-2xl overflow-hidden border border-border/50">
+                {partiData.map((parti, index) => {
+                  const config = getPartiConfig(parti.forkortelse);
+                  return (
+                    <Link
+                      key={parti.forkortelse}
+                      to={`/parti/${parti.forkortelse}`}
+                      className="flex items-center gap-3 px-4 py-3.5 hover:bg-accent/50 active:bg-accent transition-colors relative"
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style={{ 
+                          backgroundColor: config.farge,
+                          color: config.tekstFarge 
+                        }}
+                      >
+                        {config.forkortelse}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-[15px] text-foreground">
+                          {config.navn}
+                        </p>
+                        <p className="text-[13px] text-muted-foreground">
+                          {parti.antallRepresentanter} representanter
+                        </p>
+                      </div>
+                      
+                      <ChevronRight className="h-5 w-5 text-muted-foreground/50 flex-shrink-0" />
+                      
+                      {index < partiData.length - 1 && (
+                        <div className="absolute left-14 right-0 bottom-0 h-px bg-border/50" />
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </>
