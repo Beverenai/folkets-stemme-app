@@ -138,46 +138,42 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
         </p>
       )}
 
-      {/* Detailed breakdown - compact list */}
-      <div className="space-y-1 pt-2 border-t border-border/50">
-        <p className="text-xs font-medium text-muted-foreground mb-2">Detaljert oversikt</p>
-        {partiesWithStance.sort(sortByOrder).map((parti) => (
-          <div 
-            key={parti.parti_forkortelse}
-            className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/30 transition-colors"
-          >
-            {/* Party badge */}
-            <div
-              className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-              style={{ backgroundColor: parti.config.farge, color: parti.config.tekstFarge }}
-            >
-              {parti.config.forkortelse}
+      {/* Show split parties only if significant internal division exists */}
+      {(() => {
+        const splitParties = partiesWithStance.filter(p => {
+          const total = p.stemmer_for + p.stemmer_mot;
+          if (total === 0) return false;
+          const minority = Math.min(p.stemmer_for, p.stemmer_mot);
+          const splitPercentage = (minority / total) * 100;
+          return splitPercentage >= 30;
+        }).sort(sortByOrder);
+
+        if (splitParties.length === 0) return null;
+
+        return (
+          <div className="pt-3 border-t border-border/50">
+            <p className="text-xs font-medium text-vote-avholdende mb-2">
+              ⚠️ Intern splittelse
+            </p>
+            <div className="space-y-1">
+              {splitParties.map(parti => (
+                <div key={parti.parti_forkortelse} className="flex items-center gap-2 text-xs">
+                  <div
+                    className="h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold"
+                    style={{ backgroundColor: parti.config.farge, color: parti.config.tekstFarge }}
+                  >
+                    {parti.config.forkortelse}
+                  </div>
+                  <span className="text-muted-foreground">{parti.config.navn}:</span>
+                  <span className="text-vote-for font-medium">{parti.stemmer_for} for</span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-vote-mot font-medium">{parti.stemmer_mot} mot</span>
+                </div>
+              ))}
             </div>
-
-            {/* Party name */}
-            <span className="flex-1 text-sm font-medium truncate">{parti.config.navn}</span>
-
-            {/* Vote counts */}
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-vote-for font-semibold w-6 text-right">{parti.stemmer_for}</span>
-              <span className="text-muted-foreground">-</span>
-              <span className="text-vote-mot font-semibold w-6">{parti.stemmer_mot}</span>
-            </div>
-
-            {/* Stance badge */}
-            <span
-              className={cn(
-                'text-[10px] px-2 py-0.5 rounded font-semibold shrink-0 w-10 text-center',
-                parti.stance === 'for' && 'bg-vote-for/20 text-vote-for',
-                parti.stance === 'mot' && 'bg-vote-mot/20 text-vote-mot',
-                parti.stance === 'delt' && 'bg-vote-avholdende/20 text-vote-avholdende'
-              )}
-            >
-              {parti.stance === 'for' ? 'For' : parti.stance === 'mot' ? 'Mot' : 'Delt'}
-            </span>
           </div>
-        ))}
-      </div>
+        );
+      })()}
     </div>
   );
 }
