@@ -6,6 +6,9 @@ import { cn } from '@/lib/utils';
 import PartiSamsvarsChart from '@/components/charts/PartiSamsvarsChart';
 import KategoriAvvikChart from '@/components/charts/KategoriAvvikChart';
 import MånedligAktivitetChart from '@/components/charts/MånedligAktivitetChart';
+import ViktigeSakerDenneUken from '@/components/ViktigeSakerDenneUken';
+import TopKonfliktSaker from '@/components/TopKonfliktSaker';
+import EngasjementMeter from '@/components/EngasjementMeter';
 
 interface StatsData {
   totalSaker: number;
@@ -92,6 +95,9 @@ export default function Statistikk() {
   return (
     <Layout title="Statistikk">
       <div className="px-4 py-4 space-y-5 animate-ios-fade">
+        {/* Viktige saker denne uken - NRK style hero stat */}
+        <ViktigeSakerDenneUken className="animate-ios-slide-up" />
+
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
           {statCards.map((stat, index) => {
@@ -203,6 +209,15 @@ export default function Statistikk() {
           </p>
           <MånedligAktivitetChart />
         </div>
+
+        {/* Top konflikt saker */}
+        <TopKonfliktSaker limit={10} className="animate-ios-slide-up" />
+
+        {/* Engasjement Meter */}
+        <EngasjementMeter 
+          antallStemmer={stats.totalStemmer} 
+          className="animate-ios-slide-up" 
+        />
 
         {/* Info */}
         <div className="nrk-card animate-ios-slide-up" style={{ animationDelay: '0.4s' }}>

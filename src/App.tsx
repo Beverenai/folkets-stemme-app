@@ -16,6 +16,7 @@ import PartiDetalj from "./pages/PartiDetalj";
 import Lovbibliotek from "./pages/Lovbibliotek";
 import Statistikk from "./pages/Statistikk";
 import Profil from "./pages/Profil";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/saker" element={<Saker />} />
             <Route path="/sak/:id" element={<SakDetalj />} />

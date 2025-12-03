@@ -77,6 +77,15 @@ export default {
           teal: "hsl(var(--ios-teal))",
           cyan: "hsl(var(--ios-cyan))",
         },
+        nrk: {
+          primary: "hsl(var(--nrk-primary))",
+          success: "hsl(var(--nrk-success))",
+          danger: "hsl(var(--nrk-danger))",
+          neutral: "hsl(var(--nrk-neutral))",
+          "light-gray": "hsl(var(--nrk-light-gray))",
+          divider: "hsl(var(--nrk-divider))",
+          "dark-text": "hsl(var(--nrk-dark-text))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
