@@ -103,7 +103,97 @@ Deno.serve(async (req) => {
     const repMap = new Map(representanter?.map(r => [r.stortinget_id, { id: r.id, parti_forkortelse: r.parti_forkortelse, parti: r.parti }]) || []);
     console.log(`Loaded ${repMap.size} representanter`);
 
-    // Get IMPORTANT saker that need voting data (not yet synced)
+    // First: Get voteringer that have missing data (need re-sync)
+    const { data: voteringerMissingData, error: voteringMissingError } = await supabase
+      .from('voteringer')
+      .select('id, stortinget_votering_id, sak_id, votering_dato, resultat_for, resultat_mot')
+      .or('votering_dato.is.null,resultat_for.eq.0,resultat_mot.eq.0')
+      .limit(50);
+
+    if (voteringMissingError) {
+      console.error('Error fetching voteringer with missing data:', voteringMissingError);
+    }
+
+    console.log(`Found ${voteringerMissingData?.length || 0} voteringer with missing data to re-sync`);
+
+    // Re-sync voteringer with missing data - use voteringsresultat directly
+    let voteringerUpdated = 0;
+    for (const votering of voteringerMissingData || []) {
+      try {
+        const voteringId = votering.stortinget_votering_id;
+        console.log(`Re-syncing votering ${voteringId}`);
+
+        // Get individual votes from voteringsresultat API (most reliable)
+        const resultatUrl = `https://data.stortinget.no/eksport/voteringsresultat?voteringid=${voteringId}&format=json`;
+        const resultatRes = await fetch(resultatUrl);
+        
+        if (!resultatRes.ok) {
+          console.log(`No voteringsresultat for ${voteringId}, skipping`);
+          continue;
+        }
+
+        const resultatData = await resultatRes.json();
+        let representantList = resultatData?.voteringsresultat_liste?.representant_voteringsresultat 
+          || resultatData?.voteringsresultat_liste;
+        
+        if (!Array.isArray(representantList)) {
+          representantList = representantList ? [representantList] : [];
+        }
+
+        if (representantList.length === 0) {
+          console.log(`No votes found for votering ${voteringId}`);
+          continue;
+        }
+
+        // Count votes from individual results
+        let countFor = 0, countMot = 0, countAvh = 0;
+        let voteringDato = null;
+        
+        for (const repVote of representantList) {
+          const stemme = normalizeVote(repVote?.votering);
+          if (stemme === 'for') countFor++;
+          else if (stemme === 'mot') countMot++;
+          else if (stemme === 'avholdende') countAvh++;
+          
+          // Get date from first vote
+          if (!voteringDato && repVote?.votering_tid) {
+            voteringDato = repVote.votering_tid;
+          }
+        }
+
+        console.log(`Votering ${voteringId}: for=${countFor}, mot=${countMot}, avh=${countAvh}`);
+
+        // Only update if we have actual votes
+        if (countFor > 0 || countMot > 0) {
+          const { error: updateErr } = await supabase
+            .from('voteringer')
+            .update({
+              votering_dato: safeParseDate(voteringDato) || votering.votering_dato,
+              resultat_for: countFor,
+              resultat_mot: countMot,
+              resultat_avholdende: countAvh,
+              vedtatt: countFor > countMot,
+              status: 'avsluttet',
+            })
+            .eq('id', votering.id);
+
+          if (!updateErr) {
+            voteringerUpdated++;
+            console.log(`Updated votering ${voteringId}`);
+          } else {
+            console.error(`Error updating votering ${voteringId}:`, updateErr);
+          }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (e: any) {
+        console.error(`Error re-syncing votering ${votering.stortinget_votering_id}:`, e.message);
+      }
+    }
+
+    console.log(`Re-synced ${voteringerUpdated} voteringer with missing data`);
+
+    // Second: Get IMPORTANT saker that need voting data (not yet synced)
     const { data: saker, error: sakerError } = await supabase
       .from('stortinget_saker')
       .select('id, stortinget_id, tittel, status, kategori')
@@ -113,7 +203,7 @@ Deno.serve(async (req) => {
 
     if (sakerError) throw sakerError;
 
-    console.log(`Found ${saker?.length || 0} saker to process`);
+    console.log(`Found ${saker?.length || 0} new saker to process`);
 
     let totalInserted = 0;
     let voteringerCreated = 0;
@@ -398,7 +488,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const message = `Synkronisert ${totalInserted} stemmer, ${voteringerCreated} nye voteringer fra ${sakerProcessed} saker`;
+    const message = `Synkronisert ${totalInserted} stemmer, ${voteringerCreated} nye voteringer, ${voteringerUpdated} oppdatert fra ${sakerProcessed} saker`;
     console.log(message);
 
     return new Response(
@@ -407,6 +497,7 @@ Deno.serve(async (req) => {
         message, 
         votesInserted: totalInserted, 
         voteringerCreated,
+        voteringerUpdated,
         processedCount: sakerProcessed 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
