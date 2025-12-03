@@ -46,6 +46,10 @@ interface PartiVote {
   stemmer_avholdende: number;
 }
 
+interface VoteringInfo {
+  count: number;
+}
+
 export default function SakDetalj() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -58,6 +62,7 @@ export default function SakDetalj() {
   const [voteStats, setVoteStats] = useState<VoteStats>({ for: 0, mot: 0, avholdende: 0, total: 0 });
   const [generatingAI, setGeneratingAI] = useState(false);
   const [partiVotes, setPartiVotes] = useState<PartiVote[]>([]);
+  const [voteringCount, setVoteringCount] = useState<number>(0);
 
   useEffect(() => {
     async function fetchData() {
@@ -111,6 +116,14 @@ export default function SakDetalj() {
         if (partiData) {
           setPartiVotes(partiData);
         }
+
+        // Fetch votering count for context
+        const { count } = await supabase
+          .from('voteringer')
+          .select('*', { count: 'exact', head: true })
+          .eq('sak_id', id);
+        
+        setVoteringCount(count || 0);
       } catch (error) {
         console.error('Error fetching sak:', error);
       } finally {
@@ -434,7 +447,7 @@ export default function SakDetalj() {
               <Building2 className="h-5 w-5 text-primary" />
               <h3 className="font-semibold text-lg">Partienes stemmer</h3>
             </div>
-            <PartiVoteringList partiVotes={partiVotes} />
+            <PartiVoteringList partiVotes={partiVotes} voteringCount={voteringCount} />
           </div>
         )}
       </div>
