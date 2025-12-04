@@ -131,6 +131,7 @@ export default function SakSwipeView({
   const slides = [
     <IntroSlide
       key="intro"
+      sakId={sak.id}
       tittel={sak.tittel}
       kortTittel={sak.kort_tittel}
       spoersmaal={sak.spoersmaal}
