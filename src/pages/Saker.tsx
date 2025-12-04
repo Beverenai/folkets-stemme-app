@@ -4,7 +4,7 @@ import { Json } from '@/integrations/supabase/types';
 import Layout from '@/components/Layout';
 import PremiumCaseCard from '@/components/PremiumCaseCard';
 import { Input } from '@/components/ui/input';
-import { Search, FileText } from 'lucide-react';
+import { Search, FileText, Vote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 interface Sak {
@@ -25,6 +25,7 @@ interface Sak {
   stortinget_votering_avholdende: number | null;
   argumenter_for: Json | null;
   argumenter_mot: Json | null;
+  siste_votering_dato: string | null;
   folke_stemmer?: { stemme: string; user_id: string }[];
 }
 
@@ -39,15 +40,37 @@ export default function Saker() {
 
   const fetchSaker = async () => {
     try {
-      // Only fetch saker with complete AI content (oppsummering + argumenter)
+      // First get sak IDs that have votings with their latest votering_dato
+      const { data: voteringData } = await supabase
+        .from('voteringer')
+        .select('sak_id, votering_dato')
+        .not('sak_id', 'is', null)
+        .order('votering_dato', { ascending: false });
+      
+      // Group by sak_id and get latest votering_dato
+      const sakVoteringMap = new Map<string, string>();
+      (voteringData || []).forEach((v) => {
+        if (v.sak_id && !sakVoteringMap.has(v.sak_id)) {
+          sakVoteringMap.set(v.sak_id, v.votering_dato || '');
+        }
+      });
+      const sakIdsWithVotings = Array.from(sakVoteringMap.keys());
+
+      if (sakIdsWithVotings.length === 0) {
+        setSaker([]);
+        setLoading(false);
+        return;
+      }
+
+      // Only fetch saker with votings and complete AI content
       let query = supabase
         .from('stortinget_saker')
         .select(`*, folke_stemmer(stemme, user_id)`)
-        .in('behandlet_sesjon', ['2024-2025', '2025-2026'])
         .eq('er_viktig', true)
         .not('oppsummering', 'is', null)
         .not('argumenter_for', 'eq', '[]')
-        .order('created_at', { ascending: false });
+        .in('id', sakIdsWithVotings)
+        .order('updated_at', { ascending: false });
 
       if (statusFilter !== 'alle') {
         query = query.eq('status', statusFilter);
@@ -59,7 +82,14 @@ export default function Saker() {
 
       const { data, error } = await query.limit(50);
       if (error) throw error;
-      setSaker(data || []);
+      
+      // Add votering_dato to each sak
+      const sakerWithDates = (data || []).map((sak) => ({
+        ...sak,
+        siste_votering_dato: sakVoteringMap.get(sak.id) || null
+      }));
+      
+      setSaker(sakerWithDates);
     } catch (error) {
       console.error('Error fetching saker:', error);
     } finally {
@@ -100,9 +130,12 @@ export default function Saker() {
       <div className="px-4 py-4 space-y-4 animate-ios-fade">
         {/* Header */}
         <div>
-          <h1 className="text-xl font-bold">Viktige saker</h1>
-          <p className="text-sm text-muted-foreground">
-            {saker.length} saker fra 2024-2026
+          <div className="flex items-center gap-2">
+            <Vote className="h-5 w-5 text-ios-orange" />
+            <h1 className="text-xl font-bold">Saker til votering</h1>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            {saker.length} saker som er eller har vært oppe til votering
           </p>
         </div>
 
