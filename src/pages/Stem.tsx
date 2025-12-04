@@ -307,26 +307,37 @@ export default function Stem() {
           </div>
         </div>
 
-        {/* iOS Page Control - minimal dots */}
-        <div className="flex items-center justify-center py-3 safe-bottom">
-          <div className="flex items-center gap-1.5">
-            {saker.slice(0, 10).map((_, i) => (
+        {/* Swipe indicator - redesigned for visibility */}
+        <div className="flex flex-col items-center justify-center py-4 safe-bottom gap-2">
+          {/* Progress dots */}
+          <div className="flex items-center gap-2">
+            {saker.slice(0, 8).map((_, i) => (
               <div
                 key={i}
                 className={cn(
-                  "rounded-full transition-all duration-200",
+                  "rounded-full transition-all duration-300",
                   i === currentIndex 
-                    ? "w-5 h-1.5 bg-white" 
-                    : "w-1.5 h-1.5 bg-white/30"
+                    ? "w-6 h-2 bg-primary shadow-lg shadow-primary/30" 
+                    : i < currentIndex
+                      ? "w-2 h-2 bg-primary/50"
+                      : "w-2 h-2 bg-muted-foreground/30"
                 )}
               />
             ))}
-            {saker.length > 10 && (
-              <span className="text-[10px] text-white/40 ml-1">
-                +{saker.length - 10}
+            {saker.length > 8 && (
+              <span className="text-xs text-muted-foreground font-medium ml-1">
+                +{saker.length - 8}
               </span>
             )}
           </div>
+          
+          {/* Swipe hint text */}
+          {currentIndex < saker.length - 1 && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <span>Sveip for flere</span>
+              <span className="animate-pulse">→</span>
+            </p>
+          )}
         </div>
       </div>
 
