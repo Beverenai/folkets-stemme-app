@@ -59,7 +59,7 @@ export default function IntroSlide({
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col px-4 pt-6 pb-16">
+      <div className="relative z-10 h-full flex flex-col px-4 pt-6 pb-12">
         <h2 className="text-sm font-medium text-white/70 mb-4">Sett deg inn i saken</h2>
         
         <div className="flex-1 flex flex-col justify-end">

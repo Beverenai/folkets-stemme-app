@@ -208,7 +208,7 @@ export default function SakSwipeView({
       
       {/* Dot indicators inside card (for modal) */}
       {!showDotsOutside && (
-        <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2 z-20">
+        <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-2 z-20">
           {[0, 1, 2, 3].map((i) => (
             <button
               key={i}
