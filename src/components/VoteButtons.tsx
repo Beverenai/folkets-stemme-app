@@ -2,6 +2,7 @@ import { ThumbsUp, ThumbsDown, Minus, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { triggerHaptic } from '@/lib/haptics';
 
 interface VoteButtonsProps {
   currentVote: string | null;
@@ -26,6 +27,18 @@ export default function VoteButtons({ currentVote, onVote, disabled, isLoggedIn 
       </div>
     );
   }
+
+  const handleVote = (vote: 'for' | 'mot' | 'avholdende') => {
+    // Trigger haptic feedback based on vote type
+    if (vote === 'for') {
+      triggerHaptic('success');
+    } else if (vote === 'mot') {
+      triggerHaptic('error');
+    } else {
+      triggerHaptic('medium');
+    }
+    onVote(vote);
+  };
 
   const votes = [
     {
@@ -60,7 +73,7 @@ export default function VoteButtons({ currentVote, onVote, disabled, isLoggedIn 
         return (
           <button
             key={vote.value}
-            onClick={() => onVote(vote.value)}
+            onClick={() => handleVote(vote.value)}
             disabled={disabled}
             className={cn(
               'w-full flex items-center justify-center gap-3 p-4 rounded-xl font-semibold text-lg transition-all duration-200',
