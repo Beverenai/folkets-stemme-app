@@ -104,39 +104,39 @@ export default function StemKort({
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col p-5">
+      <div className="relative z-10 h-full flex flex-col p-4">
         {/* Top metadata */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 text-white/70">
-            <Building2 className="h-4 w-4" />
-            <span className="text-xs font-medium">Stortinget</span>
+            <Building2 className="h-3.5 w-3.5" />
+            <span className="text-[11px] font-medium">Stortinget</span>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm text-white text-xs font-semibold">
-            <Clock className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm text-white text-[11px] font-semibold">
+            <Clock className="h-3 w-3" />
             <span>{getDaysText()}</span>
           </div>
         </div>
 
         {/* Spacer */}
-        <div className="flex-1" />
+        <div className="flex-1 min-h-0" />
 
         {/* Category badge */}
         {kategori && (
-          <span className="inline-flex self-start px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-white text-xs font-semibold border border-white/20 mb-3">
+          <span className="inline-flex self-start px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm text-white text-[11px] font-semibold border border-white/20 mb-2">
             {kategori}
           </span>
         )}
 
         {/* Question */}
-        <h2 className="text-xl font-bold text-white leading-tight mb-4 line-clamp-3">
+        <h2 className="text-lg font-bold text-white leading-tight mb-3 line-clamp-3">
           {displayQuestion}
         </h2>
 
         {/* Stortingets vedtak */}
         {hasStortingetVote && (
-          <div className="mb-3">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xs font-medium text-white/70">🏛️ Stortingets vedtak</span>
+          <div className="mb-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[11px] font-medium text-white/70">🏛️ Stortingets vedtak</span>
             </div>
             <ResultBar
               forCount={stortingetFor || 0}
@@ -150,11 +150,11 @@ export default function StemKort({
         )}
 
         {/* Folkets mening */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-xs font-medium text-white/70">👥 Folkets mening</span>
+        <div className="mb-3">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-medium text-white/70">👥 Folkets mening</span>
             {hasFolkeVotes && (
-              <span className="text-xs text-white/50">({folkeTotal} stemmer)</span>
+              <span className="text-[11px] text-white/50">({folkeTotal} stemmer)</span>
             )}
           </div>
           {hasFolkeVotes ? (
@@ -167,23 +167,23 @@ export default function StemKort({
               size="sm"
             />
           ) : (
-            <p className="text-xs text-white/50 italic">Vær den første til å stemme!</p>
+            <p className="text-[11px] text-white/50 italic">Vær den første til å stemme!</p>
           )}
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={handleStemNå}
-            className="flex-1 py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-base ios-press hover:brightness-110 transition-all shadow-lg shadow-primary/30"
+            className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm ios-press hover:brightness-110 transition-all shadow-lg shadow-primary/30"
           >
             Stem her
           </button>
           <button
             onClick={handleShare}
-            className="px-5 py-3.5 rounded-2xl bg-white/15 backdrop-blur-sm text-white font-semibold text-base ios-press hover:bg-white/25 transition-all border border-white/20"
+            className="px-4 py-3 rounded-xl bg-white/15 backdrop-blur-sm text-white font-semibold text-sm ios-press hover:bg-white/25 transition-all border border-white/20"
           >
-            <Share2 className="h-5 w-5" />
+            <Share2 className="h-4 w-4" />
           </button>
         </div>
       </div>

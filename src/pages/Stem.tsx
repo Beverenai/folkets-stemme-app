@@ -275,10 +275,10 @@ export default function Stem() {
 
   return (
     <Layout hideHeader>
-      <div className="flex flex-col h-[calc(100vh-80px)]">
-        {/* Full-screen Card Carousel */}
-        <div className="flex-1 overflow-hidden relative" ref={emblaRef}>
-          <div className="flex h-full py-2">
+      <div className="flex flex-col h-[calc(100vh-80px)] pt-2">
+        {/* Compact Card Carousel - 70vh */}
+        <div className="flex-1 overflow-hidden relative flex items-center" ref={emblaRef}>
+          <div className="flex h-[70vh] max-h-[600px] py-1">
             {saker.map((sak, index) => (
               <div 
                 key={sak.id} 
