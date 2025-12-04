@@ -16,10 +16,12 @@ interface ShareCardProps {
   title: string;
   summary?: string;
   sakId?: string;
+  voteringId?: string;
   type?: 'sak' | 'votering';
+  kategori?: string | null;
   forCount: number;
   motCount: number;
-  avholdendeCount: number;
+  avholdendeCount?: number;
   stortingetFor?: number | null;
   stortingetMot?: number | null;
   stortingetAvholdende?: number | null;
@@ -31,10 +33,12 @@ export default function ShareCard({
   onOpenChange,
   title,
   sakId,
+  voteringId,
   type = 'sak',
+  kategori,
   forCount,
   motCount,
-  avholdendeCount,
+  avholdendeCount = 0,
   stortingetFor,
   stortingetMot,
   url,
@@ -61,8 +65,9 @@ export default function ShareCard({
   const isAgreement = publicMajority === stortingetMajority;
 
   // OG Image URL
-  const ogImageUrl = sakId 
-    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-image?id=${sakId}&type=${type}`
+  const id = sakId || voteringId;
+  const ogImageUrl = id 
+    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-image?id=${id}&type=${type}${kategori ? `&kategori=${encodeURIComponent(kategori)}` : ''}`
     : null;
 
   // Share text

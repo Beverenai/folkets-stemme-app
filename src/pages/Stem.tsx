@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 import StemKort from '@/components/StemKort';
 import StemModal from '@/components/StemModal';
+import ShareCard from '@/components/ShareCard';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -263,23 +264,17 @@ export default function Stem() {
     await voteMutation.mutateAsync({ sakId: selectedSak.id, vote });
   };
 
-  const handleShare = useCallback(async (sak?: Sak) => {
+  // Share state
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareTargetSak, setShareTargetSak] = useState<Sak | null>(null);
+
+  const handleShare = useCallback((sak?: Sak) => {
     const sakToShare = sak || selectedSak;
     if (!sakToShare) return;
     
     triggerHaptic('light');
-    const shareData = {
-      title: sakToShare.spoersmaal || sakToShare.kort_tittel || sakToShare.tittel,
-      text: `Stem på denne saken på Folketinget!`,
-      url: `${window.location.origin}/sak/${sakToShare.id}`,
-    };
-
-    if (navigator.share) {
-      await navigator.share(shareData);
-    } else {
-      await navigator.clipboard.writeText(shareData.url);
-      toast.success('Link kopiert!');
-    }
+    setShareTargetSak(sakToShare);
+    setShareOpen(true);
   }, [selectedSak]);
 
   const getVoteStats = (sak: Sak) => {
@@ -398,6 +393,22 @@ export default function Stem() {
         onVote={handleVote}
         isSubmitting={voteMutation.isPending}
         onShare={handleShare}
+      />
+
+      {/* Share Dialog */}
+      <ShareCard
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        title={shareTargetSak?.spoersmaal || shareTargetSak?.kort_tittel || shareTargetSak?.tittel || ''}
+        sakId={shareTargetSak?.id}
+        type="sak"
+        kategori={shareTargetSak?.kategori}
+        forCount={shareTargetSak?.voteStats?.for || 0}
+        motCount={shareTargetSak?.voteStats?.mot || 0}
+        avholdendeCount={shareTargetSak?.voteStats?.avholdende || 0}
+        stortingetFor={shareTargetSak?.stortinget_votering_for}
+        stortingetMot={shareTargetSak?.stortinget_votering_mot}
+        url={`${window.location.origin}/sak/${shareTargetSak?.id}`}
       />
     </Layout>
   );
