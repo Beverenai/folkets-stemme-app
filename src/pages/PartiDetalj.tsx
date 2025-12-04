@@ -46,7 +46,7 @@ export default function PartiDetalj() {
   const [stats, setStats] = useState<PartiStats>({ totalFor: 0, totalMot: 0, totalAvholdende: 0, antallSaker: 0 });
   const [loading, setLoading] = useState(true);
 
-  useSwipeBack({ targetPath: '/resultater' });
+  useSwipeBack({ targetPath: -1 });
 
   const config = getPartiConfig(forkortelse || '');
 
@@ -148,7 +148,7 @@ export default function PartiDetalj() {
         <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-border/50" style={{ backgroundColor: `color-mix(in srgb, ${config.farge}08, hsl(var(--background)) 92%)` }}>
           <div className="flex items-center justify-between p-4 pt-safe">
             <button
-              onClick={() => navigate('/resultater')}
+              onClick={() => navigate(-1)}
               className="flex items-center gap-1 text-primary"
             >
               <ChevronLeft className="h-5 w-5" />

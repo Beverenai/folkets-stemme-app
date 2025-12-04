@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface UseSwipeBackOptions {
-  targetPath: string;
+  targetPath: string | number; // string for path, number for history (e.g., -1 for back)
   edgeThreshold?: number; // How far from left edge swipe must start (px)
   minSwipeDistance?: number; // Minimum distance to trigger navigation (px)
   enabled?: boolean;
@@ -42,7 +42,11 @@ export function useSwipeBack({
 
       // Only trigger if horizontal swipe is dominant and long enough
       if (deltaX > minSwipeDistance && deltaX > deltaY * 2) {
-        navigate(targetPath);
+        if (typeof targetPath === 'number') {
+          navigate(targetPath as number);
+        } else {
+          navigate(targetPath as string);
+        }
       }
 
       // Reset
