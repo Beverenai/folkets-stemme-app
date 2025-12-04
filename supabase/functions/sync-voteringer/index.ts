@@ -97,24 +97,47 @@ function hasIndividualVotes(votering: any): boolean {
 }
 
 // Find the FINAL votering for a sak (the decisive vote)
-function findFinalVotering(voteringListe: any[]): any | null {
-  if (!voteringListe || voteringListe.length === 0) return null;
+// Returns TWO voteringer: one for totals, one for party breakdown
+function findFinalVotering(voteringListe: any[]): { forTotals: any | null, forPartyVotes: any | null } {
+  if (!voteringListe || voteringListe.length === 0) {
+    return { forTotals: null, forPartyVotes: null };
+  }
+  
+  // Find votering for totals (the actual final decision)
+  let forTotals: any = null;
   
   // First: Look for explicit final vote patterns
   for (const votering of voteringListe) {
     const tema = votering?.votering_tema || '';
     if (isFinalVote(tema)) {
-      return votering;
+      forTotals = votering;
+      break;
     }
   }
   
-  // Second: If only one votering, use it (it's the final decision)
-  if (voteringListe.length === 1) {
-    return voteringListe[0];
+  // If no final pattern found, use the last votering
+  if (!forTotals) {
+    forTotals = voteringListe[voteringListe.length - 1];
   }
   
-  // Third: Use the last votering as fallback (typically the final)
-  return voteringListe[voteringListe.length - 1];
+  // Find votering for party breakdown (must have individual votes)
+  // Prefer the final votering if it has individual votes, otherwise use any that does
+  let forPartyVotes: any = null;
+  
+  if (forTotals && hasIndividualVotes(forTotals)) {
+    forPartyVotes = forTotals;
+  } else {
+    // Find any votering with individual votes - prefer ones with dissent
+    const voteringerWithVotes = voteringListe.filter(hasIndividualVotes);
+    
+    if (voteringerWithVotes.length > 0) {
+      // Prefer votering with most dissent (antall_mot > 0)
+      const withDissent = voteringerWithVotes.filter(v => parseInt(v?.antall_mot) > 0);
+      forPartyVotes = withDissent.length > 0 ? withDissent[0] : voteringerWithVotes[0];
+    }
+  }
+  
+  return { forTotals, forPartyVotes };
 }
 
 // Process individual votes for a single votering
@@ -358,20 +381,20 @@ Deno.serve(async (req) => {
 
         console.log(`Found ${voteringListe.length} total voteringer`);
 
-        // Get the FINAL votering for the sak's overall result - this is the ONLY one we use for party breakdown
-        const finalVotering = findFinalVotering(voteringListe);
+        // Get the FINAL votering for totals and the votering to use for party breakdown
+        const { forTotals: totalsVotering, forPartyVotes: partyVotering } = findFinalVotering(voteringListe);
         
-        // Party votes should ONLY come from the final votering, not aggregated across all
+        // Party votes should ONLY come from one votering, not aggregated across all
         let finalPartiVotes: Record<string, { for: number; mot: number; avholdende: number; navn: string }> = {};
         let sakVoteringerCreated = 0;
         let sakRepVotesInserted = 0;
 
-        // Process the FINAL votering for party breakdown
-        if (finalVotering && hasIndividualVotes(finalVotering)) {
-          const finalVoteringId = finalVotering?.votering_id;
-          console.log(`Processing FINAL votering ${finalVoteringId}: "${finalVotering?.votering_tema?.substring(0, 50)}..."`);
+        // Process the votering that has party-level data
+        if (partyVotering) {
+          const partyVoteringId = partyVotering?.votering_id;
+          console.log(`Processing PARTY votering ${partyVoteringId}: "${partyVotering?.votering_tema?.substring(0, 50)}..."`);
 
-          const result = await processVoteringVotes(supabase, finalVotering, sak.id, repMap);
+          const result = await processVoteringVotes(supabase, partyVotering, sak.id, repMap);
           
           if (result) {
             if (result.votesInserted > 0) {
@@ -383,8 +406,9 @@ Deno.serve(async (req) => {
         }
 
         // Also process other voteringer for rep vote history (but don't use for party stats)
+        const partyVoteringId = partyVotering?.votering_id;
         const voteringerWithIndividualVotes = voteringListe.filter((v: any) => 
-          hasIndividualVotes(v) && v?.votering_id !== finalVotering?.votering_id
+          hasIndividualVotes(v) && v?.votering_id !== partyVoteringId
         );
         
         for (const votering of voteringerWithIndividualVotes) {
@@ -399,33 +423,34 @@ Deno.serve(async (req) => {
           await new Promise(resolve => setTimeout(resolve, 50));
         }
         
+        // Use totalsVotering for the final counts (stortinget_votering_for/mot)
         let finalFor = 0, finalMot = 0, finalAvholdende = 0;
 
-        if (finalVotering) {
-          finalFor = parseInt(finalVotering?.antall_for) || 0;
-          finalMot = parseInt(finalVotering?.antall_mot) || 0;
-          finalAvholdende = parseInt(finalVotering?.antall_ikke_tilstede) || 0;
+        if (totalsVotering) {
+          finalFor = parseInt(totalsVotering?.antall_for) || 0;
+          finalMot = parseInt(totalsVotering?.antall_mot) || 0;
+          finalAvholdende = parseInt(totalsVotering?.antall_ikke_tilstede) || 0;
 
-          // If final votering wasn't processed yet (enstemmig), ensure it exists in voteringer table
-          const finalVoteringId = finalVotering?.votering_id;
-          if (finalVoteringId) {
+          // If totals votering wasn't processed yet, ensure it exists in voteringer table
+          const totalsVoteringId = totalsVotering?.votering_id;
+          if (totalsVoteringId) {
             const { data: existingFinal } = await supabase
               .from('voteringer')
               .select('id')
-              .eq('stortinget_votering_id', String(finalVoteringId))
+              .eq('stortinget_votering_id', String(totalsVoteringId))
               .maybeSingle();
 
             if (!existingFinal) {
-              // Create the final votering record
+              // Create the votering record
               await supabase
                 .from('voteringer')
                 .insert({
-                  stortinget_votering_id: String(finalVoteringId),
+                  stortinget_votering_id: String(totalsVoteringId),
                   sak_id: sak.id,
-                  forslag_tekst: finalVotering?.votering_tema || sak.tittel,
-                  votering_dato: safeParseDate(finalVotering?.votering_tid),
+                  forslag_tekst: totalsVotering?.votering_tema || sak.tittel,
+                  votering_dato: safeParseDate(totalsVotering?.votering_tid),
                   status: 'avsluttet',
-                  vedtatt: finalVotering?.vedtatt === true || finalVotering?.vedtatt === 'true',
+                  vedtatt: totalsVotering?.vedtatt === true || totalsVotering?.vedtatt === 'true',
                   resultat_for: finalFor,
                   resultat_mot: finalMot,
                   resultat_avholdende: finalAvholdende,
