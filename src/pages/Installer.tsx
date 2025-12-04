@@ -73,7 +73,7 @@ export default function Installer() {
             <Smartphone className="h-12 w-12 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Installer Folkets Storting</h1>
+            <h1 className="text-2xl font-bold">Installer Folketinget</h1>
             <p className="text-muted-foreground mt-2">
               Få rask tilgang til appen fra hjemskjermen din
             </p>
@@ -86,7 +86,7 @@ export default function Installer() {
             <Check className="h-12 w-12 text-vote-for mx-auto mb-3" />
             <h2 className="font-semibold text-lg">Appen er installert!</h2>
             <p className="text-muted-foreground text-sm mt-2">
-              Du kjører allerede Folkets Storting som en app.
+              Du kjører allerede Folketinget som en app.
             </p>
           </div>
         )}

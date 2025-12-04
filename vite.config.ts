@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt", "apple-touch-icon.png"],
       manifest: {
-        name: "Folkets Storting",
-        short_name: "Folkets Storting",
+        name: "Folketinget",
+        short_name: "Folketinget",
         description: "Stem på Stortingets saker og se om politikerne representerer deg",
         theme_color: "#000000",
         background_color: "#000000",

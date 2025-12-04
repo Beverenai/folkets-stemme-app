@@ -18,7 +18,7 @@ export function usePageMeta({
   useEffect(() => {
     // Update document title
     if (title) {
-      document.title = `${title} | Folkets Storting`;
+      document.title = `${title} | Folketinget`;
     }
 
     // Update meta tags
@@ -55,9 +55,9 @@ export function usePageMeta({
 
     // Cleanup: Reset to defaults when component unmounts
     return () => {
-      document.title = 'Folkets Storting - Stem på Stortingets saker';
+      document.title = 'Folketinget - Stem på Stortingets saker';
       updateMetaTag('meta[name="description"]', 'Se hva folket mener om politiske saker og sammenlign med Stortinget. Stem på viktige politiske saker og se om politikerne representerer deg.');
-      updateMetaTag('meta[property="og:title"]', 'Folkets Storting - Stem på Stortingets saker');
+      updateMetaTag('meta[property="og:title"]', 'Folketinget - Stem på Stortingets saker');
       updateMetaTag('meta[property="og:description"]', 'Se hva folket mener om politiske saker og sammenlign med Stortinget. Stem på viktige politiske saker og se om politikerne representerer deg.');
       updateMetaTag('meta[property="og:image"]', 'https://lovable.dev/opengraph-image-p98pqg.png');
       updateMetaTag('meta[name="twitter:image"]', 'https://lovable.dev/opengraph-image-p98pqg.png');
