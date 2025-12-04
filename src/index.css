@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -8,45 +10,45 @@
 @layer base {
   :root {
     /* iOS True Black Background */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 98%;
-    
+    --background: 209 40% 96%;
+    --foreground: 222 47% 11%;
+
     /* iOS Dark Grey Cards */
-    --card: 0 0% 11%;
-    --card-foreground: 0 0% 98%;
-    
+    --card: 210 40% 98%;
+    --card-foreground: 222 47% 11%;
+
     /* iOS Popover */
-    --popover: 0 0% 11%;
-    --popover-foreground: 0 0% 98%;
-    
+    --popover: 214 31% 91%;
+    --popover-foreground: 222 47% 11%;
+
     /* iOS Cyan/Teal Primary */
-    --primary: 174 72% 39%;
-    --primary-foreground: 0 0% 100%;
-    
+    --primary: 216 19% 26%;
+    --primary-foreground: 210 19% 98%;
+
     /* iOS Secondary */
-    --secondary: 0 0% 17%;
-    --secondary-foreground: 0 0% 98%;
-    
+    --secondary: 215 19% 34%;
+    --secondary-foreground: 210 40% 98%;
+
     /* iOS Muted */
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 64%;
-    
+    --muted: 215 20% 65%;
+    --muted-foreground: 222 47% 11%;
+
     /* iOS Accent */
-    --accent: 174 72% 39%;
-    --accent-foreground: 0 0% 100%;
-    
+    --accent: 210 40% 98%;
+    --accent-foreground: 215 16% 46%;
+
     /* iOS Destructive Red */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 85% 97%;
+
     /* Border */
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 174 72% 39%;
-    
+    --border: 212 26% 83%;
+    --input: 212 26% 83%;
+    --ring: 216 19% 26%;
+
     /* Radius */
-    --radius: 1rem;
-    
+    --radius: 0rem;
+
     /* Vote colors - iOS style */
     --vote-for: 142 71% 45%;
     --vote-for-foreground: 0 0% 100%;
@@ -54,7 +56,7 @@
     --vote-mot-foreground: 0 0% 100%;
     --vote-avholdende: 47 96% 53%;
     --vote-avholdende-foreground: 0 0% 0%;
-    
+
     /* iOS System Colors */
     --ios-blue: 211 100% 50%;
     --ios-green: 142 71% 45%;
@@ -66,73 +68,88 @@
     --ios-purple: 280 100% 70%;
     --ios-pink: 340 82% 65%;
     --ios-gray: 0 0% 56%;
-    
+
     /* Success/Warning */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 47 96% 53%;
     --warning-foreground: 0 0% 0%;
-    
+
     /* Shadows for iOS depth */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.7);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
     --shadow-glow: 0 0 40px hsla(174, 72%, 39%, 0.3);
-    
+
     /* Sidebar */
     --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 174 72% 39%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 174 72% 39%;
-    
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 216 19% 26%;
+    --sidebar-primary-foreground: 210 19% 98%;
+    --sidebar-accent: 215 19% 34%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 212 26% 83%;
+    --sidebar-ring: 216 19% 26%;
+
     /* Safe areas for iPhone notch/Dynamic Island */
     --safe-area-inset-top: env(safe-area-inset-top, 0px);
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-inset-left: env(safe-area-inset-left, 0px);
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --chart-1: 217 10% 64%;
+    --chart-2: 215 20% 65%;
+    --chart-3: 215 16% 46%;
+    --chart-4: 219 8% 46%;
+    --chart-5: 215 19% 34%;
+    --sidebar: 210 40% 98%;
+    --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-serif: 'Crimson Pro', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
   }
 
   /* Light mode override */
   .light {
     --background: 0 0% 98%;
     --foreground: 0 0% 9%;
-    
+
     --card: 0 0% 100%;
     --card-foreground: 0 0% 9%;
-    
+
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
-    
+
     --primary: 174 72% 39%;
     --primary-foreground: 0 0% 100%;
-    
+
     --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 9%;
-    
+
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
-    
+
     --accent: 174 72% 39%;
     --accent-foreground: 0 0% 100%;
-    
+
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    
+
     --border: 0 0% 90%;
     --input: 0 0% 90%;
     --ring: 174 72% 39%;
-    
+
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
     --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
     --shadow-glow: 0 0 40px hsla(174, 72%, 39%, 0.15);
-    
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 9%;
     --sidebar-primary: 174 72% 39%;
@@ -141,6 +158,48 @@
     --sidebar-accent-foreground: 0 0% 9%;
     --sidebar-border: 0 0% 90%;
     --sidebar-ring: 174 72% 39%;
+  }
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 217 32% 17%;
+    --card-foreground: 210 40% 98%;
+    --popover: 215 24% 26%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 212 26% 83%;
+    --primary-foreground: 228 84% 4%;
+    --secondary: 215 19% 34%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 215 16% 46%;
+    --muted-foreground: 210 40% 98%;
+    --accent: 228 84% 4%;
+    --accent-foreground: 215 20% 65%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 85% 97%;
+    --border: 215 19% 34%;
+    --input: 215 19% 34%;
+    --ring: 212 26% 83%;
+    --chart-1: 215 12% 83%;
+    --chart-2: 212 26% 83%;
+    --chart-3: 215 20% 65%;
+    --chart-4: 217 10% 64%;
+    --chart-5: 215 16% 46%;
+    --sidebar: 217 32% 17%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 212 26% 83%;
+    --sidebar-primary-foreground: 228 84% 4%;
+    --sidebar-accent: 215 20% 65%;
+    --sidebar-accent-foreground: 228 84% 4%;
+    --sidebar-border: 215 19% 34%;
+    --sidebar-ring: 212 26% 83%;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   }
 }
 
@@ -442,7 +501,7 @@
   ::-webkit-scrollbar {
     display: none;
   }
-  
+
   * {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -455,16 +514,16 @@
     width: 6px;
     height: 6px;
   }
-  
+
   ::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.2);
     border-radius: 3px;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.4);
   }
