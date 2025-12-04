@@ -23,7 +23,7 @@ function safeParseDate(dateStr: string | null | undefined): string | null {
 }
 
 // Map vote value to standard format
-// Stortinget API returns text values: "for", "mot", "ikke_tilstede"
+// Stortinget API appears to use: 1 = mot, 2 = for, 3 = ikke_tilstede
 function normalizeVote(voteData: any, shouldLog: boolean = false): string {
   if (voteData === null || voteData === undefined) return 'ikke_tilstede';
   
@@ -33,19 +33,24 @@ function normalizeVote(voteData: any, shouldLog: boolean = false): string {
   }
   
   // Handle numeric vote codes from Stortinget API
+  // SWAPPED: Based on data analysis, 1 appears to be MOT and 2 appears to be FOR
   if (typeof voteData === 'number') {
-    if (voteData === 1) return 'for';
-    if (voteData === 2) return 'mot';
+    if (voteData === 1) return 'mot';  // Changed from 'for'
+    if (voteData === 2) return 'for';  // Changed from 'mot'
     if (voteData === 3) return 'ikke_tilstede';
     return 'ikke_tilstede';
   }
   
-  // Handle string votes
+  // Handle string votes (these are explicit and don't need swapping)
   if (typeof voteData === 'string') {
     const v = voteData.toLowerCase().trim();
-    if (v === 'for' || v === '1') return 'for';
-    if (v === 'mot' || v === 'imot' || v === '2') return 'mot';
-    if (v === 'avholdende' || v === 'ikke_avgitt_stemme' || v === 'ikke avgitt stemme' || v === '3') return 'avholdende';
+    if (v === 'for') return 'for';
+    if (v === 'mot' || v === 'imot') return 'mot';
+    if (v === 'avholdende' || v === 'ikke_avgitt_stemme' || v === 'ikke avgitt stemme') return 'avholdende';
+    // Numeric strings - apply same swap
+    if (v === '1') return 'mot';
+    if (v === '2') return 'for';
+    if (v === '3') return 'ikke_tilstede';
     return 'ikke_tilstede';
   }
   
