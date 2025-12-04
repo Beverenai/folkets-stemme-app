@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { getPartiConfig } from '@/lib/partiConfig';
 import { cn } from '@/lib/utils';
 
@@ -73,12 +74,13 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
           </div>
           <div className="flex flex-wrap gap-1.5">
             {forParties.map(p => (
-              <div
+              <Link
                 key={p.parti_forkortelse}
-                className="flex flex-col items-center"
+                to={`/parti/${p.parti_forkortelse}`}
+                className="flex flex-col items-center ios-press"
               >
                 <div
-                  className="h-10 w-10 rounded-lg flex items-center justify-center text-[11px] font-bold shadow-sm"
+                  className="h-10 w-10 rounded-lg flex items-center justify-center text-[11px] font-bold shadow-sm hover:scale-105 transition-transform"
                   style={{ backgroundColor: p.config.farge, color: p.config.tekstFarge }}
                   title={p.config.navn}
                 >
@@ -87,7 +89,7 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
                 <span className="text-[10px] font-semibold text-vote-for mt-1">
                   {p.stemmer_for}
                 </span>
-              </div>
+              </Link>
             ))}
             {forParties.length === 0 && (
               <span className="text-xs text-muted-foreground">Ingen</span>
@@ -108,12 +110,13 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
           </div>
           <div className="flex flex-wrap gap-1.5 justify-end">
             {motParties.map(p => (
-              <div
+              <Link
                 key={p.parti_forkortelse}
-                className="flex flex-col items-center"
+                to={`/parti/${p.parti_forkortelse}`}
+                className="flex flex-col items-center ios-press"
               >
                 <div
-                  className="h-10 w-10 rounded-lg flex items-center justify-center text-[11px] font-bold shadow-sm"
+                  className="h-10 w-10 rounded-lg flex items-center justify-center text-[11px] font-bold shadow-sm hover:scale-105 transition-transform"
                   style={{ backgroundColor: p.config.farge, color: p.config.tekstFarge }}
                   title={p.config.navn}
                 >
@@ -122,7 +125,7 @@ export default function PartiVoteringList({ partiVotes, voteringCount }: PartiVo
                 <span className="text-[10px] font-semibold text-vote-mot mt-1">
                   {p.stemmer_mot}
                 </span>
-              </div>
+              </Link>
             ))}
             {motParties.length === 0 && (
               <span className="text-xs text-muted-foreground">Ingen</span>
