@@ -99,7 +99,7 @@ export default function StemKort({
             <Building2 className="h-4 w-4" />
             <span className="text-xs font-medium">Stortinget</span>
           </div>
-          <div className="flex items-center gap-1.5 text-primary text-xs font-semibold">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm text-white text-xs font-semibold">
             <Clock className="h-3.5 w-3.5" />
             <span>{getDaysText()}</span>
           </div>
@@ -124,7 +124,7 @@ export default function StemKort({
 
         {/* Category badge */}
         {kategori && (
-          <span className="inline-flex self-start px-3 py-1 rounded-full bg-primary/20 backdrop-blur-sm text-primary text-xs font-semibold mb-3">
+          <span className="inline-flex self-start px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-white text-xs font-semibold border border-white/20 mb-3">
             {kategori}
           </span>
         )}
