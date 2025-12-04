@@ -218,14 +218,15 @@ export default function Stem() {
     await voteMutation.mutateAsync({ sakId: selectedSak.id, vote });
   };
 
-  const handleShare = useCallback(async () => {
-    if (!selectedSak) return;
+  const handleShare = useCallback(async (sak?: Sak) => {
+    const sakToShare = sak || selectedSak;
+    if (!sakToShare) return;
     
     triggerHaptic('light');
     const shareData = {
-      title: selectedSak.spoersmaal || selectedSak.kort_tittel || selectedSak.tittel,
+      title: sakToShare.spoersmaal || sakToShare.kort_tittel || sakToShare.tittel,
       text: `Stem på denne saken på Folketinget!`,
-      url: `${window.location.origin}/sak/${selectedSak.id}`,
+      url: `${window.location.origin}/sak/${sakToShare.id}`,
     };
 
     if (navigator.share) {
@@ -290,8 +291,14 @@ export default function Stem() {
                   kortTittel={sak.kort_tittel}
                   kategori={sak.kategori}
                   stengtDato={sak.stengt_dato || null}
-                  voteCount={getVoteStats(sak).total}
+                  stortingetFor={sak.stortinget_votering_for}
+                  stortingetMot={sak.stortinget_votering_mot}
+                  stortingetAvholdende={sak.stortinget_votering_avholdende}
+                  folkeFor={sak.voteStats?.for || 0}
+                  folkeMot={sak.voteStats?.mot || 0}
+                  folkeAvholdende={sak.voteStats?.avholdende || 0}
                   onStemNå={() => handleOpenModal(sak)}
+                  onShare={() => handleShare(sak)}
                   isActive={index === currentIndex}
                 />
               </div>

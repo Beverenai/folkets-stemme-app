@@ -1,7 +1,8 @@
 import { getSakBildeUrl, getKategoriConfig } from '@/lib/kategoriConfig';
 import { cn } from '@/lib/utils';
 import { triggerHaptic } from '@/lib/haptics';
-import { Clock, Building2, Users, TrendingUp } from 'lucide-react';
+import { Clock, Building2, Share2 } from 'lucide-react';
+import ResultBar from '@/components/ResultBar';
 
 interface StemKortProps {
   sakId: string;
@@ -10,8 +11,14 @@ interface StemKortProps {
   kortTittel: string | null;
   kategori: string | null;
   stengtDato: string | null;
-  voteCount: number;
+  stortingetFor: number | null;
+  stortingetMot: number | null;
+  stortingetAvholdende: number | null;
+  folkeFor: number;
+  folkeMot: number;
+  folkeAvholdende: number;
   onStemNå: () => void;
+  onShare: () => void;
   isActive?: boolean;
 }
 
@@ -22,13 +29,27 @@ export default function StemKort({
   kortTittel,
   kategori,
   stengtDato,
-  voteCount,
+  stortingetFor,
+  stortingetMot,
+  stortingetAvholdende,
+  folkeFor,
+  folkeMot,
+  folkeAvholdende,
   onStemNå,
+  onShare,
   isActive = false,
 }: StemKortProps) {
   const bildeUrl = getSakBildeUrl(kategori, sakId);
   const kategoriConfig = getKategoriConfig(kategori);
   const displayQuestion = spoersmaal || kortTittel || tittel;
+
+  // Check if Stortinget has voted
+  const stortingetTotal = (stortingetFor || 0) + (stortingetMot || 0) + (stortingetAvholdende || 0);
+  const hasStortingetVote = stortingetTotal > 0;
+
+  // Check if folket has voted
+  const folkeTotal = folkeFor + folkeMot + folkeAvholdende;
+  const hasFolkeVotes = folkeTotal > 0;
 
   // Calculate days remaining
   const getDaysText = () => {
@@ -49,20 +70,11 @@ export default function StemKort({
     onStemNå();
   };
 
-  // Format vote count
-  const formatVoteCount = (count: number) => {
-    if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
-    return count.toString();
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHaptic('light');
+    onShare();
   };
-
-  // Get engagement level
-  const getEngagementLevel = (count: number) => {
-    if (count >= 100) return { label: 'Høyt engasjement', color: 'text-[hsl(var(--ios-green))]' };
-    if (count >= 20) return { label: 'Aktivt', color: 'text-[hsl(var(--ios-yellow))]' };
-    return { label: 'Ny sak', color: 'text-muted-foreground' };
-  };
-
-  const engagement = getEngagementLevel(voteCount);
 
   return (
     <div 
@@ -105,20 +117,6 @@ export default function StemKort({
           </div>
         </div>
 
-        {/* Vote count badge */}
-        {voteCount > 0 && (
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm">
-              <Users className="h-3.5 w-3.5 text-white/80" />
-              <span className="text-xs font-semibold text-white">{formatVoteCount(voteCount)} stemmer</span>
-            </div>
-            <div className={cn("flex items-center gap-1 text-xs font-medium", engagement.color)}>
-              <TrendingUp className="h-3 w-3" />
-              <span>{engagement.label}</span>
-            </div>
-          </div>
-        )}
-
         {/* Spacer */}
         <div className="flex-1" />
 
@@ -130,17 +128,64 @@ export default function StemKort({
         )}
 
         {/* Question */}
-        <h2 className="text-xl font-bold text-white leading-tight mb-5 line-clamp-4">
+        <h2 className="text-xl font-bold text-white leading-tight mb-4 line-clamp-3">
           {displayQuestion}
         </h2>
 
-        {/* STEM NÅ button */}
-        <button
-          onClick={handleStemNå}
-          className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-lg ios-press hover:brightness-110 transition-all shadow-lg shadow-primary/30"
-        >
-          STEM NÅ
-        </button>
+        {/* Stortingets vedtak */}
+        {hasStortingetVote && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xs font-medium text-white/70">🏛️ Stortingets vedtak</span>
+            </div>
+            <ResultBar
+              forCount={stortingetFor || 0}
+              motCount={stortingetMot || 0}
+              avholdendeCount={stortingetAvholdende || 0}
+              showLabels={false}
+              showPercentages
+              size="sm"
+            />
+          </div>
+        )}
+
+        {/* Folkets mening */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs font-medium text-white/70">👥 Folkets mening</span>
+            {hasFolkeVotes && (
+              <span className="text-xs text-white/50">({folkeTotal} stemmer)</span>
+            )}
+          </div>
+          {hasFolkeVotes ? (
+            <ResultBar
+              forCount={folkeFor}
+              motCount={folkeMot}
+              avholdendeCount={folkeAvholdende}
+              showLabels={false}
+              showPercentages
+              size="sm"
+            />
+          ) : (
+            <p className="text-xs text-white/50 italic">Vær den første til å stemme!</p>
+          )}
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleStemNå}
+            className="flex-1 py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-base ios-press hover:brightness-110 transition-all shadow-lg shadow-primary/30"
+          >
+            LES MER
+          </button>
+          <button
+            onClick={handleShare}
+            className="px-5 py-3.5 rounded-2xl bg-white/15 backdrop-blur-sm text-white font-semibold text-base ios-press hover:bg-white/25 transition-all border border-white/20"
+          >
+            <Share2 className="h-5 w-5" />
+          </button>
+        </div>
       </div>
     </div>
   );
