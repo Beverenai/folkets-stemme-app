@@ -10,6 +10,7 @@ import PartiBadge from '@/components/PartiBadge';
 import { cn } from '@/lib/utils';
 import ResultBar from '@/components/ResultBar';
 import { getProxiedImageUrl } from '@/lib/imageProxy';
+import SwipeBackIndicator from '@/components/SwipeBackIndicator';
 
 interface Representant {
   id: string;
@@ -296,6 +297,7 @@ export default function RepresentantDetalj() {
 
   return (
     <div className="min-h-screen bg-background pb-safe">
+      <SwipeBackIndicator />
       {/* iOS-style header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between p-4 pt-safe">

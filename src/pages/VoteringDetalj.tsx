@@ -11,6 +11,7 @@ import ResultBar from '@/components/ResultBar';
 import PartiVoteringList from '@/components/PartiVoteringList';
 import RepresentantVoteList from '@/components/RepresentantVoteList';
 import KategoriBadge from '@/components/KategoriBadge';
+import SwipeBackIndicator from '@/components/SwipeBackIndicator';
 
 interface Votering {
   id: string;
@@ -243,6 +244,7 @@ export default function VoteringDetalj() {
 
   return (
     <Layout hideHeader>
+      <SwipeBackIndicator />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 safe-top">
         <div className="flex items-center justify-between h-14 px-4">
