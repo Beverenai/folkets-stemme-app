@@ -23,9 +23,14 @@ function safeParseDate(dateStr: string | null | undefined): string | null {
 }
 
 // Map vote value to standard format
-// Stortinget API uses: 1 = for, 2 = mot, 3 = ikke_tilstede
-function normalizeVote(voteData: any): string {
+// Stortinget API returns text values: "for", "mot", "ikke_tilstede"
+function normalizeVote(voteData: any, shouldLog: boolean = false): string {
   if (voteData === null || voteData === undefined) return 'ikke_tilstede';
+  
+  // Log first few votes to debug
+  if (shouldLog) {
+    console.log(`Raw vote value: ${JSON.stringify(voteData)} (type: ${typeof voteData})`);
+  }
   
   // Handle numeric vote codes from Stortinget API
   if (typeof voteData === 'number') {
@@ -47,7 +52,7 @@ function normalizeVote(voteData: any): string {
   // Handle object with value
   if (typeof voteData === 'object') {
     const value = voteData['$value'] || voteData.tekst || voteData.value || voteData.vote;
-    return normalizeVote(value);
+    return normalizeVote(value, shouldLog);
   }
   
   return 'ikke_tilstede';
@@ -184,6 +189,12 @@ async function processVoteringVotes(
   }
 
   console.log(`Processing ${representantList.length} individual votes for votering ${voteringId}`);
+  
+  // Log first 3 raw vote values for debugging
+  for (let i = 0; i < Math.min(3, representantList.length); i++) {
+    const rv = representantList[i];
+    console.log(`Sample vote ${i}: votering=${JSON.stringify(rv?.votering)}, representant=${rv?.representant?.fornavn} ${rv?.representant?.etternavn}`);
+  }
 
   let countFor = 0, countMot = 0, countAvh = 0;
   const votesToInsert: any[] = [];
