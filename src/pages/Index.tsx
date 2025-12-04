@@ -5,11 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BarChart3, ChevronRight, Sparkles, Users, FileText, Vote } from 'lucide-react';
+import { BarChart3, ChevronRight, Sparkles, Users, Vote, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import KategoriBadge from '@/components/KategoriBadge';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { nb } from 'date-fns/locale';
+
 interface ViktigSak {
   id: string;
   tittel: string;
@@ -18,7 +19,7 @@ interface ViktigSak {
   kategori: string | null;
   status: string;
   updated_at: string;
-  prosess_steg: number | null;
+  siste_votering_dato: string | null;
   stortinget_votering_for: number | null;
   stortinget_votering_mot: number | null;
   stortinget_votering_avholdende: number | null;
@@ -29,20 +30,35 @@ interface ViktigSak {
 async function fetchHomeData() {
   const sb = supabase as any;
   
-  // Parallel fetch all data
+  // First get sak IDs that have votings
+  const { data: voteringData } = await sb
+    .from('voteringer')
+    .select('sak_id, votering_dato')
+    .not('sak_id', 'is', null)
+    .order('votering_dato', { ascending: false });
+  
+  // Group by sak_id and get latest votering_dato
+  const sakVoteringMap = new Map<string, string>();
+  (voteringData || []).forEach((v: any) => {
+    if (v.sak_id && !sakVoteringMap.has(v.sak_id)) {
+      sakVoteringMap.set(v.sak_id, v.votering_dato);
+    }
+  });
+  const sakIdsWithVotings = Array.from(sakVoteringMap.keys());
+
+  // Parallel fetch saker and sync
   const [sakerRes, syncRes] = await Promise.all([
-    // Fetch pågående viktige saker (kommende voteringer)
     sb
       .from('stortinget_saker')
-      .select('id, tittel, kort_tittel, oppsummering, kategori, status, updated_at, prosess_steg, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat, argumenter_for')
+      .select('id, tittel, kort_tittel, oppsummering, kategori, status, updated_at, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat, argumenter_for')
       .eq('er_viktig', true)
       .eq('status', 'pågående')
       .not('oppsummering', 'is', null)
       .not('argumenter_for', 'eq', '[]')
+      .in('id', sakIdsWithVotings.length > 0 ? sakIdsWithVotings : ['00000000-0000-0000-0000-000000000000'])
       .order('updated_at', { ascending: false })
       .limit(12),
     
-    // Fetch last sync
     sb
       .from('sync_log')
       .select('completed_at')
@@ -65,9 +81,10 @@ async function fetchHomeData() {
     folkeData = stemmer || [];
   }
 
-  // Merge folk votes with saker
+  // Merge folk votes and votering dates with saker
   const sakerWithStemmer = saker.map((s: any) => ({
     ...s,
+    siste_votering_dato: sakVoteringMap.get(s.id) || null,
     folke_stemmer: folkeData.filter((st: any) => st.sak_id === s.id)
   }));
   
@@ -176,10 +193,10 @@ export default function Index() {
                 const folkeForPct = folkeCounts.total > 0 ? Math.round((folkeCounts.for / folkeCounts.total) * 100) : 0;
                 const stortingetForPct = stortingetTotal > 0 ? Math.round(((sak.stortinget_votering_for || 0) / stortingetTotal) * 100) : 0;
                 
-                // Prosess steg label
-                const prosessSteg = sak.prosess_steg || 1;
-                const prosessLabel = prosessSteg === 1 ? 'Forslag' : prosessSteg === 2 ? 'I komité' : 'Votering';
-                const ProsessIcon = prosessSteg === 1 ? FileText : prosessSteg === 2 ? Users : Vote;
+                // Voting date formatting
+                const voteringDato = sak.siste_votering_dato 
+                  ? format(new Date(sak.siste_votering_dato), 'd. MMM', { locale: nb })
+                  : null;
 
                 return (
                   <Link
@@ -190,16 +207,15 @@ export default function Index() {
                   >
                     <div className="absolute inset-0 glass-gradient rounded-2xl" />
                     <div className="relative z-[1]">
-                      {/* Header with kategori and process step */}
+                      {/* Header with kategori and voting date */}
                       <div className="flex items-center justify-between mb-3">
                         <KategoriBadge kategori={sak.kategori} size="sm" />
-                        <span className={cn(
-                          'px-2 py-1 rounded-full text-[10px] font-medium flex items-center gap-1',
-                          prosessSteg === 3 ? 'bg-ios-orange/20 text-ios-orange' : 'bg-primary/20 text-primary'
-                        )}>
-                          <ProsessIcon className="h-3 w-3" />
-                          {prosessLabel}
-                        </span>
+                        {voteringDato && (
+                          <span className="px-2 py-1 rounded-full text-[10px] font-medium flex items-center gap-1 bg-ios-orange/20 text-ios-orange">
+                            <Vote className="h-3 w-3" />
+                            Votert {voteringDato}
+                          </span>
+                        )}
                       </div>
 
                       {/* Title */}
