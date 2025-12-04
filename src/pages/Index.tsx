@@ -30,11 +30,12 @@ interface ViktigSak {
 async function fetchHomeData() {
   const sb = supabase as any;
   
-  // First get sak IDs that have votings
+  // First get sak IDs that have votings WITH REAL RESULTS
   const { data: voteringData } = await sb
     .from('voteringer')
     .select('sak_id, votering_dato')
     .not('sak_id', 'is', null)
+    .gt('resultat_for', 0)  // Only votings with actual results
     .order('votering_dato', { ascending: false });
   
   // Group by sak_id and get latest votering_dato
