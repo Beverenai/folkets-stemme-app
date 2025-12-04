@@ -32,16 +32,16 @@ export default function Layout({ children, hideHeader, hideNav, title }: LayoutP
 
   return (
     <div className="min-h-screen bg-background">
-      {/* NRK-style Header - Desktop */}
-      <header className="hidden md:block sticky top-0 z-50 nrk-header border-b border-white/10">
+      {/* Header - Desktop */}
+      <header className="hidden md:block sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex h-14 items-center justify-between">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
                 <span className="text-lg">🏛️</span>
               </div>
-              <span className="font-semibold text-lg text-white">
+              <span className="font-semibold text-lg text-foreground">
                 Folketinget
               </span>
             </Link>
@@ -56,13 +56,16 @@ export default function Layout({ children, hideHeader, hideNav, title }: LayoutP
                     key={item.href}
                     to={item.href}
                     className={cn(
-                      'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ios-press',
+                      'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ios-press',
                       isActive
-                        ? 'bg-white/20 text-white'
-                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                     )}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className={cn(
+                      'h-4 w-4 transition-transform duration-200',
+                      isActive && 'scale-110'
+                    )} />
                     {item.label}
                   </Link>
                 );
@@ -76,7 +79,7 @@ export default function Layout({ children, hideHeader, hideNav, title }: LayoutP
                   variant="ghost"
                   size="sm"
                   onClick={handleSignOut}
-                  className="text-white/70 hover:text-white hover:bg-white/10 ios-press"
+                  className="text-muted-foreground hover:text-foreground hover:bg-secondary ios-press"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Logg ut
@@ -85,7 +88,7 @@ export default function Layout({ children, hideHeader, hideNav, title }: LayoutP
                 <Button
                   onClick={() => navigate('/auth')}
                   size="sm"
-                  className="bg-white text-[hsl(220,45%,16%)] hover:bg-white/90 ios-press"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 ios-press shadow-sm"
                 >
                   Logg inn
                 </Button>
@@ -95,11 +98,11 @@ export default function Layout({ children, hideHeader, hideNav, title }: LayoutP
         </div>
       </header>
 
-      {/* NRK-style Mobile Header */}
+      {/* Mobile Header */}
       {!hideHeader && (
-        <header className="md:hidden sticky top-0 z-40 nrk-header safe-top">
+        <header className="md:hidden sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border safe-top">
           <div className="flex items-center justify-center h-12 px-4 relative">
-            <h1 className="font-semibold text-[17px] text-white">
+            <h1 className="font-semibold text-[17px] text-foreground">
               {title || 'Folketinget'}
             </h1>
           </div>

@@ -14,8 +14,8 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      {/* iOS-style frosted glass background */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-xl border-t border-border/30" />
+      {/* Frosted glass background */}
+      <div className="absolute inset-0 bg-card/90 backdrop-blur-xl border-t border-border" />
       
       {/* Content */}
       <div className="relative flex items-center justify-around h-[84px] px-6 safe-bottom">
@@ -30,23 +30,31 @@ export default function BottomNav() {
               to={item.href}
               onClick={() => triggerHaptic('light')}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 min-w-[64px] py-1 transition-all duration-300 ease-out',
-                isActive ? 'text-primary' : 'text-muted-foreground/70 active:text-muted-foreground'
+                'flex flex-col items-center justify-center gap-1 min-w-[72px] py-2 rounded-2xl transition-all duration-200 ease-out',
+                isActive 
+                  ? 'text-primary' 
+                  : 'text-muted-foreground active:text-foreground active:scale-95'
               )}
             >
-              <div className="relative flex items-center justify-center h-7">
+              {/* Icon container with active background */}
+              <div className={cn(
+                'relative flex items-center justify-center h-8 w-12 rounded-2xl transition-all duration-200',
+                isActive && 'bg-primary/15'
+              )}>
                 <Icon
                   className={cn(
-                    'h-[26px] w-[26px] transition-transform duration-300',
+                    'h-6 w-6 transition-all duration-200',
                     isActive && 'scale-105'
                   )}
-                  strokeWidth={isActive ? 2 : 1.5}
+                  strokeWidth={isActive ? 2.5 : 1.75}
                   fill={isActive ? 'currentColor' : 'none'}
                 />
               </div>
+              
+              {/* Label */}
               <span className={cn(
-                'text-[10px] tracking-tight transition-all duration-300',
-                isActive ? 'font-semibold' : 'font-medium'
+                'text-[11px] tracking-tight transition-all duration-200',
+                isActive ? 'font-bold' : 'font-medium'
               )}>
                 {item.label}
               </span>
