@@ -6,55 +6,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* iOS Dark Mode as Default - True Black Theme */
+/* iOS Consistent Color Theme - True Black Dark Mode */
 @layer base {
+  /* Shared values for both modes */
   :root {
-    /* iOS True Black Background */
-    --background: 209 40% 96%;
-    --foreground: 222 47% 11%;
+    /* Border Radius */
+    --radius: 0.75rem;
 
-    /* iOS Dark Grey Cards */
-    --card: 210 40% 98%;
-    --card-foreground: 222 47% 11%;
-
-    /* iOS Popover */
-    --popover: 214 31% 91%;
-    --popover-foreground: 222 47% 11%;
-
-    /* iOS Cyan/Teal Primary */
-    --primary: 216 19% 26%;
-    --primary-foreground: 210 19% 98%;
-
-    /* iOS Secondary */
-    --secondary: 215 19% 34%;
-    --secondary-foreground: 210 40% 98%;
-
-    /* iOS Muted */
-    --muted: 215 20% 65%;
-    --muted-foreground: 222 47% 11%;
-
-    /* iOS Accent */
-    --accent: 210 40% 98%;
-    --accent-foreground: 215 16% 46%;
-
-    /* iOS Destructive Red */
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
-
-    /* Border */
-    --border: 212 26% 83%;
-    --input: 212 26% 83%;
-    --ring: 216 19% 26%;
-
-    /* Radius */
-    --radius: 0rem;
-
-    /* Vote colors - iOS style */
+    /* Vote colors - Consistent across modes (Green=For, Red=Mot, Yellow=Avholdende) */
     --vote-for: 142 71% 45%;
     --vote-for-foreground: 0 0% 100%;
     --vote-mot: 0 84% 60%;
     --vote-mot-foreground: 0 0% 100%;
-    --vote-avholdende: 47 96% 53%;
+    --vote-avholdende: 45 93% 47%;
     --vote-avholdende-foreground: 0 0% 0%;
 
     /* iOS System Colors */
@@ -62,144 +26,178 @@
     --ios-green: 142 71% 45%;
     --ios-red: 0 84% 60%;
     --ios-orange: 28 100% 50%;
-    --ios-yellow: 47 96% 53%;
+    --ios-yellow: 45 93% 47%;
     --ios-teal: 174 72% 39%;
     --ios-cyan: 187 92% 50%;
     --ios-purple: 280 100% 70%;
     --ios-pink: 340 82% 65%;
     --ios-gray: 0 0% 56%;
 
-    /* Success/Warning */
+    /* Success/Warning - Match vote colors for consistency */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 47 96% 53%;
+    --warning: 45 93% 47%;
     --warning-foreground: 0 0% 0%;
-
-    /* Shadows for iOS depth */
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-glow: 0 0 40px hsla(174, 72%, 39%, 0.3);
-
-    /* Sidebar */
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 216 19% 26%;
-    --sidebar-primary-foreground: 210 19% 98%;
-    --sidebar-accent: 215 19% 34%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 212 26% 83%;
-    --sidebar-ring: 216 19% 26%;
 
     /* Safe areas for iPhone notch/Dynamic Island */
     --safe-area-inset-top: env(safe-area-inset-top, 0px);
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-inset-left: env(safe-area-inset-left, 0px);
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
-    --chart-1: 217 10% 64%;
-    --chart-2: 215 20% 65%;
-    --chart-3: 215 16% 46%;
-    --chart-4: 219 8% 46%;
-    --chart-5: 215 19% 34%;
-    --sidebar: 210 40% 98%;
+
+    /* Typography */
     --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
     --font-serif: 'Crimson Pro', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
     --font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
+
+    /* NRK Colors - Map to semantic colors for consistency */
+    --nrk-primary: 174 100% 39%;
+    --nrk-success: 142 71% 45%;
+    --nrk-danger: 0 84% 60%;
+    --nrk-neutral: 0 0% 56%;
+    --nrk-light-gray: 0 0% 90%;
+    --nrk-divider: 0 0% 20%;
+    --nrk-dark-text: 0 0% 9%;
   }
 
-  /* Light mode override */
-  .light {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 9%;
+  /* Dark Mode - TRUE BLACK iOS Theme (Default) */
+  .dark {
+    /* True Black Background */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    /* iOS Dark Grey Cards (#1C1C1E) */
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    /* Popover - Slightly lighter for elevation */
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 174 72% 39%;
+    /* Primary - Teal Accent (#00C7BE) */
+    --primary: 174 100% 39%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 9%;
+    /* Secondary - Dark Grey (#2C2C2E) */
+    --secondary: 0 0% 17%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    /* Muted - iOS Grey (#8E8E93) */
+    --muted: 0 0% 17%;
+    --muted-foreground: 0 0% 56%;
 
-    --accent: 174 72% 39%;
+    /* Accent - Same as Primary for consistency */
+    --accent: 174 100% 39%;
     --accent-foreground: 0 0% 100%;
 
+    /* Destructive - iOS Red */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
+    /* Border - Subtle dark separator */
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 174 100% 39%;
+
+    /* Chart colors */
+    --chart-1: 174 100% 39%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 211 100% 50%;
+    --chart-4: 280 100% 70%;
+    --chart-5: 45 93% 47%;
+
+    /* Sidebar */
+    --sidebar: 0 0% 7%;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 174 100% 39%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 17%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 174 100% 39%;
+
+    /* Shadows */
+    --shadow-2xs: 0 1px 2px hsl(0 0% 0% / 0.3);
+    --shadow-xs: 0 1px 3px hsl(0 0% 0% / 0.4);
+    --shadow-sm: 0 2px 4px hsl(0 0% 0% / 0.4);
+    --shadow: 0 2px 8px hsl(0 0% 0% / 0.5);
+    --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.5);
+    --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.6);
+    --shadow-xl: 0 16px 48px hsl(0 0% 0% / 0.7);
+    --shadow-2xl: 0 24px 64px hsl(0 0% 0% / 0.8);
+    --shadow-glow: 0 0 40px hsla(174, 100%, 39%, 0.3);
+  }
+
+  /* Light Mode - Clean iOS Light Theme */
+  .light {
+    /* iOS Light Grey Background (#F2F2F7) */
+    --background: 240 6% 97%;
+    --foreground: 0 0% 9%;
+
+    /* White Cards */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+
+    /* Primary - Same Teal Accent */
+    --primary: 174 100% 39%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Light Grey */
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 0 0% 9%;
+
+    /* Muted */
+    --muted: 240 5% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    /* Accent - Same as Primary */
+    --accent: 174 100% 39%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border */
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 174 72% 39%;
+    --ring: 174 100% 39%;
 
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
-    --shadow-glow: 0 0 40px hsla(174, 72%, 39%, 0.15);
+    /* Chart colors */
+    --chart-1: 174 100% 39%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 211 100% 50%;
+    --chart-4: 280 100% 70%;
+    --chart-5: 45 93% 47%;
 
+    /* Sidebar */
+    --sidebar: 0 0% 98%;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 174 72% 39%;
+    --sidebar-primary: 174 100% 39%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent: 240 5% 96%;
     --sidebar-accent-foreground: 0 0% 9%;
     --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 174 72% 39%;
-  }
-  .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 217 32% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 215 24% 26%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 212 26% 83%;
-    --primary-foreground: 228 84% 4%;
-    --secondary: 215 19% 34%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 215 16% 46%;
-    --muted-foreground: 210 40% 98%;
-    --accent: 228 84% 4%;
-    --accent-foreground: 215 20% 65%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
-    --border: 215 19% 34%;
-    --input: 215 19% 34%;
-    --ring: 212 26% 83%;
-    --chart-1: 215 12% 83%;
-    --chart-2: 212 26% 83%;
-    --chart-3: 215 20% 65%;
-    --chart-4: 217 10% 64%;
-    --chart-5: 215 16% 46%;
-    --sidebar: 217 32% 17%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 212 26% 83%;
-    --sidebar-primary-foreground: 228 84% 4%;
-    --sidebar-accent: 215 20% 65%;
-    --sidebar-accent-foreground: 228 84% 4%;
-    --sidebar-border: 215 19% 34%;
-    --sidebar-ring: 212 26% 83%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --sidebar-ring: 174 100% 39%;
+
+    /* Shadows - Lighter for light mode */
+    --shadow-2xs: 0 1px 2px hsl(0 0% 0% / 0.03);
+    --shadow-xs: 0 1px 3px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 2px 4px hsl(0 0% 0% / 0.06);
+    --shadow: 0 2px 8px hsl(0 0% 0% / 0.08);
+    --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.12);
+    --shadow-xl: 0 16px 48px hsl(0 0% 0% / 0.15);
+    --shadow-2xl: 0 24px 64px hsl(0 0% 0% / 0.18);
+    --shadow-glow: 0 0 40px hsla(174, 100%, 39%, 0.15);
   }
 }
 
@@ -232,21 +230,21 @@
 }
 
 @layer utilities {
-  /* iOS Glass Effects */
+  /* iOS Glass Effects - Dark mode aware */
   .glass {
-    background: hsla(0, 0%, 11%, 0.8);
+    @apply bg-card/80;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
 
   .glass-heavy {
-    background: hsla(0, 0%, 11%, 0.95);
+    @apply bg-card/95;
     backdrop-filter: blur(40px) saturate(200%);
     -webkit-backdrop-filter: blur(40px) saturate(200%);
   }
 
   .glass-subtle {
-    background: hsla(0, 0%, 11%, 0.6);
+    @apply bg-card/60;
     backdrop-filter: blur(10px) saturate(150%);
     -webkit-backdrop-filter: blur(10px) saturate(150%);
   }
