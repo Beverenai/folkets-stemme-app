@@ -91,7 +91,7 @@ export default function IntroSlide({
             href={stortingetUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium ios-press hover:bg-white/20 transition-colors"
+            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white text-sm font-medium ios-press hover:bg-white/15 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
           >
             <ExternalLink className="h-4 w-4" />
             Les forslaget på Stortinget.no
