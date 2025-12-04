@@ -35,7 +35,44 @@ interface Sak {
   voteStats?: { for: number; mot: number; avholdende: number };
 }
 
-// Fetch saker for voting - prioritize cases with actual Stortinget voting data
+// Diversify saker - limit budget cases and ensure category variety
+function diversifySaker(saker: typeof rawSaker): typeof rawSaker {
+  let budgetCount = 0;
+  const MAX_BUDGET = 2;
+  
+  return saker.filter(sak => {
+    const kortTittel = sak.kort_tittel?.toLowerCase() || '';
+    const isBudget = kortTittel.includes('statsbudsjett') || kortTittel.includes('saldering');
+    
+    if (isBudget) {
+      budgetCount++;
+      return budgetCount <= MAX_BUDGET;
+    }
+    return true;
+  });
+}
+
+// Placeholder for type inference
+let rawSaker: Array<{
+  id: string;
+  stortinget_id: string;
+  tittel: string;
+  kort_tittel: string | null;
+  spoersmaal: string | null;
+  kategori: string | null;
+  oppsummering: string | null;
+  beskrivelse: string | null;
+  argumenter_for: Json;
+  argumenter_mot: Json;
+  stortinget_votering_for: number | null;
+  stortinget_votering_mot: number | null;
+  stortinget_votering_avholdende: number | null;
+  komite_navn: string | null;
+  forslagsstiller: Json;
+  stengt_dato: string | null;
+}> = [];
+
+// Fetch saker for voting - prioritize diverse cases with actual voting data
 async function fetchSakerForStemming(userId: string | null) {
   const { data: saker, error } = await supabase
     .from('stortinget_saker')
@@ -60,19 +97,17 @@ async function fetchSakerForStemming(userId: string | null) {
     .eq('er_viktig', true)
     .not('oppsummering', 'is', null)
     .not('spoersmaal', 'is', null)
+    // Exclude budget chapter duplicates (keep main budget votes only)
+    .not('kort_tittel', 'ilike', '%statsbudsjett%kapitler%')
+    .gt('stortinget_votering_for', 0) // Only cases with actual voting data
     .order('created_at', { ascending: false })
-    .limit(50);
+    .limit(100);
 
   if (error) throw error;
 
-  // Sort to prioritize cases with actual voting data from Stortinget
-  const sortedSaker = [...(saker || [])].sort((a, b) => {
-    const aHasVotes = (a.stortinget_votering_for ?? 0) > 0;
-    const bHasVotes = (b.stortinget_votering_for ?? 0) > 0;
-    if (aHasVotes && !bHasVotes) return -1;
-    if (!aHasVotes && bHasVotes) return 1;
-    return 0;
-  }).slice(0, 25);
+  // Diversify: limit budget cases to max 2
+  const diversified = diversifySaker(saker || []);
+  const sortedSaker = diversified.slice(0, 25);
 
   // Fetch user votes if logged in
   let userVotesMap: Record<string, string> = {};
