@@ -27,7 +27,7 @@ export default function VoteSlide({
 
   if (!isLoggedIn) {
     return (
-      <div className="h-full flex flex-col items-center justify-center px-4 pb-20">
+      <div className="h-full flex flex-col items-center justify-center px-4 pb-12">
         <div className="premium-card p-8 text-center w-full max-w-sm">
           <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-5">
             <LogIn className="h-8 w-8 text-primary" />
@@ -49,7 +49,7 @@ export default function VoteSlide({
   }
 
   return (
-    <div className="h-full flex flex-col px-4 pt-6 pb-20">
+    <div className="h-full flex flex-col px-4 pt-6 pb-12">
       <h2 className="text-sm font-medium text-muted-foreground mb-4">Stem på forslaget</h2>
       
       {/* Spørsmålet */}

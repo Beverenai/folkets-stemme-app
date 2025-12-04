@@ -10,7 +10,7 @@ export default function ArgumentsSlide({ argumenterFor, argumenterMot }: Argumen
   const hasArguments = totalArguments > 0;
 
   return (
-    <div className="h-full flex flex-col px-4 pt-6 pb-20">
+    <div className="h-full flex flex-col px-4 pt-6 pb-12">
       <h2 className="text-xl font-bold text-primary mb-2">Argumenter</h2>
       <p className="text-sm text-muted-foreground mb-4">
         For- og motargumenter hentet fra Stortingets dokumenter.
