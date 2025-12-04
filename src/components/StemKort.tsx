@@ -78,12 +78,7 @@ export default function StemKort({
 
   return (
     <div 
-      className={cn(
-        "relative h-full w-full rounded-[2.5rem] overflow-hidden transition-all duration-300 ease-out",
-        isActive 
-          ? "scale-100 opacity-100" 
-          : "scale-[0.92] opacity-40"
-      )}
+      className="relative h-full w-full rounded-[2.5rem] overflow-hidden"
     >
       {/* Background image */}
       <div className="absolute inset-0">
