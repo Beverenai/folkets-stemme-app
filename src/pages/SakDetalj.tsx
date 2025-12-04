@@ -10,6 +10,7 @@ import { ChevronLeft, Share2 } from 'lucide-react';
 import ShareCard from '@/components/ShareCard';
 import SakSwipeView from '@/components/SakSwipeView';
 import { Json } from '@/integrations/supabase/types';
+import SwipeBackIndicator from '@/components/SwipeBackIndicator';
 
 interface Forslagsstiller {
   navn: string;
@@ -276,6 +277,7 @@ export default function SakDetalj() {
 
   return (
     <Layout hideHeader>
+      <SwipeBackIndicator />
       <div className="h-screen flex flex-col bg-background">
         {/* Simple Clean Header */}
         <header className="flex-shrink-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50 safe-top">
