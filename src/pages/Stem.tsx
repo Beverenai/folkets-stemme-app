@@ -35,7 +35,7 @@ interface Sak {
   voteStats?: { for: number; mot: number; avholdende: number };
 }
 
-// Fetch saker for voting
+// Fetch saker for voting - prioritize cases with actual Stortinget voting data
 async function fetchSakerForStemming(userId: string | null) {
   const { data: saker, error } = await supabase
     .from('stortinget_saker')
@@ -59,10 +59,20 @@ async function fetchSakerForStemming(userId: string | null) {
     `)
     .eq('er_viktig', true)
     .not('oppsummering', 'is', null)
+    .not('spoersmaal', 'is', null)
     .order('created_at', { ascending: false })
-    .limit(20);
+    .limit(50);
 
   if (error) throw error;
+
+  // Sort to prioritize cases with actual voting data from Stortinget
+  const sortedSaker = [...(saker || [])].sort((a, b) => {
+    const aHasVotes = (a.stortinget_votering_for ?? 0) > 0;
+    const bHasVotes = (b.stortinget_votering_for ?? 0) > 0;
+    if (aHasVotes && !bHasVotes) return -1;
+    if (!aHasVotes && bHasVotes) return 1;
+    return 0;
+  }).slice(0, 25);
 
   // Fetch user votes if logged in
   let userVotesMap: Record<string, string> = {};
@@ -71,7 +81,7 @@ async function fetchSakerForStemming(userId: string | null) {
       .from('folke_stemmer')
       .select('sak_id, stemme')
       .eq('user_id', userId)
-      .in('sak_id', saker?.map(s => s.id) || []);
+      .in('sak_id', sortedSaker.map(s => s.id));
     
     if (userVotes) {
       userVotesMap = userVotes.reduce((acc, v) => {
@@ -85,7 +95,7 @@ async function fetchSakerForStemming(userId: string | null) {
   const { data: voteCounts } = await supabase
     .from('folke_stemmer')
     .select('sak_id, stemme')
-    .in('sak_id', saker?.map(s => s.id) || []);
+    .in('sak_id', sortedSaker.map(s => s.id));
 
   const voteCountsMap: Record<string, { for: number; mot: number; avholdende: number }> = {};
   voteCounts?.forEach(v => {
@@ -98,12 +108,12 @@ async function fetchSakerForStemming(userId: string | null) {
     else voteCountsMap[v.sak_id].avholdende++;
   });
 
-  return saker?.map(s => ({
+  return sortedSaker.map(s => ({
     ...s,
     forslagsstiller: (s.forslagsstiller as unknown) as Forslagsstiller[] | null,
     userVote: userVotesMap[s.id] || null,
     voteStats: voteCountsMap[s.id] || { for: 0, mot: 0, avholdende: 0 }
-  })) || [];
+  }));
 }
 
 export default function Stem() {

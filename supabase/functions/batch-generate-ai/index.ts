@@ -51,12 +51,14 @@ serve(async (req) => {
   let count = 50;
   let filterCategory: string | null = null;
   let includeAllSessions = false;
+  let prioritizeWithVotes = false;
   
   try {
     const body = await req.json();
     count = Math.min(body.count || 50, 100); // Max 100 per batch
     filterCategory = body.category || null; // Filter by specific category
     includeAllSessions = body.allSessions || false; // Include historical sessions
+    prioritizeWithVotes = body.prioritizeWithVotes || false; // Prioritize cases with voting data
   } catch {
     // Use defaults
   }
@@ -64,11 +66,12 @@ serve(async (req) => {
   console.log(`Starting batch AI generation for ${count} saker...`);
   console.log(`Category filter: ${filterCategory || 'all'}`);
   console.log(`Sessions: ${includeAllSessions ? 'all' : '2024-2026'}`);
+  console.log(`Prioritize with votes: ${prioritizeWithVotes}`);
 
   // Create log entry
   const { data: logEntry } = await supabase
     .from('sync_log')
-    .insert({ source: `batch-ai${filterCategory ? `-${filterCategory}` : ''}` })
+    .insert({ source: `batch-ai${filterCategory ? `-${filterCategory}` : ''}${prioritizeWithVotes ? '-votes' : ''}` })
     .select('id')
     .single();
   const logId = logEntry?.id;
@@ -80,7 +83,7 @@ serve(async (req) => {
     // Build query with filters
     let query = supabase
       .from('stortinget_saker')
-      .select('id, tittel, beskrivelse, tema, kategori, behandlet_sesjon')
+      .select('id, tittel, beskrivelse, tema, kategori, behandlet_sesjon, stortinget_votering_for')
       .eq('er_viktig', true)
       .is('oppsummering', null);
 
@@ -92,6 +95,11 @@ serve(async (req) => {
     // Filter sessions unless allSessions is true
     if (!includeAllSessions) {
       query = query.in('behandlet_sesjon', ['2024-2025', '2025-2026']);
+    }
+
+    // If prioritizing with votes, only get cases that have actual voting data
+    if (prioritizeWithVotes) {
+      query = query.gt('stortinget_votering_for', 0);
     }
 
     const { data: sakerUtenAI, error: fetchError } = await query
