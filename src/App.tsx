@@ -8,7 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Saker from "./pages/Saker";
 import SakDetalj from "./pages/SakDetalj";
-import Voteringer from "./pages/Voteringer";
+import Stem from "./pages/Stem";
 import VoteringDetalj from "./pages/VoteringDetalj";
 import Representanter from "./pages/Representanter";
 import RepresentantDetalj from "./pages/RepresentantDetalj";
@@ -36,7 +36,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/saker" element={<Saker />} />
             <Route path="/sak/:id" element={<SakDetalj />} />
-            <Route path="/voteringer" element={<Voteringer />} />
+            <Route path="/stem" element={<Stem />} />
             <Route path="/votering/:id" element={<VoteringDetalj />} />
             <Route path="/representanter" element={<Representanter />} />
             <Route path="/representant/:id" element={<RepresentantDetalj />} />
