@@ -10,7 +10,7 @@ import StemModal from '@/components/StemModal';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Vote, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Vote } from 'lucide-react';
 import { Json } from '@/integrations/supabase/types';
 
 interface Forslagsstiller {
@@ -236,16 +236,6 @@ export default function Stem() {
     }
   }, [selectedSak]);
 
-  const goToPrev = () => {
-    emblaApi?.scrollPrev();
-    triggerHaptic('light');
-  };
-
-  const goToNext = () => {
-    emblaApi?.scrollNext();
-    triggerHaptic('light');
-  };
-
   const getVoteStats = (sak: Sak) => {
     const stats = sak.voteStats || { for: 0, mot: 0, avholdende: 0 };
     return { ...stats, total: stats.for + stats.mot + stats.avholdende };
@@ -253,13 +243,13 @@ export default function Stem() {
 
   if (isLoading || authLoading) {
     return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
-          <Skeleton className="h-[500px] w-full max-w-sm rounded-3xl" />
-          <div className="flex gap-2 mt-6">
-            <Skeleton className="h-2 w-2 rounded-full" />
-            <Skeleton className="h-2 w-6 rounded-full" />
-            <Skeleton className="h-2 w-2 rounded-full" />
+      <Layout hideHeader>
+        <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] px-4">
+          <Skeleton className="h-[70vh] w-full rounded-3xl" />
+          <div className="flex gap-1.5 mt-6">
+            <Skeleton className="h-1.5 w-1.5 rounded-full" />
+            <Skeleton className="h-1.5 w-5 rounded-full" />
+            <Skeleton className="h-1.5 w-1.5 rounded-full" />
           </div>
         </div>
       </Layout>
@@ -268,8 +258,8 @@ export default function Stem() {
 
   if (saker.length === 0) {
     return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center">
+      <Layout hideHeader>
+        <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] px-4 text-center">
           <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
             <Vote className="h-10 w-10 text-muted-foreground" />
           </div>
@@ -283,23 +273,15 @@ export default function Stem() {
   }
 
   return (
-    <Layout>
-      <div className="flex flex-col h-[calc(100vh-140px)] pt-4">
-        {/* Header */}
-        <div className="text-center mb-4 px-4">
-          <h1 className="text-2xl font-bold mb-1">Stem</h1>
-          <p className="text-sm text-muted-foreground">
-            {saker.length} saker • Sveip for å se flere
-          </p>
-        </div>
-
-        {/* Card Carousel */}
+    <Layout hideHeader>
+      <div className="flex flex-col h-[calc(100vh-80px)]">
+        {/* Full-screen Card Carousel */}
         <div className="flex-1 overflow-hidden relative" ref={emblaRef}>
-          <div className="flex h-full">
+          <div className="flex h-full py-2">
             {saker.map((sak, index) => (
               <div 
                 key={sak.id} 
-                className="flex-[0_0_88%] min-w-0 h-full px-3"
+                className="flex-[0_0_92%] min-w-0 h-full px-2"
               >
                 <StemKort
                   sakId={sak.id}
@@ -317,49 +299,26 @@ export default function Stem() {
           </div>
         </div>
 
-        {/* iOS-style Navigation */}
-        <div className="flex items-center justify-center gap-6 py-5 px-4">
-          <button
-            onClick={goToPrev}
-            disabled={currentIndex === 0}
-            className={cn(
-              "h-11 w-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center ios-press transition-all duration-200",
-              currentIndex === 0 ? "opacity-20" : "opacity-100 hover:bg-white/15"
-            )}
-          >
-            <ChevronLeft className="h-5 w-5 text-white" />
-          </button>
-
-          {/* iOS-style pill dots */}
-          <div className="flex items-center gap-2">
+        {/* iOS Page Control - minimal dots */}
+        <div className="flex items-center justify-center py-3 safe-bottom">
+          <div className="flex items-center gap-1.5">
             {saker.slice(0, 10).map((_, i) => (
               <div
                 key={i}
                 className={cn(
-                  "rounded-full transition-all duration-300 ease-out",
+                  "rounded-full transition-all duration-200",
                   i === currentIndex 
-                    ? "w-7 h-2.5 bg-white" 
-                    : "w-2.5 h-2.5 bg-white/25"
+                    ? "w-5 h-1.5 bg-white" 
+                    : "w-1.5 h-1.5 bg-white/30"
                 )}
               />
             ))}
             {saker.length > 10 && (
-              <span className="text-xs text-white/50 ml-1">
+              <span className="text-[10px] text-white/40 ml-1">
                 +{saker.length - 10}
               </span>
             )}
           </div>
-
-          <button
-            onClick={goToNext}
-            disabled={currentIndex === saker.length - 1}
-            className={cn(
-              "h-11 w-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center ios-press transition-all duration-200",
-              currentIndex === saker.length - 1 ? "opacity-20" : "opacity-100 hover:bg-white/15"
-            )}
-          >
-            <ChevronRight className="h-5 w-5 text-white" />
-          </button>
         </div>
       </div>
 
