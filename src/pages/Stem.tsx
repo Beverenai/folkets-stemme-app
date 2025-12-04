@@ -11,32 +11,8 @@ import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Vote } from 'lucide-react';
+import { SakWithVotes, PartiVote, RepresentantVote, Forslagsstiller } from '@/types';
 import { Json } from '@/integrations/supabase/types';
-
-interface Forslagsstiller {
-  navn: string;
-  parti: string;
-}
-
-interface PartiVote {
-  parti_forkortelse: string;
-  parti_navn: string;
-  stemmer_for: number;
-  stemmer_mot: number;
-  stemmer_avholdende: number;
-}
-
-interface RepresentantVote {
-  id: string;
-  stemme: string;
-  representant: {
-    id: string;
-    fornavn: string;
-    etternavn: string;
-    parti_forkortelse: string | null;
-    bilde_url: string | null;
-  };
-}
 
 interface Sak {
   id: string;

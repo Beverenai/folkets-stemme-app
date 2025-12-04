@@ -8,14 +8,7 @@ import { cn } from '@/lib/utils';
 import ResultBar from '@/components/ResultBar';
 import { Badge } from '@/components/ui/badge';
 import PartiStancePreview from '@/components/PartiStancePreview';
-
-interface PartiVote {
-  parti_forkortelse: string;
-  parti_navn: string;
-  stemmer_for: number;
-  stemmer_mot: number;
-  stemmer_avholdende: number;
-}
+import { SakLibrary, PartiVote } from '@/types';
 
 interface Sak {
   id: string;

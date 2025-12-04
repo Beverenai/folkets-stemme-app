@@ -2,18 +2,7 @@ import { Link } from 'react-router-dom';
 import { getPartiConfig } from '@/lib/partiConfig';
 import { ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
 import { useState } from 'react';
-
-interface RepresentantVote {
-  id: string;
-  stemme: string;
-  representant: {
-    id: string;
-    fornavn: string;
-    etternavn: string;
-    parti_forkortelse: string | null;
-    bilde_url: string | null;
-  };
-}
+import { RepresentantVote } from '@/types';
 
 interface RepresentantVoteListProps {
   votes: RepresentantVote[];

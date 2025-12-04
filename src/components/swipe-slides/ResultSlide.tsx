@@ -2,35 +2,11 @@ import { Share2, Users, Building2, CheckCircle, XCircle, TrendingUp, TrendingDow
 import PartiVoteringList from '@/components/PartiVoteringList';
 import RepresentantVoteList from '@/components/RepresentantVoteList';
 import { cn } from '@/lib/utils';
-
-interface PartiVote {
-  parti_forkortelse: string;
-  parti_navn: string;
-  stemmer_for: number;
-  stemmer_mot: number;
-  stemmer_avholdende: number;
-}
-
-interface RepresentantVote {
-  id: string;
-  stemme: string;
-  representant: {
-    id: string;
-    fornavn: string;
-    etternavn: string;
-    parti_forkortelse: string | null;
-    bilde_url: string | null;
-  };
-}
+import { PartiVote, RepresentantVote, VoteStats } from '@/types';
 
 interface ResultSlideProps {
   userVote: string | null;
-  voteStats: {
-    for: number;
-    mot: number;
-    avholdende: number;
-    total: number;
-  };
+  voteStats: VoteStats;
   stortingetFor: number | null;
   stortingetMot: number | null;
   stortingetAvholdende: number | null;

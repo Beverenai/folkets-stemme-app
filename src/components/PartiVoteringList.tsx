@@ -1,14 +1,7 @@
 import { Link } from 'react-router-dom';
 import { getPartiConfig } from '@/lib/partiConfig';
 import { cn } from '@/lib/utils';
-
-interface PartiVote {
-  parti_forkortelse: string;
-  parti_navn: string;
-  stemmer_for: number;
-  stemmer_mot: number;
-  stemmer_avholdende: number;
-}
+import { PartiVote } from '@/types';
 
 interface PartiVoteringListProps {
   partiVotes: PartiVote[];
