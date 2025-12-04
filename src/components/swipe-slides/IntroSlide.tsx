@@ -59,29 +59,29 @@ export default function IntroSlide({
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col px-4 pt-6 pb-12">
-        <h2 className="text-sm font-medium text-white/70 mb-4">Sett deg inn i saken</h2>
+      <div className="relative z-10 h-full flex flex-col px-4 pt-4 pb-6">
+        <h2 className="text-xs font-medium text-white/70 mb-2">Sett deg inn i saken</h2>
         
-        <div className="flex-1 flex flex-col justify-end">
+        <div className="flex-1 flex flex-col justify-end min-h-0">
           {/* Kategori badge */}
           {kategori && (
-            <span className="inline-flex self-start px-3 py-1 rounded-full bg-primary/20 backdrop-blur-sm text-primary text-xs font-semibold mb-3">
+            <span className="inline-flex self-start px-2.5 py-1 rounded-full bg-primary/20 backdrop-blur-sm text-primary text-[11px] font-semibold mb-2">
               {kategori}
             </span>
           )}
 
           {/* Spørsmål som hovedtittel */}
-          <h1 className="text-2xl font-bold leading-tight text-white mb-4">
+          <h1 className="text-xl font-bold leading-tight text-white mb-3">
             {spoersmaal || kortTittel || tittel}
           </h1>
 
           {/* Oppsummering */}
-          <p className="text-[15px] leading-relaxed text-white/80 line-clamp-4 mb-4">
+          <p className="text-sm leading-relaxed text-white/80 line-clamp-3 mb-3">
             {oppsummering || beskrivelse || 'Ingen beskrivelse tilgjengelig.'}
           </p>
           
           {primaryForslagsstiller && (
-            <p className="text-sm text-white/60 mb-4">
+            <p className="text-xs text-white/60 mb-3">
               <span className="font-medium text-white/80">Foreslått av:</span> {primaryForslagsstiller.navn} ({primaryForslagsstiller.parti})
             </p>
           )}
@@ -91,17 +91,17 @@ export default function IntroSlide({
             href={stortingetUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white font-medium ios-press hover:bg-white/20 transition-colors"
+            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium ios-press hover:bg-white/20 transition-colors"
           >
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-3.5 w-3.5" />
             Les forslaget på Stortinget.no
           </a>
         </div>
 
         {/* Sveip-hint */}
-        <div className="flex items-center justify-center gap-1 mt-6 text-primary">
-          <span className="text-sm font-medium">Sveip for argumenter</span>
-          <ChevronRight className="h-4 w-4" />
+        <div className="flex items-center justify-center gap-1 mt-4 text-primary">
+          <span className="text-xs font-medium">Sveip for argumenter</span>
+          <ChevronRight className="h-3.5 w-3.5" />
         </div>
       </div>
     </div>
