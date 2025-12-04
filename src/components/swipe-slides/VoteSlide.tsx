@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { LogIn, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { triggerVoteConfetti } from '@/lib/confetti';
+import { triggerHaptic } from '@/lib/haptics';
 
 interface VoteSlideProps {
   spoersmaal: string | null;
@@ -63,6 +64,7 @@ export default function VoteSlide({
       <div className="space-y-3 mb-6">
         <button
           onClick={() => {
+            triggerHaptic('success');
             triggerVoteConfetti();
             onVote('for');
           }}
@@ -87,6 +89,7 @@ export default function VoteSlide({
 
         <button
           onClick={() => {
+            triggerHaptic('success');
             triggerVoteConfetti();
             onVote('mot');
           }}
