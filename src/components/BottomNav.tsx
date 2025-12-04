@@ -1,11 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Vote, BarChart3 } from 'lucide-react';
+import { Home, Vote, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Hjem', icon: Home },
   { href: '/voteringer', label: 'Stem', icon: Vote },
-  { href: '/resultater', label: 'Resultater', icon: BarChart3 },
+  { href: '/profil', label: 'Profil', icon: User },
 ];
 
 export default function BottomNav() {

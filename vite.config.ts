@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
         name: "Folkets Storting",
         short_name: "Folkets Storting",
         description: "Stem på Stortingets saker og se om politikerne representerer deg",
-        theme_color: "#00C7BE",
+        theme_color: "#000000",
         background_color: "#000000",
         display: "standalone",
         orientation: "portrait",
