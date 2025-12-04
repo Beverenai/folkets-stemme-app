@@ -278,12 +278,12 @@ export default function Stem() {
     <Layout hideHeader>
       <div className="flex flex-col h-[calc(100vh-80px)] pt-2">
         {/* Compact Card Carousel - 70vh */}
-        <div className="flex-1 overflow-hidden relative flex items-center" ref={emblaRef}>
-          <div className="flex h-[70vh] max-h-[600px] py-1">
+        <div className="flex-1 overflow-hidden relative flex items-center justify-center" ref={emblaRef}>
+          <div className="flex h-[65vh] max-h-[550px] py-1">
             {saker.map((sak, index) => (
               <div 
                 key={sak.id} 
-                className="flex-[0_0_88%] min-w-0 h-full px-2 first:pl-[6%] last:pr-[6%]"
+                className="flex-[0_0_85vw] max-w-[340px] min-w-0 h-full mx-2"
               >
                 <StemKort
                   sakId={sak.id}
