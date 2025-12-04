@@ -134,9 +134,9 @@ export default function StemModal({
       </div>
       
       {/* Modal card content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-2 pt-2 pb-4 animate-card-slide-up">
-        {/* Floating card - compact, same as StemKort */}
-        <div className="w-[92%] h-[70vh] max-h-[600px] rounded-[2.5rem] bg-card modal-card overflow-hidden">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pt-2 pb-6 animate-card-slide-up">
+        {/* Floating card */}
+        <div className="w-full max-w-[340px] h-[62vh] max-h-[520px] rounded-[2rem] bg-card modal-card overflow-hidden shadow-2xl">
           <SakSwipeView
             sak={sak}
             isLoggedIn={isLoggedIn}
@@ -146,7 +146,6 @@ export default function StemModal({
             representantVotes={representantVotes}
             onVote={onVote}
             onShare={onShare}
-            showDotsOutside={false}
           />
         </div>
       </div>

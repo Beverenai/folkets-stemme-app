@@ -63,7 +63,6 @@ interface SakSwipeViewProps {
   representantVotes?: RepresentantVote[];
   onVote: (vote: 'for' | 'mot' | 'avholdende') => Promise<void>;
   onShare: () => void;
-  showDotsOutside?: boolean;
 }
 
 export default function SakSwipeView({
@@ -74,8 +73,7 @@ export default function SakSwipeView({
   partiVotes = [],
   representantVotes = [],
   onVote,
-  onShare,
-  showDotsOutside = true
+  onShare
 }: SakSwipeViewProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     watchDrag: true,
@@ -185,49 +183,25 @@ export default function SakSwipeView({
         </div>
       </div>
 
-      {/* Dot indicators - outside card (for Stem page) */}
-      {showDotsOutside && (
-        <div className="absolute -bottom-12 left-0 right-0 flex items-center justify-center gap-2 safe-bottom">
-          {[0, 1, 2, 3].map((i) => (
-            <button
-              key={i}
-              onClick={() => {
-                emblaApi?.scrollTo(i);
-                triggerHaptic();
-              }}
-              className={cn(
-                'h-2 rounded-full transition-all duration-300',
-                currentSlide === i 
-                  ? 'w-6 bg-primary' 
-                  : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
-              )}
-            />
-          ))}
-        </div>
-      )}
+      {/* Dot indicators - always outside card */}
+      <div className="absolute -bottom-10 left-0 right-0 flex items-center justify-center gap-2">
+        {[0, 1, 2, 3].map((i) => (
+          <button
+            key={i}
+            onClick={() => {
+              emblaApi?.scrollTo(i);
+              triggerHaptic();
+            }}
+            className={cn(
+              'h-2 rounded-full transition-all duration-300',
+              currentSlide === i 
+                ? 'w-6 bg-primary' 
+                : 'w-2 bg-white/40 hover:bg-white/60'
+            )}
+          />
+        ))}
+      </div>
       
-      {/* Dot indicators inside card (for modal) */}
-      {!showDotsOutside && (
-        <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center z-20">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm">
-            {[0, 1, 2, 3].map((i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  emblaApi?.scrollTo(i);
-                  triggerHaptic();
-                }}
-                className={cn(
-                  'h-2 rounded-full transition-all duration-300',
-                  currentSlide === i 
-                    ? 'w-6 bg-primary shadow-sm' 
-                    : 'w-2 bg-white/60 hover:bg-white/80'
-                )}
-              />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
