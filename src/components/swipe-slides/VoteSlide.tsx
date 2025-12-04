@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LogIn, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { triggerVoteConfetti } from '@/lib/confetti';
 
 interface VoteSlideProps {
   spoersmaal: string | null;
@@ -61,7 +62,10 @@ export default function VoteSlide({
       {/* Ja/Nei knapper */}
       <div className="space-y-3 mb-6">
         <button
-          onClick={() => onVote('for')}
+          onClick={() => {
+            triggerVoteConfetti();
+            onVote('for');
+          }}
           disabled={isSubmitting}
           className={cn(
             "w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ios-press",
@@ -82,7 +86,10 @@ export default function VoteSlide({
         </button>
 
         <button
-          onClick={() => onVote('mot')}
+          onClick={() => {
+            triggerVoteConfetti();
+            onVote('mot');
+          }}
           disabled={isSubmitting}
           className={cn(
             "w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ios-press",
