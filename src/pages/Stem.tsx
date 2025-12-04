@@ -400,6 +400,8 @@ export default function Stem() {
         open={shareOpen}
         onOpenChange={setShareOpen}
         title={shareTargetSak?.spoersmaal || shareTargetSak?.kort_tittel || shareTargetSak?.tittel || ''}
+        tittel={shareTargetSak?.tittel}
+        kortTittel={shareTargetSak?.kort_tittel}
         sakId={shareTargetSak?.id}
         type="sak"
         kategori={shareTargetSak?.kategori}
