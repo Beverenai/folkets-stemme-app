@@ -173,9 +173,9 @@ export default function SakSwipeView({
   ];
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Carousel */}
-      <div className="flex-1 overflow-hidden" ref={emblaRef}>
+    <div className="relative h-full">
+      {/* Carousel - absolute positioning for proper height */}
+      <div className="absolute inset-0 overflow-hidden" ref={emblaRef}>
         <div className="flex h-full">
           {slides.map((slide, index) => (
             <div key={index} className="flex-[0_0_100%] min-w-0 h-full">
@@ -185,9 +185,9 @@ export default function SakSwipeView({
         </div>
       </div>
 
-      {/* Dot indicators - inside card */}
+      {/* Dot indicators - outside card (for Stem page) */}
       {showDotsOutside && (
-        <div className="flex items-center justify-center gap-2 py-4 safe-bottom">
+        <div className="absolute -bottom-12 left-0 right-0 flex items-center justify-center gap-2 safe-bottom">
           {[0, 1, 2, 3].map((i) => (
             <button
               key={i}
@@ -208,7 +208,7 @@ export default function SakSwipeView({
       
       {/* Dot indicators inside card (for modal) */}
       {!showDotsOutside && (
-        <div className="flex items-center justify-center gap-2 py-4 pb-6">
+        <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2 z-20">
           {[0, 1, 2, 3].map((i) => (
             <button
               key={i}
@@ -220,7 +220,7 @@ export default function SakSwipeView({
                 'h-2 rounded-full transition-all duration-300',
                 currentSlide === i 
                   ? 'w-6 bg-primary' 
-                  : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                  : 'w-2 bg-white/30 hover:bg-white/50'
               )}
             />
           ))}
