@@ -213,9 +213,32 @@ export default function Stem() {
         if (error) throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       triggerHaptic('success');
       queryClient.invalidateQueries({ queryKey: ['saker-stemming'] });
+      
+      // Update selectedSak with new vote for immediate visual feedback
+      if (selectedSak && selectedSak.id === variables.sakId) {
+        const oldVote = selectedSak.userVote;
+        const stats = { ...(selectedSak.voteStats || { for: 0, mot: 0, avholdende: 0 }) };
+        
+        // Remove old vote count
+        if (oldVote === 'for') stats.for = Math.max(0, stats.for - 1);
+        else if (oldVote === 'mot') stats.mot = Math.max(0, stats.mot - 1);
+        else if (oldVote === 'avholdende') stats.avholdende = Math.max(0, stats.avholdende - 1);
+        
+        // Add new vote count
+        if (variables.vote === 'for') stats.for++;
+        else if (variables.vote === 'mot') stats.mot++;
+        else if (variables.vote === 'avholdende') stats.avholdende++;
+        
+        setSelectedSak({
+          ...selectedSak,
+          userVote: variables.vote,
+          voteStats: stats
+        });
+      }
+      
       toast.success('Din stemme er registrert!');
     },
     onError: () => {
