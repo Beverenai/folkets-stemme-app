@@ -6,41 +6,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Viktige temaer som gjør representantforslag relevante
-const VIKTIGE_TEMAER = [
-  'helse', 'sykehus', 'legevakt', 'fastlege', 'psykisk',
-  'skole', 'utdann', 'barnehage', 'lærer',
-  'skatt', 'avgift', 'moms',
-  'trygd', 'pensjon', 'nav', 'uføre', 'arbeidsav',
-  'velfer', 'sosial',
-  'klima', 'miljø', 'natur', 'forurens',
-  'bolig', 'husleie', 'eiendom',
-  'forsvar', 'beredskap', 'sikkerhet',
-  'politi', 'justis', 'kriminal',
-  'innvandr', 'asyl', 'integrer',
-  'arbeid', 'lønn', 'permitteri', 'oppsigelse',
-  'strøm', 'energi', 'kraft',
-  'transport', 'vei', 'jernbane', 'buss',
-];
+// === ESSENTIAL ONLY: Kun 3 kategorier ===
+// Vi vil kun ha lovendringer, budsjett og grunnlovsendringer
+// Alt annet er ikke viktig nok for vanlige borgere
 
-// Classify sak based on title - determines if it's important for citizens
 function classifySak(tittel: string): { kategori: string; erViktig: boolean } {
   const t = tittel.toLowerCase();
   
-  // === VIKTIGE KATEGORIER ===
-  
-  // 1. Lovendringer - VIKTIG (lover påvirker folk direkte)
+  // === KATEGORI 1: LOVENDRINGER ===
+  // Lover som direkte påvirker folks liv
   if (
     (t.includes('endringer i') && (t.includes('loven') || t.includes('lova') || t.includes('lov ('))) ||
     t.startsWith('lov om') ||
     t.includes('lovvedtak') ||
-    t.includes('prop. l') ||  // Lovproposisjoner
-    t.includes('innst. l')    // Lovinnstillinger
+    t.includes('prop. l') ||
+    t.includes('innst. l')
   ) {
-    return { kategori: 'lovendring', erViktig: true };
+    return { kategori: 'Lovendring', erViktig: true };
   }
   
-  // 2. Budsjett - VIKTIG (pengene til alt viktig)
+  // === KATEGORI 2: BUDSJETT ===
+  // Pengene som finansierer alt viktig
   if (
     t.includes('statsbudsjettet') || 
     t.includes('budsjettet') || 
@@ -52,71 +38,17 @@ function classifySak(tittel: string): { kategori: string; erViktig: boolean } {
     t.includes('skatter og avgifter') ||
     t.includes('tilleggsbevilgning')
   ) {
-    return { kategori: 'budsjett', erViktig: true };
+    return { kategori: 'Budsjett', erViktig: true };
   }
   
-  // 3. Grunnlovsforslag - VIKTIG (endrer fundamentet)
+  // === KATEGORI 3: GRUNNLOVSENDRINGER ===
+  // Fundamentale endringer i samfunnskontrakten
   if (t.includes('grunnlovsforslag') || t.includes('grunnlovsframlegg') || t.includes('grunnloven')) {
-    return { kategori: 'grunnlov', erViktig: true };
+    return { kategori: 'Grunnlovsendring', erViktig: true };
   }
   
-  // 4. Stortingsmeldinger - VIKTIG (store politiske retninger)
-  if (t.includes('meld. st.') || t.includes('stortingsmelding')) {
-    return { kategori: 'melding', erViktig: true };
-  }
-  
-  // === SELEKTIVE KATEGORIER ===
-  
-  // 5. Representantforslag - kun viktige temaer
-  if (t.includes('representantforslag') || t.includes('dokument 8')) {
-    const erViktigTema = VIKTIGE_TEMAER.some(tema => t.includes(tema));
-    return { kategori: 'representantforslag', erViktig: erViktigTema };
-  }
-  
-  // === IKKE-VIKTIGE KATEGORIER ===
-  
-  // EØS-samtykke og internasjonale avtaler
-  if (t.includes('samtykke til') || t.includes('eøs-komiteens') || t.includes('innlemmelse')) {
-    return { kategori: 'samtykke', erViktig: false };
-  }
-  
-  // Rapporter og beretninger
-  if (
-    t.includes('årsrapport') || 
-    t.includes('årsmelding') || 
-    t.includes('beretning') || 
-    t.includes('riksrevisjonens') ||
-    t.includes('melding fra')
-  ) {
-    return { kategori: 'rapport', erViktig: false };
-  }
-  
-  // Interne prosedyrer og tekniske saker
-  if (
-    t.includes('arbeidsordningen') || 
-    t.includes('valg av') || 
-    t.includes('suppleringsvalg') ||
-    t.includes('komiteens sammensetning') ||
-    t.includes('arbeidsplan') ||
-    t.includes('forretningsorden') ||
-    t.includes('referert til') ||
-    t.includes('innkalling') ||
-    t.includes('fullmakt')
-  ) {
-    return { kategori: 'prosedyre', erViktig: false };
-  }
-  
-  // Regnskapssaker
-  if (t.includes('regnskap') || t.includes('revisjon')) {
-    return { kategori: 'regnskap', erViktig: false };
-  }
-  
-  // Annet - sjekk for viktige nøkkelord som siste sjanse
-  const viktigeNøkkelord = ['reform', 'krise', 'nasjonal', 'folkeavstemning'];
-  if (viktigeNøkkelord.some(ord => t.includes(ord))) {
-    return { kategori: 'politikk', erViktig: true };
-  }
-  
+  // === ALT ANNET ER IKKE VIKTIG ===
+  // Representantforslag, meldinger, rapporter, prosedyrer, etc.
   return { kategori: 'annet', erViktig: false };
 }
 
