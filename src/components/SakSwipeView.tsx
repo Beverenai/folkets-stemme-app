@@ -208,22 +208,24 @@ export default function SakSwipeView({
       
       {/* Dot indicators inside card (for modal) */}
       {!showDotsOutside && (
-        <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-2 z-20">
-          {[0, 1, 2, 3].map((i) => (
-            <button
-              key={i}
-              onClick={() => {
-                emblaApi?.scrollTo(i);
-                triggerHaptic();
-              }}
-              className={cn(
-                'h-2 rounded-full transition-all duration-300',
-                currentSlide === i 
-                  ? 'w-6 bg-primary' 
-                  : 'w-2 bg-white/30 hover:bg-white/50'
-              )}
-            />
-          ))}
+        <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center z-20">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm">
+            {[0, 1, 2, 3].map((i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  emblaApi?.scrollTo(i);
+                  triggerHaptic();
+                }}
+                className={cn(
+                  'h-2 rounded-full transition-all duration-300',
+                  currentSlide === i 
+                    ? 'w-6 bg-primary shadow-sm' 
+                    : 'w-2 bg-white/60 hover:bg-white/80'
+                )}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>

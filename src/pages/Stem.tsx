@@ -307,7 +307,8 @@ export default function Stem() {
           </div>
         </div>
 
-        {/* Swipe indicator - redesigned for visibility */}
+        {/* Swipe indicator - only show when modal is closed */}
+        {!isModalOpen && (
         <div className="flex flex-col items-center justify-center py-4 safe-bottom gap-2">
           {/* Progress dots */}
           <div className="flex items-center gap-2">
@@ -339,6 +340,7 @@ export default function Stem() {
             </p>
           )}
         </div>
+        )}
       </div>
 
       {/* Modal */}
