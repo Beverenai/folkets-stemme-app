@@ -1,5 +1,4 @@
 import { ExternalLink, ChevronRight, Users } from 'lucide-react';
-import ProsessIndikator from '@/components/ProsessIndikator';
 
 interface Forslagsstiller {
   navn: string;
@@ -15,7 +14,6 @@ interface IntroSlideProps {
   stortingetId: string;
   komiteNavn?: string | null;
   forslagsstiller?: Forslagsstiller[] | null;
-  prosessSteg?: number;
 }
 
 export default function IntroSlide({ 
@@ -27,7 +25,6 @@ export default function IntroSlide({
   stortingetId,
   komiteNavn,
   forslagsstiller,
-  prosessSteg = 1,
 }: IntroSlideProps) {
   // Get first proposer for display
   const hovedForslagsstiller = forslagsstiller && forslagsstiller.length > 0 
@@ -60,11 +57,6 @@ export default function IntroSlide({
             )}
           </p>
         )}
-        
-        {/* Prosess-indikator */}
-        <div className="mb-4">
-          <ProsessIndikator steg={prosessSteg} />
-        </div>
         
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xs text-muted-foreground">Kilde: Stortinget</span>
