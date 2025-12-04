@@ -114,7 +114,6 @@ export default function SakSwipeView({
       stortingetId={sak.stortinget_id}
       komiteNavn={sak.komite_navn}
       forslagsstiller={forslagsstillerData}
-      prosessSteg={sak.prosess_steg || 1}
     />,
     <ArgumentsSlide
       key="arguments"
