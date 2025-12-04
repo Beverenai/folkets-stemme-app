@@ -139,8 +139,8 @@ export default function Stem() {
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'center',
-    containScroll: 'trimSnaps',
     loop: false,
+    skipSnaps: false,
   });
 
   const { data: saker = [], isLoading } = useQuery({
@@ -299,7 +299,7 @@ export default function Stem() {
             {saker.map((sak, index) => (
               <div 
                 key={sak.id} 
-                className="flex-[0_0_85%] min-w-0 h-full px-2 first:pl-4 last:pr-4"
+                className="flex-[0_0_88%] min-w-0 h-full px-3"
               >
                 <StemKort
                   sakId={sak.id}
@@ -317,34 +317,34 @@ export default function Stem() {
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-center gap-4 py-4 px-4">
+        {/* iOS-style Navigation */}
+        <div className="flex items-center justify-center gap-6 py-5 px-4">
           <button
             onClick={goToPrev}
             disabled={currentIndex === 0}
             className={cn(
-              "h-10 w-10 rounded-full bg-secondary flex items-center justify-center ios-press",
-              currentIndex === 0 && "opacity-30"
+              "h-11 w-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center ios-press transition-all duration-200",
+              currentIndex === 0 ? "opacity-20" : "opacity-100 hover:bg-white/15"
             )}
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5 text-white" />
           </button>
 
-          {/* Dots */}
-          <div className="flex items-center gap-1.5">
+          {/* iOS-style pill dots */}
+          <div className="flex items-center gap-2">
             {saker.slice(0, 10).map((_, i) => (
               <div
                 key={i}
                 className={cn(
-                  "h-1.5 rounded-full transition-all duration-300",
+                  "rounded-full transition-all duration-300 ease-out",
                   i === currentIndex 
-                    ? "w-4 bg-primary" 
-                    : "w-1.5 bg-muted-foreground/30"
+                    ? "w-7 h-2.5 bg-white" 
+                    : "w-2.5 h-2.5 bg-white/25"
                 )}
               />
             ))}
             {saker.length > 10 && (
-              <span className="text-xs text-muted-foreground ml-1">
+              <span className="text-xs text-white/50 ml-1">
                 +{saker.length - 10}
               </span>
             )}
@@ -354,11 +354,11 @@ export default function Stem() {
             onClick={goToNext}
             disabled={currentIndex === saker.length - 1}
             className={cn(
-              "h-10 w-10 rounded-full bg-secondary flex items-center justify-center ios-press",
-              currentIndex === saker.length - 1 && "opacity-30"
+              "h-11 w-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center ios-press transition-all duration-200",
+              currentIndex === saker.length - 1 ? "opacity-20" : "opacity-100 hover:bg-white/15"
             )}
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5 text-white" />
           </button>
         </div>
       </div>
