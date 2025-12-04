@@ -1,4 +1,4 @@
-import { ExternalLink, ChevronRight } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { getSakBildeUrl, getKategoriConfig } from '@/lib/kategoriConfig';
 import { cn } from '@/lib/utils';
 
@@ -96,12 +96,6 @@ export default function IntroSlide({
             <ExternalLink className="h-3.5 w-3.5" />
             Les forslaget på Stortinget.no
           </a>
-        </div>
-
-        {/* Sveip-hint */}
-        <div className="flex items-center justify-center gap-1 mt-4 text-primary">
-          <span className="text-xs font-medium">Sveip for argumenter</span>
-          <ChevronRight className="h-3.5 w-3.5" />
         </div>
       </div>
     </div>
