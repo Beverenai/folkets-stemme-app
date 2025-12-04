@@ -1,7 +1,7 @@
 import { getSakBildeUrl, getKategoriConfig } from '@/lib/kategoriConfig';
 import { cn } from '@/lib/utils';
 import { triggerHaptic } from '@/lib/haptics';
-import { Clock, Building2 } from 'lucide-react';
+import { Clock, Building2, Users, TrendingUp } from 'lucide-react';
 
 interface StemKortProps {
   sakId: string;
@@ -10,6 +10,7 @@ interface StemKortProps {
   kortTittel: string | null;
   kategori: string | null;
   stengtDato: string | null;
+  voteCount: number;
   onStemNå: () => void;
   isActive?: boolean;
 }
@@ -21,6 +22,7 @@ export default function StemKort({
   kortTittel,
   kategori,
   stengtDato,
+  voteCount,
   onStemNå,
   isActive = false,
 }: StemKortProps) {
@@ -46,6 +48,21 @@ export default function StemKort({
     triggerHaptic('medium');
     onStemNå();
   };
+
+  // Format vote count
+  const formatVoteCount = (count: number) => {
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+    return count.toString();
+  };
+
+  // Get engagement level
+  const getEngagementLevel = (count: number) => {
+    if (count >= 100) return { label: 'Høyt engasjement', color: 'text-[hsl(var(--ios-green))]' };
+    if (count >= 20) return { label: 'Aktivt', color: 'text-[hsl(var(--ios-yellow))]' };
+    return { label: 'Ny sak', color: 'text-muted-foreground' };
+  };
+
+  const engagement = getEngagementLevel(voteCount);
 
   return (
     <div 
@@ -87,6 +104,20 @@ export default function StemKort({
             <span>{getDaysText()}</span>
           </div>
         </div>
+
+        {/* Vote count badge */}
+        {voteCount > 0 && (
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm">
+              <Users className="h-3.5 w-3.5 text-white/80" />
+              <span className="text-xs font-semibold text-white">{formatVoteCount(voteCount)} stemmer</span>
+            </div>
+            <div className={cn("flex items-center gap-1 text-xs font-medium", engagement.color)}>
+              <TrendingUp className="h-3 w-3" />
+              <span>{engagement.label}</span>
+            </div>
+          </div>
+        )}
 
         {/* Spacer */}
         <div className="flex-1" />

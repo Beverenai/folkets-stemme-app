@@ -308,6 +308,7 @@ export default function Stem() {
                   kortTittel={sak.kort_tittel}
                   kategori={sak.kategori}
                   stengtDato={sak.stengt_dato || null}
+                  voteCount={getVoteStats(sak).total}
                   onStemNå={() => handleOpenModal(sak)}
                   isActive={index === currentIndex}
                 />
