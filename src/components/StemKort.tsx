@@ -156,7 +156,7 @@ export default function StemKort({
             <ResultBar
               forCount={folkeFor}
               motCount={folkeMot}
-              avholdendeCount={folkeAvholdende}
+              avholdendeCount={0}
               showLabels={false}
               showPercentages
               size="sm"
