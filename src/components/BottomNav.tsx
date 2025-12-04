@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Vote, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { triggerHaptic } from '@/lib/haptics';
 
 const navItems = [
   { href: '/', label: 'Hjem', icon: Home },
@@ -27,6 +28,7 @@ export default function BottomNav() {
             <Link
               key={item.href}
               to={item.href}
+              onClick={() => triggerHaptic('light')}
               className={cn(
                 'flex flex-col items-center justify-center gap-0.5 min-w-[64px] py-1 transition-all duration-300 ease-out',
                 isActive ? 'text-primary' : 'text-muted-foreground/70 active:text-muted-foreground'
