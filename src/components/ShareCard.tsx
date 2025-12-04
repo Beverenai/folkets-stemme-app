@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Share2, Check, Users, Building2 } from 'lucide-react';
+import { Share2, Check, Users, Building2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
@@ -15,6 +15,8 @@ interface ShareCardProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   summary?: string;
+  sakId?: string;
+  type?: 'sak' | 'votering';
   forCount: number;
   motCount: number;
   avholdendeCount: number;
@@ -28,16 +30,18 @@ export default function ShareCard({
   open,
   onOpenChange,
   title,
+  sakId,
+  type = 'sak',
   forCount,
   motCount,
   avholdendeCount,
   stortingetFor,
   stortingetMot,
-  stortingetAvholdende,
   url,
 }: ShareCardProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [showOGPreview, setShowOGPreview] = useState(false);
 
   // Public votes
   const total = forCount + motCount + avholdendeCount;
@@ -47,7 +51,7 @@ export default function ShareCard({
 
   // Parliament votes
   const hasStortingetVotes = stortingetFor != null && stortingetMot != null && (stortingetFor > 0 || stortingetMot > 0);
-  const stortingetTotal = (stortingetFor || 0) + (stortingetMot || 0) + (stortingetAvholdende || 0);
+  const stortingetTotal = (stortingetFor || 0) + (stortingetMot || 0);
   const stortingetForPercent = stortingetTotal > 0 ? Math.round(((stortingetFor || 0) / stortingetTotal) * 100) : 0;
   const stortingetMotPercent = stortingetTotal > 0 ? Math.round(((stortingetMot || 0) / stortingetTotal) * 100) : 0;
   const stortingetMajority = (stortingetFor || 0) > (stortingetMot || 0) ? 'for' : (stortingetFor || 0) < (stortingetMot || 0) ? 'mot' : 'likt';
@@ -55,6 +59,11 @@ export default function ShareCard({
 
   // Agreement check
   const isAgreement = publicMajority === stortingetMajority;
+
+  // OG Image URL
+  const ogImageUrl = sakId 
+    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-image?id=${sakId}&type=${type}`
+    : null;
 
   // Share text
   const shareText = hasStortingetVotes
@@ -121,10 +130,32 @@ Stem selv på Folkets Storting!`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent className="sm:max-w-md bg-card border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="sr-only">Del sak</DialogTitle>
         </DialogHeader>
+
+        {/* OG Image Preview Toggle */}
+        {ogImageUrl && (
+          <button
+            onClick={() => setShowOGPreview(!showOGPreview)}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
+          >
+            <ExternalLink className="h-4 w-4" />
+            <span>{showOGPreview ? 'Skjul' : 'Se'} forhåndsvisning ved deling</span>
+          </button>
+        )}
+
+        {/* OG Preview Image */}
+        {showOGPreview && ogImageUrl && (
+          <div className="aspect-[1200/630] rounded-xl overflow-hidden border border-border bg-secondary mb-4">
+            <img
+              src={ogImageUrl}
+              alt="Forhåndsvisning"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
 
         {/* Preview Card */}
         <div className="bg-background rounded-xl p-5 border border-border space-y-4">

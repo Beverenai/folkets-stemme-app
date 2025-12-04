@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { useSwipeBack } from '@/hooks/useSwipeBack';
+import { usePageMeta, getOGImageUrl } from '@/hooks/usePageMeta';
 import { ChevronLeft, Share2 } from 'lucide-react';
 import ShareCard from '@/components/ShareCard';
 import SakSwipeView from '@/components/SakSwipeView';
@@ -85,10 +86,16 @@ export default function SakDetalj() {
 
   useSwipeBack({ targetPath: '/saker' });
 
+  // Set page meta for SEO and social sharing
+  usePageMeta({
+    title: sak?.kort_tittel || sak?.tittel,
+    description: sak?.oppsummering || sak?.beskrivelse || undefined,
+    ogImage: sak ? getOGImageUrl(sak.id, 'sak') : undefined,
+    ogUrl: window.location.href,
+    type: 'article',
+  });
+
   // Scroll to top on mount
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id]);
 
   useEffect(() => {
     async function fetchData() {
@@ -290,6 +297,8 @@ export default function SakDetalj() {
           onOpenChange={setShareOpen}
           title={sak.kort_tittel || sak.tittel}
           summary={sak.oppsummering || undefined}
+          sakId={sak.id}
+          type="sak"
           forCount={voteStats.for}
           motCount={voteStats.mot}
           avholdendeCount={voteStats.avholdende}
