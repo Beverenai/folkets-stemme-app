@@ -53,8 +53,7 @@ function normalizeVote(voteData: any): string {
   return 'ikke_tilstede';
 }
 
-// === ESSENTIAL ONLY: Only process FINAL voteringer ===
-// These are the only patterns we care about - when the law is voted on "in its entirety"
+// === Final vote patterns - used to identify THE DECISIVE vote ===
 const FINAL_VOTE_PATTERNS = [
   'lovens overskrift og loven i sin helhet',
   'loven i sin helhet',
@@ -72,6 +71,19 @@ function isFinalVote(voteringTema: string | null | undefined): boolean {
   if (!voteringTema) return false;
   const tema = voteringTema.toLowerCase();
   return FINAL_VOTE_PATTERNS.some(pattern => tema.includes(pattern));
+}
+
+// Check if a votering has individual votes available
+function hasIndividualVotes(votering: any): boolean {
+  // personlig_votering = true means individual votes are recorded
+  if (votering?.personlig_votering === true || votering?.personlig_votering === 'true') {
+    return true;
+  }
+  // Also check if there are actual vote counts (indicates real voting happened)
+  const antallFor = parseInt(votering?.antall_for) || 0;
+  const antallMot = parseInt(votering?.antall_mot) || 0;
+  // If there were any dissenting votes, individual records should exist
+  return antallFor > 0 && antallMot > 0;
 }
 
 // Find the FINAL votering for a sak (the decisive vote)
@@ -95,6 +107,160 @@ function findFinalVotering(voteringListe: any[]): any | null {
   return voteringListe[voteringListe.length - 1];
 }
 
+// Process individual votes for a single votering
+async function processVoteringVotes(
+  supabase: any,
+  votering: any,
+  sakId: string,
+  repMap: Map<string, { id: string; parti_forkortelse: string; parti: string }>
+): Promise<{ voteringDbId: string; votesInserted: number; partiVotes: Record<string, any> } | null> {
+  const voteringId = votering?.votering_id;
+  if (!voteringId) return null;
+
+  const forslagTekst = votering?.votering_tema || '';
+  const voteringDato = votering?.votering_tid;
+  const vedtatt = votering?.vedtatt === true || votering?.vedtatt === 'true';
+  
+  const apiAntallFor = parseInt(votering?.antall_for) || 0;
+  const apiAntallMot = parseInt(votering?.antall_mot) || 0;
+  const apiAntallIkkeTilstede = parseInt(votering?.antall_ikke_tilstede) || 0;
+
+  // Check if this votering already exists
+  const { data: existingVotering } = await supabase
+    .from('voteringer')
+    .select('id')
+    .eq('stortinget_votering_id', String(voteringId))
+    .maybeSingle();
+
+  let voteringDbId: string;
+
+  if (existingVotering) {
+    voteringDbId = existingVotering.id;
+  } else {
+    const { data: newVotering, error: voteringError } = await supabase
+      .from('voteringer')
+      .insert({
+        stortinget_votering_id: String(voteringId),
+        sak_id: sakId,
+        forslag_tekst: forslagTekst,
+        votering_dato: safeParseDate(voteringDato),
+        status: 'avsluttet',
+        vedtatt: vedtatt,
+        resultat_for: apiAntallFor,
+        resultat_mot: apiAntallMot,
+        resultat_avholdende: apiAntallIkkeTilstede,
+      })
+      .select('id')
+      .single();
+
+    if (voteringError) {
+      console.error('Error creating votering:', voteringError);
+      return null;
+    }
+    voteringDbId = newVotering.id;
+  }
+
+  // Get individual votes for this votering
+  const resultatUrl = `https://data.stortinget.no/eksport/voteringsresultat?voteringid=${voteringId}&format=json`;
+  const resultatRes = await fetch(resultatUrl);
+  
+  if (!resultatRes.ok) {
+    console.log(`No individual votes available for votering ${voteringId}`);
+    return { voteringDbId, votesInserted: 0, partiVotes: {} };
+  }
+
+  const resultatData = await resultatRes.json();
+  
+  let representantList = resultatData?.voteringsresultat_liste?.representant_voteringsresultat 
+    || resultatData?.voteringsresultat_liste;
+  
+  if (!Array.isArray(representantList)) {
+    representantList = representantList ? [representantList] : [];
+  }
+
+  if (representantList.length === 0) {
+    console.log(`No individual votes in response for votering ${voteringId}`);
+    return { voteringDbId, votesInserted: 0, partiVotes: {} };
+  }
+
+  console.log(`Processing ${representantList.length} individual votes for votering ${voteringId}`);
+
+  let countFor = 0, countMot = 0, countAvh = 0;
+  const votesToInsert: any[] = [];
+  const partiVotes: Record<string, { for: number; mot: number; avholdende: number; navn: string }> = {};
+
+  for (const repVote of representantList) {
+    const repStortingetId = repVote?.representant?.id;
+    const stemme = normalizeVote(repVote?.votering);
+
+    if (!repStortingetId) continue;
+
+    // Count totals
+    if (stemme === 'for') countFor++;
+    else if (stemme === 'mot') countMot++;
+    else if (stemme === 'avholdende') countAvh++;
+
+    const repInfo = repMap.get(repStortingetId);
+    const partiForkortelse = repInfo?.parti_forkortelse || repVote?.representant?.parti?.id || 'IND';
+    const partiNavn = repInfo?.parti || repVote?.representant?.parti?.navn || 'Uavhengig';
+    
+    // Track party votes
+    if (!partiVotes[partiForkortelse]) {
+      partiVotes[partiForkortelse] = { for: 0, mot: 0, avholdende: 0, navn: partiNavn };
+    }
+
+    if (stemme === 'for') partiVotes[partiForkortelse].for++;
+    else if (stemme === 'mot') partiVotes[partiForkortelse].mot++;
+    else if (stemme === 'avholdende') partiVotes[partiForkortelse].avholdende++;
+
+    // Insert rep vote if rep exists in our database
+    if (repInfo) {
+      votesToInsert.push({
+        representant_id: repInfo.id,
+        sak_id: sakId,
+        votering_id: String(voteringId),
+        votering_uuid: voteringDbId,
+        stemme,
+      });
+    }
+  }
+
+  // Update votering with actual counts
+  const finalFor = countFor > 0 ? countFor : apiAntallFor;
+  const finalMot = countMot > 0 ? countMot : apiAntallMot;
+  const finalAvholdende = countAvh > 0 ? countAvh : apiAntallIkkeTilstede;
+
+  await supabase
+    .from('voteringer')
+    .update({
+      resultat_for: finalFor,
+      resultat_mot: finalMot,
+      resultat_avholdende: finalAvholdende,
+      vedtatt: finalFor > finalMot,
+      status: 'avsluttet',
+    })
+    .eq('id', voteringDbId);
+
+  // Batch insert rep votes
+  let votesInserted = 0;
+  if (votesToInsert.length > 0) {
+    const { error: insertError } = await supabase
+      .from('representant_voteringer')
+      .upsert(votesToInsert, { 
+        onConflict: 'representant_id,votering_uuid',
+        ignoreDuplicates: true 
+      });
+
+    if (!insertError) {
+      votesInserted = votesToInsert.length;
+    } else {
+      console.error('Batch insert error:', insertError);
+    }
+  }
+
+  return { voteringDbId, votesInserted, partiVotes };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -105,7 +271,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Starting ESSENTIAL ONLY voting sync...');
+    console.log('Starting COMPLETE voting sync (all voteringer with individual votes)...');
 
     // Get all representanter with their party info
     const { data: representanter, error: repError } = await supabase
@@ -129,15 +295,15 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${saker?.length || 0} saker to process`);
 
-    let voteringerCreated = 0;
-    let repVotesInserted = 0;
+    let totalVoteringerCreated = 0;
+    let totalRepVotesInserted = 0;
     let sakerProcessed = 0;
 
     for (const sak of saker || []) {
       try {
-        console.log(`Processing sak ${sak.stortinget_id}: ${sak.tittel?.substring(0, 50)}...`);
+        console.log(`\n=== Processing sak ${sak.stortinget_id}: ${sak.tittel?.substring(0, 50)}... ===`);
 
-        // Get voteringer for this sak
+        // Get ALL voteringer for this sak
         const voteringerUrl = `https://data.stortinget.no/eksport/voteringer?sakid=${sak.stortinget_id}&format=json`;
         
         const voteringerRes = await fetch(voteringerUrl);
@@ -174,187 +340,90 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        console.log(`Found ${voteringListe.length} voteringer, looking for FINAL vote...`);
+        console.log(`Found ${voteringListe.length} total voteringer`);
 
-        // === ESSENTIAL ONLY: Only get the FINAL votering ===
+        // === NEW: Process ALL voteringer that have individual votes ===
+        const voteringerWithIndividualVotes = voteringListe.filter(hasIndividualVotes);
+        console.log(`${voteringerWithIndividualVotes.length} voteringer have individual votes available`);
+
+        // Aggregate party votes across all voteringer for this sak
+        const aggregatePartiVotes: Record<string, { for: number; mot: number; avholdende: number; navn: string }> = {};
+        let sakVoteringerCreated = 0;
+        let sakRepVotesInserted = 0;
+
+        // Process each votering with individual votes
+        for (const votering of voteringerWithIndividualVotes) {
+          const voteringId = votering?.votering_id;
+          console.log(`Processing votering ${voteringId}: "${votering?.votering_tema?.substring(0, 50)}..."`);
+
+          const result = await processVoteringVotes(supabase, votering, sak.id, repMap);
+          
+          if (result) {
+            if (result.votesInserted > 0) {
+              sakVoteringerCreated++;
+              sakRepVotesInserted += result.votesInserted;
+            }
+
+            // Aggregate party votes
+            for (const [parti, votes] of Object.entries(result.partiVotes)) {
+              if (!aggregatePartiVotes[parti]) {
+                aggregatePartiVotes[parti] = { for: 0, mot: 0, avholdende: 0, navn: votes.navn };
+              }
+              aggregatePartiVotes[parti].for += votes.for;
+              aggregatePartiVotes[parti].mot += votes.mot;
+              aggregatePartiVotes[parti].avholdende += votes.avholdende;
+            }
+          }
+
+          // Small delay between API calls
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        // Also get the FINAL votering for the sak's overall result
         const finalVotering = findFinalVotering(voteringListe);
-        
-        if (!finalVotering) {
-          console.log(`No final votering found for sak ${sak.stortinget_id}`);
-          await supabase
-            .from('stortinget_saker')
-            .update({ voteringer_synced_at: new Date().toISOString() })
-            .eq('id', sak.id);
-          sakerProcessed++;
-          continue;
-        }
+        let finalFor = 0, finalMot = 0, finalAvholdende = 0;
 
-        const voteringId = finalVotering?.votering_id;
-        const forslagTekst = finalVotering?.votering_tema || sak.tittel;
-        const voteringDato = finalVotering?.votering_tid;
-        const vedtatt = finalVotering?.vedtatt === true || finalVotering?.vedtatt === 'true';
-        
-        const apiAntallFor = parseInt(finalVotering?.antall_for) || 0;
-        const apiAntallMot = parseInt(finalVotering?.antall_mot) || 0;
-        const apiAntallIkkeTilstede = parseInt(finalVotering?.antall_ikke_tilstede) || 0;
+        if (finalVotering) {
+          finalFor = parseInt(finalVotering?.antall_for) || 0;
+          finalMot = parseInt(finalVotering?.antall_mot) || 0;
+          finalAvholdende = parseInt(finalVotering?.antall_ikke_tilstede) || 0;
 
-        console.log(`Final votering: ${voteringId} - "${forslagTekst?.substring(0, 60)}..."`);
-        console.log(`API counts: for=${apiAntallFor}, mot=${apiAntallMot}`);
+          // If final votering wasn't processed yet (enstemmig), ensure it exists in voteringer table
+          const finalVoteringId = finalVotering?.votering_id;
+          if (finalVoteringId) {
+            const { data: existingFinal } = await supabase
+              .from('voteringer')
+              .select('id')
+              .eq('stortinget_votering_id', String(finalVoteringId))
+              .maybeSingle();
 
-        if (!voteringId) {
-          console.log(`No votering ID for sak ${sak.stortinget_id}`);
-          await supabase
-            .from('stortinget_saker')
-            .update({ voteringer_synced_at: new Date().toISOString() })
-            .eq('id', sak.id);
-          sakerProcessed++;
-          continue;
-        }
-
-        // Check if this votering already exists
-        const { data: existingVotering } = await supabase
-          .from('voteringer')
-          .select('id')
-          .eq('stortinget_votering_id', String(voteringId))
-          .maybeSingle();
-
-        let voteringDbId: string;
-
-        if (existingVotering) {
-          voteringDbId = existingVotering.id;
-          console.log(`Votering already exists: ${voteringDbId}`);
-        } else {
-          const { data: newVotering, error: voteringError } = await supabase
-            .from('voteringer')
-            .insert({
-              stortinget_votering_id: String(voteringId),
-              sak_id: sak.id,
-              forslag_tekst: forslagTekst,
-              votering_dato: safeParseDate(voteringDato),
-              status: sak.status || 'pågående',
-              vedtatt: vedtatt,
-              resultat_for: apiAntallFor,
-              resultat_mot: apiAntallMot,
-              resultat_avholdende: apiAntallIkkeTilstede,
-            })
-            .select('id')
-            .single();
-
-          if (voteringError) {
-            console.error('Error creating votering:', voteringError);
-            continue;
-          }
-          voteringDbId = newVotering.id;
-          voteringerCreated++;
-          console.log(`Created new votering: ${voteringDbId}`);
-        }
-
-        // Get individual votes for this FINAL votering
-        const resultatUrl = `https://data.stortinget.no/eksport/voteringsresultat?voteringid=${voteringId}&format=json`;
-        const resultatRes = await fetch(resultatUrl);
-        
-        let finalFor = apiAntallFor;
-        let finalMot = apiAntallMot;
-        let finalAvholdende = apiAntallIkkeTilstede;
-
-        const partiVotes: Record<string, { for: number; mot: number; avholdende: number; navn: string }> = {};
-        
-        if (resultatRes.ok) {
-          const resultatData = await resultatRes.json();
-          
-          let representantList = resultatData?.voteringsresultat_liste?.representant_voteringsresultat 
-            || resultatData?.voteringsresultat_liste;
-          
-          if (!Array.isArray(representantList)) {
-            representantList = representantList ? [representantList] : [];
-          }
-
-          console.log(`Found ${representantList.length} individual votes`);
-
-          let countFor = 0, countMot = 0, countAvh = 0;
-          const votesToInsert: any[] = [];
-
-          for (const repVote of representantList) {
-            const repStortingetId = repVote?.representant?.id;
-            const stemme = normalizeVote(repVote?.votering);
-
-            if (!repStortingetId) continue;
-
-            // Count totals
-            if (stemme === 'for') countFor++;
-            else if (stemme === 'mot') countMot++;
-            else if (stemme === 'avholdende') countAvh++;
-
-            const repInfo = repMap.get(repStortingetId);
-            const partiForkortelse = repInfo?.parti_forkortelse || repVote?.representant?.parti?.id || 'IND';
-            const partiNavn = repInfo?.parti || repVote?.representant?.parti?.navn || 'Uavhengig';
-            
-            // Track party votes
-            if (!partiVotes[partiForkortelse]) {
-              partiVotes[partiForkortelse] = { for: 0, mot: 0, avholdende: 0, navn: partiNavn };
-            }
-
-            if (stemme === 'for') partiVotes[partiForkortelse].for++;
-            else if (stemme === 'mot') partiVotes[partiForkortelse].mot++;
-            else if (stemme === 'avholdende') partiVotes[partiForkortelse].avholdende++;
-
-            // Insert rep vote if rep exists
-            if (repInfo) {
-              votesToInsert.push({
-                representant_id: repInfo.id,
-                sak_id: sak.id,
-                votering_id: String(voteringId),
-                votering_uuid: voteringDbId,
-                stemme,
-              });
-            }
-          }
-
-          // Use counted values if API values are 0
-          if (countFor > 0 || countMot > 0) {
-            finalFor = apiAntallFor > 0 ? apiAntallFor : countFor;
-            finalMot = apiAntallMot > 0 ? apiAntallMot : countMot;
-            finalAvholdende = apiAntallIkkeTilstede > 0 ? apiAntallIkkeTilstede : countAvh;
-          }
-
-          console.log(`Parsed: for=${countFor}, mot=${countMot}, avh=${countAvh}`);
-
-          // Batch insert rep votes
-          if (votesToInsert.length > 0) {
-            const { error: insertError } = await supabase
-              .from('representant_voteringer')
-              .upsert(votesToInsert, { 
-                onConflict: 'representant_id,votering_uuid',
-                ignoreDuplicates: true 
-              });
-
-            if (!insertError) {
-              repVotesInserted += votesToInsert.length;
-            } else {
-              console.error('Batch insert error:', insertError);
+            if (!existingFinal) {
+              // Create the final votering record
+              await supabase
+                .from('voteringer')
+                .insert({
+                  stortinget_votering_id: String(finalVoteringId),
+                  sak_id: sak.id,
+                  forslag_tekst: finalVotering?.votering_tema || sak.tittel,
+                  votering_dato: safeParseDate(finalVotering?.votering_tid),
+                  status: 'avsluttet',
+                  vedtatt: finalVotering?.vedtatt === true || finalVotering?.vedtatt === 'true',
+                  resultat_for: finalFor,
+                  resultat_mot: finalMot,
+                  resultat_avholdende: finalAvholdende,
+                });
+              sakVoteringerCreated++;
             }
           }
         }
 
-        // Update votering with final results
-        await supabase
-          .from('voteringer')
-          .update({
-            resultat_for: finalFor,
-            resultat_mot: finalMot,
-            resultat_avholdende: finalAvholdende,
-            vedtatt: finalFor > finalMot,
-            status: 'avsluttet',
-          })
-          .eq('id', voteringDbId);
-
-        // Delete old party votes and insert fresh ones
+        // Delete old party votes and insert fresh aggregated ones
         await supabase
           .from('parti_voteringer')
           .delete()
           .eq('sak_id', sak.id);
 
-        const partiVotesToInsert = Object.entries(partiVotes).map(([partiForkortelse, votes]) => ({
+        const partiVotesToInsert = Object.entries(aggregatePartiVotes).map(([partiForkortelse, votes]) => ({
           sak_id: sak.id,
           parti_forkortelse: partiForkortelse,
           parti_navn: votes.navn,
@@ -370,7 +439,7 @@ Deno.serve(async (req) => {
           console.log(`Inserted ${partiVotesToInsert.length} parti_voteringer`);
         }
 
-        // Update sak with voting results
+        // Update sak with final voting results
         const vedtakResultat = finalFor > finalMot ? 'vedtatt' : finalMot > finalFor ? 'ikke_vedtatt' : null;
 
         await supabase
@@ -384,10 +453,13 @@ Deno.serve(async (req) => {
           })
           .eq('id', sak.id);
 
+        totalVoteringerCreated += sakVoteringerCreated;
+        totalRepVotesInserted += sakRepVotesInserted;
         sakerProcessed++;
-        console.log(`✓ Completed sak ${sak.stortinget_id}: for=${finalFor}, mot=${finalMot}`);
+        
+        console.log(`✓ Completed sak ${sak.stortinget_id}: ${sakVoteringerCreated} voteringer, ${sakRepVotesInserted} rep votes`);
 
-        // Rate limit
+        // Rate limit between saker
         await new Promise(resolve => setTimeout(resolve, 100));
 
       } catch (sakError: any) {
@@ -397,13 +469,13 @@ Deno.serve(async (req) => {
 
     const result = {
       success: true,
-      message: 'Essential voting sync completed',
+      message: 'Complete voting sync finished',
       sakerProcessed,
-      voteringerCreated,
-      repVotesInserted,
+      voteringerCreated: totalVoteringerCreated,
+      repVotesInserted: totalRepVotesInserted,
     };
 
-    console.log('Sync result:', result);
+    console.log('\nSync result:', result);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
