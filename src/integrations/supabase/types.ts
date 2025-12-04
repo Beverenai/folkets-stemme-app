@@ -275,10 +275,13 @@ export type Database = {
           created_at: string
           dokumentgruppe: string | null
           er_viktig: boolean | null
+          forslagsstiller: Json | null
           id: string
           kategori: string | null
+          komite_navn: string | null
           kort_tittel: string | null
           oppsummering: string | null
+          prosess_steg: number | null
           sist_oppdatert_fra_stortinget: string | null
           status: string
           stengt_dato: string | null
@@ -302,10 +305,13 @@ export type Database = {
           created_at?: string
           dokumentgruppe?: string | null
           er_viktig?: boolean | null
+          forslagsstiller?: Json | null
           id?: string
           kategori?: string | null
+          komite_navn?: string | null
           kort_tittel?: string | null
           oppsummering?: string | null
+          prosess_steg?: number | null
           sist_oppdatert_fra_stortinget?: string | null
           status?: string
           stengt_dato?: string | null
@@ -329,10 +335,13 @@ export type Database = {
           created_at?: string
           dokumentgruppe?: string | null
           er_viktig?: boolean | null
+          forslagsstiller?: Json | null
           id?: string
           kategori?: string | null
+          komite_navn?: string | null
           kort_tittel?: string | null
           oppsummering?: string | null
+          prosess_steg?: number | null
           sist_oppdatert_fra_stortinget?: string | null
           status?: string
           stengt_dato?: string | null
