@@ -136,7 +136,7 @@ export default function Resultater() {
       enighetText = enighet ? '✅ Stortinget stemte som folket' : '❌ Stortinget stemte mot folket';
     }
     
-    const shareText = `${displayText}\n\n${enighetText}\n\nSe resultatene på Folkets Storting`;
+    const shareText = `${displayText}\n\n${enighetText}\n\nSe resultatene på Folketinget`;
     
     if (navigator.share) {
       try {

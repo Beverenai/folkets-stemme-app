@@ -77,14 +77,14 @@ export default function ShareCard({
 
 ${isAgreement ? '✓ Folket er ENIG med Stortinget' : '✗ Folket er UENIG med Stortinget'}
 
-Stem selv på Folkets Storting!`
+Stem selv på Folketinget!`
     : `${title}
 
 📊 Folkets mening:
 ✅ ${forPercent}% For
 ❌ ${motPercent}% Mot
 
-Stem selv på Folkets Storting!`;
+Stem selv på Folketinget!`;
 
   const encodedText = encodeURIComponent(shareText);
   const encodedUrl = encodeURIComponent(url);
@@ -108,7 +108,7 @@ Stem selv på Folkets Storting!`;
   const shareToMessages = async () => {
     try {
       await navigator.share({
-        title: 'Folkets Storting',
+        title: 'Folketinget',
         text: shareText,
         url: url,
       });
@@ -164,7 +164,7 @@ Stem selv på Folkets Storting!`;
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">FS</span>
             </div>
-            <span className="font-semibold text-foreground">Folkets Storting</span>
+            <span className="font-semibold text-foreground">Folketinget</span>
           </div>
 
           {/* Title */}

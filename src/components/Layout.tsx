@@ -42,7 +42,7 @@ export default function Layout({ children, hideHeader, hideNav, title }: LayoutP
                 <span className="text-lg">🏛️</span>
               </div>
               <span className="font-semibold text-lg text-white">
-                Folkets Storting
+                Folketinget
               </span>
             </Link>
 
@@ -100,7 +100,7 @@ export default function Layout({ children, hideHeader, hideNav, title }: LayoutP
         <header className="md:hidden sticky top-0 z-40 nrk-header safe-top">
           <div className="flex items-center justify-center h-12 px-4 relative">
             <h1 className="font-semibold text-[17px] text-white">
-              {title || 'Folkets Storting'}
+              {title || 'Folketinget'}
             </h1>
           </div>
         </header>

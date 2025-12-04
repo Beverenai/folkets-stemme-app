@@ -224,7 +224,7 @@ export default function Stem() {
     triggerHaptic('light');
     const shareData = {
       title: selectedSak.spoersmaal || selectedSak.kort_tittel || selectedSak.tittel,
-      text: `Stem på denne saken på Folkets Storting!`,
+      text: `Stem på denne saken på Folketinget!`,
       url: `${window.location.origin}/sak/${selectedSak.id}`,
     };
 

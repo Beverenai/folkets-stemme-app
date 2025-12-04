@@ -86,7 +86,7 @@ export default function Auth() {
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary mb-4">
             <span className="text-3xl">🏛️</span>
           </div>
-          <h2 className="text-2xl font-bold">Folkets Storting</h2>
+          <h2 className="text-2xl font-bold">Folketinget</h2>
           <p className="text-muted-foreground text-sm mt-1">
             Din stemme teller
           </p>
