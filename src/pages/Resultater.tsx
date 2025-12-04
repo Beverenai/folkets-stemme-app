@@ -184,7 +184,7 @@ export default function Resultater() {
                     const folkeAvholdende = stemmer.filter(s => s.stemme === 'avholdende').length;
                     const totalFolke = folkeFor + folkeMot + folkeAvholdende;
                     const enighet = getEnighet(votering);
-                    const displayText = votering.oppsummering || votering.forslag_tekst || votering.stortinget_saker?.tittel || 'Votering';
+                    const displayText = votering.oppsummering || votering.stortinget_saker?.tittel || votering.forslag_tekst || 'Votering';
                     const kategori = votering.stortinget_saker?.kategori;
                     return (
                       <div key={votering.id} className="flex-[0_0_100%] min-w-0 px-4">
