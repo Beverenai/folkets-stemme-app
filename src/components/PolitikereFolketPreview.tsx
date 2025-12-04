@@ -158,23 +158,23 @@ export default function PolitikereFolketPreview() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Parti-seksjon */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-semibold flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />
             Partiene vs Folket
           </h2>
           <Link 
             to="/representanter" 
-            className="text-sm text-primary flex items-center gap-1 hover:underline"
+            className="text-xs text-primary flex items-center gap-0.5 hover:underline"
           >
-            Se alle <ChevronRight className="h-4 w-4" />
+            Se alle <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
         
-        <div className="bg-card rounded-xl p-4 space-y-3">
+        <div className="rounded-2xl bg-secondary/80 backdrop-blur-sm border border-border/50 p-4 space-y-3 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
           {partiData.slice(0, 5).map((parti, index) => {
             const config = getPartiConfig(parti.partiForkortelse);
             return (
@@ -185,7 +185,7 @@ export default function PolitikereFolketPreview() {
                 style={{ animationDelay: `${index * 0.03}s` }}
               >
                 <div 
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-sm"
                   style={{ backgroundColor: config.farge, color: config.tekstFarge }}
                 >
                   {config.forkortelse}
@@ -195,9 +195,9 @@ export default function PolitikereFolketPreview() {
                     <span className="text-sm font-medium truncate group-hover:text-primary transition-colors">
                       {config.navn}
                     </span>
-                    <span className="text-sm font-bold ml-2">{Math.round(parti.enighet)}%</span>
+                    <span className="text-sm font-bold tabular-nums ml-2">{Math.round(parti.enighet)}%</span>
                   </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
                     <div 
                       className="h-full rounded-full transition-all duration-700 ease-out"
                       style={{ width: `${parti.enighet}%`, backgroundColor: config.farge }}
@@ -213,14 +213,12 @@ export default function PolitikereFolketPreview() {
       {/* Representanter som er mest enig */}
       {topReps.length > 0 && (
         <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
-              Mest enig med folket
-            </h2>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-vote-for" />
+            <h2 className="text-base font-semibold">Mest enig med folket</h2>
           </div>
           
-          <div className="bg-card rounded-xl divide-y divide-border">
+          <div className="rounded-2xl bg-secondary/80 backdrop-blur-sm border border-border/50 divide-y divide-border/50 overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
             {topReps.map((rep) => (
               <RepresentantRow key={rep.id} rep={rep} />
             ))}
@@ -231,14 +229,12 @@ export default function PolitikereFolketPreview() {
       {/* Representanter som er minst enig */}
       {bottomReps.length > 0 && (
         <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <TrendingDown className="h-5 w-5 text-red-500" />
-              Minst enig med folket
-            </h2>
+          <div className="flex items-center gap-2">
+            <TrendingDown className="h-4 w-4 text-vote-mot" />
+            <h2 className="text-base font-semibold">Minst enig med folket</h2>
           </div>
           
-          <div className="bg-card rounded-xl divide-y divide-border">
+          <div className="rounded-2xl bg-secondary/80 backdrop-blur-sm border border-border/50 divide-y divide-border/50 overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
             {bottomReps.map((rep) => (
               <RepresentantRow key={rep.id} rep={rep} />
             ))}
@@ -249,9 +245,9 @@ export default function PolitikereFolketPreview() {
       {/* Se alle knapp */}
       <Link
         to="/representanter"
-        className="flex items-center justify-center gap-2 w-full py-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition-colors"
+        className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-primary/10 border border-primary/20 text-primary font-semibold text-sm hover:bg-primary/15 transition-colors ios-press"
       >
-        <Users className="h-5 w-5" />
+        <Users className="h-4 w-4" />
         Se alle politikere
         <ChevronRight className="h-4 w-4" />
       </Link>
@@ -265,22 +261,22 @@ function RepresentantRow({ rep }: { rep: RepresentantSamsvar }) {
   return (
     <Link
       to={`/representant/${rep.id}`}
-      className="flex items-center gap-3 p-3 hover:bg-secondary/50 transition-colors"
+      className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
     >
       {rep.bilde_url ? (
         <img 
           src={rep.bilde_url} 
           alt={rep.navn}
-          className="h-10 w-10 rounded-full object-cover bg-secondary"
+          className="h-10 w-10 rounded-full object-cover bg-muted shadow-sm"
         />
       ) : (
-        <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
+        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
           <Users className="h-5 w-5 text-muted-foreground" />
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <div className="font-medium truncate">{rep.navn}</div>
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
+        <div className="font-medium text-sm truncate">{rep.navn}</div>
+        <div className="text-xs text-muted-foreground flex items-center gap-1.5">
           <span 
             className="inline-block h-2 w-2 rounded-full"
             style={{ backgroundColor: config.farge }}
@@ -289,12 +285,12 @@ function RepresentantRow({ rep }: { rep: RepresentantSamsvar }) {
         </div>
       </div>
       <div className={cn(
-        "text-lg font-bold",
-        rep.enighet >= 60 ? "text-green-500" : rep.enighet <= 40 ? "text-red-500" : "text-foreground"
+        "text-base font-bold tabular-nums",
+        rep.enighet >= 60 ? "text-vote-for" : rep.enighet <= 40 ? "text-vote-mot" : "text-foreground"
       )}>
         {Math.round(rep.enighet)}%
       </div>
-      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
     </Link>
   );
 }
