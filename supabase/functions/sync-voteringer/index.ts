@@ -342,45 +342,47 @@ Deno.serve(async (req) => {
 
         console.log(`Found ${voteringListe.length} total voteringer`);
 
-        // === NEW: Process ALL voteringer that have individual votes ===
-        const voteringerWithIndividualVotes = voteringListe.filter(hasIndividualVotes);
-        console.log(`${voteringerWithIndividualVotes.length} voteringer have individual votes available`);
-
-        // Aggregate party votes across all voteringer for this sak
-        const aggregatePartiVotes: Record<string, { for: number; mot: number; avholdende: number; navn: string }> = {};
+        // Get the FINAL votering for the sak's overall result - this is the ONLY one we use for party breakdown
+        const finalVotering = findFinalVotering(voteringListe);
+        
+        // Party votes should ONLY come from the final votering, not aggregated across all
+        let finalPartiVotes: Record<string, { for: number; mot: number; avholdende: number; navn: string }> = {};
         let sakVoteringerCreated = 0;
         let sakRepVotesInserted = 0;
 
-        // Process each votering with individual votes
-        for (const votering of voteringerWithIndividualVotes) {
-          const voteringId = votering?.votering_id;
-          console.log(`Processing votering ${voteringId}: "${votering?.votering_tema?.substring(0, 50)}..."`);
+        // Process the FINAL votering for party breakdown
+        if (finalVotering && hasIndividualVotes(finalVotering)) {
+          const finalVoteringId = finalVotering?.votering_id;
+          console.log(`Processing FINAL votering ${finalVoteringId}: "${finalVotering?.votering_tema?.substring(0, 50)}..."`);
 
-          const result = await processVoteringVotes(supabase, votering, sak.id, repMap);
+          const result = await processVoteringVotes(supabase, finalVotering, sak.id, repMap);
           
           if (result) {
             if (result.votesInserted > 0) {
               sakVoteringerCreated++;
               sakRepVotesInserted += result.votesInserted;
             }
-
-            // Aggregate party votes
-            for (const [parti, votes] of Object.entries(result.partiVotes)) {
-              if (!aggregatePartiVotes[parti]) {
-                aggregatePartiVotes[parti] = { for: 0, mot: 0, avholdende: 0, navn: votes.navn };
-              }
-              aggregatePartiVotes[parti].for += votes.for;
-              aggregatePartiVotes[parti].mot += votes.mot;
-              aggregatePartiVotes[parti].avholdende += votes.avholdende;
-            }
+            finalPartiVotes = result.partiVotes;
           }
-
-          // Small delay between API calls
-          await new Promise(resolve => setTimeout(resolve, 50));
         }
 
-        // Also get the FINAL votering for the sak's overall result
-        const finalVotering = findFinalVotering(voteringListe);
+        // Also process other voteringer for rep vote history (but don't use for party stats)
+        const voteringerWithIndividualVotes = voteringListe.filter((v: any) => 
+          hasIndividualVotes(v) && v?.votering_id !== finalVotering?.votering_id
+        );
+        
+        for (const votering of voteringerWithIndividualVotes) {
+          const voteringId = votering?.votering_id;
+          console.log(`Processing secondary votering ${voteringId}`);
+
+          const result = await processVoteringVotes(supabase, votering, sak.id, repMap);
+          if (result && result.votesInserted > 0) {
+            sakVoteringerCreated++;
+            sakRepVotesInserted += result.votesInserted;
+          }
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
         let finalFor = 0, finalMot = 0, finalAvholdende = 0;
 
         if (finalVotering) {
@@ -417,13 +419,13 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Delete old party votes and insert fresh aggregated ones
+        // Delete old party votes and insert fresh ones from FINAL votering only
         await supabase
           .from('parti_voteringer')
           .delete()
           .eq('sak_id', sak.id);
 
-        const partiVotesToInsert = Object.entries(aggregatePartiVotes).map(([partiForkortelse, votes]) => ({
+        const partiVotesToInsert = Object.entries(finalPartiVotes).map(([partiForkortelse, votes]) => ({
           sak_id: sak.id,
           parti_forkortelse: partiForkortelse,
           parti_navn: votes.navn,
