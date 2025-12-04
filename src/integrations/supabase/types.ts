@@ -283,6 +283,7 @@ export type Database = {
           oppsummering: string | null
           prosess_steg: number | null
           sist_oppdatert_fra_stortinget: string | null
+          spoersmaal: string | null
           status: string
           stengt_dato: string | null
           stortinget_id: string
@@ -313,6 +314,7 @@ export type Database = {
           oppsummering?: string | null
           prosess_steg?: number | null
           sist_oppdatert_fra_stortinget?: string | null
+          spoersmaal?: string | null
           status?: string
           stengt_dato?: string | null
           stortinget_id: string
@@ -343,6 +345,7 @@ export type Database = {
           oppsummering?: string | null
           prosess_steg?: number | null
           sist_oppdatert_fra_stortinget?: string | null
+          spoersmaal?: string | null
           status?: string
           stengt_dato?: string | null
           stortinget_id?: string

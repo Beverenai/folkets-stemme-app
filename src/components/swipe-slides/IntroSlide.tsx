@@ -1,4 +1,4 @@
-import { ExternalLink, ChevronRight, Users } from 'lucide-react';
+import { ExternalLink, ChevronRight } from 'lucide-react';
 
 interface Forslagsstiller {
   navn: string;
@@ -8,6 +8,7 @@ interface Forslagsstiller {
 interface IntroSlideProps {
   tittel: string;
   kortTittel: string | null;
+  spoersmaal: string | null;
   kategori: string | null;
   oppsummering: string | null;
   beskrivelse: string | null;
@@ -18,7 +19,8 @@ interface IntroSlideProps {
 
 export default function IntroSlide({ 
   tittel, 
-  kortTittel, 
+  kortTittel,
+  spoersmaal,
   kategori, 
   oppsummering, 
   beskrivelse,
@@ -26,71 +28,58 @@ export default function IntroSlide({
   komiteNavn,
   forslagsstiller,
 }: IntroSlideProps) {
-  // Get first proposer for display
-  const hovedForslagsstiller = forslagsstiller && forslagsstiller.length > 0 
-    ? forslagsstiller[0] 
-    : null;
+  const primaryForslagsstiller = forslagsstiller?.[0];
+
+  const stortingetUrl = `https://www.stortinget.no/no/Saker-og-publikasjoner/Saker/Sak/?p=${stortingetId}`;
 
   return (
     <div className="h-full flex flex-col px-4 pt-6 pb-20">
-      <h2 className="text-xl font-bold text-primary mb-6">Sett deg inn i saken</h2>
+      <h2 className="text-sm font-medium text-muted-foreground mb-4">Sett deg inn i saken</h2>
       
-      <div className="premium-card p-5 flex-1 flex flex-col min-h-0">
-        {/* Komité badge */}
-        {komiteNavn && (
-          <div className="flex items-center gap-1.5 mb-3">
-            <Users className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">{komiteNavn}</span>
-          </div>
-        )}
-        
-        <h3 className="text-lg font-semibold leading-tight mb-3">
-          {kortTittel || tittel}
-        </h3>
-        
-        {/* Forslagsstiller */}
-        {hovedForslagsstiller && (
-          <p className="text-sm text-muted-foreground mb-3">
-            Fremmet av {hovedForslagsstiller.navn} ({hovedForslagsstiller.parti})
-            {forslagsstiller && forslagsstiller.length > 1 && (
-              <span className="text-muted-foreground/60"> +{forslagsstiller.length - 1} til</span>
-            )}
-          </p>
-        )}
-        
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xs text-muted-foreground">Kilde: Stortinget</span>
+      <div className="premium-card p-5 flex-1 flex flex-col overflow-hidden">
+        {/* Spørsmål som hovedtittel */}
+        <h1 className="text-xl font-bold leading-tight mb-4">
+          {spoersmaal || kortTittel || tittel}
+        </h1>
+
+        {/* Metadata */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+          <span>Stortinget</span>
           {kategori && (
             <>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-xs text-muted-foreground capitalize">{kategori}</span>
+              <span>•</span>
+              <span className="text-primary">{kategori}</span>
             </>
           )}
         </div>
-        
-        {/* Scrollable text area with fade */}
-        <div className="relative flex-1 min-h-0">
-          <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-card to-transparent z-10 pointer-events-none" />
-          <div className="h-full overflow-y-auto ios-scroll py-2">
-            <p className="text-[15px] leading-relaxed text-foreground/90">
-              {oppsummering || beskrivelse || 'Ingen oppsummering tilgjengelig.'}
+
+        {/* Oppsummering */}
+        <div className="flex-1 overflow-y-auto mb-4 ios-scroll">
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            {oppsummering || beskrivelse || 'Ingen beskrivelse tilgjengelig.'}
+          </p>
+          
+          {primaryForslagsstiller && (
+            <p className="text-sm text-muted-foreground mt-4">
+              <span className="font-medium text-foreground">Foreslått av:</span> {primaryForslagsstiller.navn} ({primaryForslagsstiller.parti})
             </p>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-card to-transparent z-10 pointer-events-none" />
+          )}
         </div>
-        
+
+        {/* Link til Stortinget */}
         <a
-          href={`https://www.stortinget.no/no/Saker-og-publikasjoner/Saker/Sak/?p=${stortingetId}`}
+          href={stortingetUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 ios-press flex-shrink-0"
+          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-primary/10 text-primary font-medium ios-press"
         >
           <ExternalLink className="h-4 w-4" />
           Les forslaget her
         </a>
       </div>
-      
-      <div className="flex items-center justify-center gap-2 mt-6 text-primary animate-pulse">
+
+      {/* Sveip-hint */}
+      <div className="flex items-center justify-center gap-1 mt-4 text-primary">
         <span className="text-sm font-medium">Sveip for argumenter</span>
         <ChevronRight className="h-4 w-4" />
       </div>

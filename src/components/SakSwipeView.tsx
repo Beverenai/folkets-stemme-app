@@ -38,6 +38,7 @@ interface SakSwipeViewProps {
     stortinget_id: string;
     tittel: string;
     kort_tittel: string | null;
+    spoersmaal: string | null;
     kategori: string | null;
     oppsummering: string | null;
     beskrivelse: string | null;
@@ -132,6 +133,7 @@ export default function SakSwipeView({
       key="intro"
       tittel={sak.tittel}
       kortTittel={sak.kort_tittel}
+      spoersmaal={sak.spoersmaal}
       kategori={sak.kategori}
       oppsummering={sak.oppsummering}
       beskrivelse={sak.beskrivelse}
@@ -146,6 +148,7 @@ export default function SakSwipeView({
     />,
     <VoteSlide
       key="vote"
+      spoersmaal={sak.spoersmaal}
       tittel={sak.tittel}
       kortTittel={sak.kort_tittel}
       isLoggedIn={isLoggedIn}

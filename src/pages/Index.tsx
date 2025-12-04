@@ -15,6 +15,7 @@ interface ViktigSak {
   id: string;
   tittel: string;
   kort_tittel: string | null;
+  spoersmaal: string | null;
   oppsummering: string | null;
   kategori: string | null;
   status: string;
@@ -51,7 +52,7 @@ async function fetchHomeData() {
   const [sakerRes, syncRes] = await Promise.all([
     sb
       .from('stortinget_saker')
-      .select('id, tittel, kort_tittel, oppsummering, kategori, status, updated_at, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat, argumenter_for')
+      .select('id, tittel, kort_tittel, spoersmaal, oppsummering, kategori, status, updated_at, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat, argumenter_for')
       .eq('er_viktig', true)
       .eq('status', 'pågående')
       .not('oppsummering', 'is', null)
@@ -219,9 +220,9 @@ export default function Index() {
                         )}
                       </div>
 
-                      {/* Title */}
+                      {/* Title - use spoersmaal if available */}
                       <h3 className="font-semibold text-[15px] leading-snug mb-2 line-clamp-2">
-                        {sak.kort_tittel || sak.tittel}
+                        {sak.spoersmaal || sak.kort_tittel || sak.tittel}
                       </h3>
 
                       {/* Summary */}
