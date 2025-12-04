@@ -48,6 +48,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "folke_stemmer_sak_id_fkey"
+            columns: ["sak_id"]
+            isOneToOne: false
+            referencedRelation: "v_komplette_saker"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "folke_stemmer_votering_id_fkey"
+            columns: ["votering_id"]
+            isOneToOne: false
+            referencedRelation: "v_komplette_voteringer"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "folke_stemmer_votering_id_fkey"
             columns: ["votering_id"]
             isOneToOne: false
@@ -93,6 +107,13 @@ export type Database = {
             columns: ["sak_id"]
             isOneToOne: false
             referencedRelation: "stortinget_saker"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parti_voteringer_sak_id_fkey"
+            columns: ["sak_id"]
+            isOneToOne: false
+            referencedRelation: "v_komplette_saker"
             referencedColumns: ["id"]
           },
         ]
@@ -165,6 +186,20 @@ export type Database = {
             columns: ["sak_id"]
             isOneToOne: false
             referencedRelation: "stortinget_saker"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "representant_voteringer_sak_id_fkey"
+            columns: ["sak_id"]
+            isOneToOne: false
+            referencedRelation: "v_komplette_saker"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "representant_voteringer_votering_uuid_fkey"
+            columns: ["votering_uuid"]
+            isOneToOne: false
+            referencedRelation: "v_komplette_voteringer"
             referencedColumns: ["id"]
           },
           {
@@ -410,11 +445,144 @@ export type Database = {
             referencedRelation: "stortinget_saker"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "voteringer_sak_id_fkey"
+            columns: ["sak_id"]
+            isOneToOne: false
+            referencedRelation: "v_komplette_saker"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      v_komplette_saker: {
+        Row: {
+          argumenter_for: Json | null
+          argumenter_mot: Json | null
+          behandlet_sesjon: string | null
+          beskrivelse: string | null
+          bilde_url: string | null
+          created_at: string | null
+          dokumentgruppe: string | null
+          er_viktig: boolean | null
+          folke_stemmer_count: number | null
+          id: string | null
+          kategori: string | null
+          kort_tittel: string | null
+          oppsummering: string | null
+          sist_oppdatert_fra_stortinget: string | null
+          status: string | null
+          stengt_dato: string | null
+          stortinget_id: string | null
+          stortinget_vedtak: string | null
+          stortinget_votering_avholdende: number | null
+          stortinget_votering_for: number | null
+          stortinget_votering_mot: number | null
+          tema: string | null
+          tittel: string | null
+          updated_at: string | null
+          vedtak_resultat: string | null
+          voteringer_synced_at: string | null
+        }
+        Insert: {
+          argumenter_for?: Json | null
+          argumenter_mot?: Json | null
+          behandlet_sesjon?: string | null
+          beskrivelse?: string | null
+          bilde_url?: string | null
+          created_at?: string | null
+          dokumentgruppe?: string | null
+          er_viktig?: boolean | null
+          folke_stemmer_count?: never
+          id?: string | null
+          kategori?: string | null
+          kort_tittel?: string | null
+          oppsummering?: string | null
+          sist_oppdatert_fra_stortinget?: string | null
+          status?: string | null
+          stengt_dato?: string | null
+          stortinget_id?: string | null
+          stortinget_vedtak?: string | null
+          stortinget_votering_avholdende?: number | null
+          stortinget_votering_for?: number | null
+          stortinget_votering_mot?: number | null
+          tema?: string | null
+          tittel?: string | null
+          updated_at?: string | null
+          vedtak_resultat?: string | null
+          voteringer_synced_at?: string | null
+        }
+        Update: {
+          argumenter_for?: Json | null
+          argumenter_mot?: Json | null
+          behandlet_sesjon?: string | null
+          beskrivelse?: string | null
+          bilde_url?: string | null
+          created_at?: string | null
+          dokumentgruppe?: string | null
+          er_viktig?: boolean | null
+          folke_stemmer_count?: never
+          id?: string | null
+          kategori?: string | null
+          kort_tittel?: string | null
+          oppsummering?: string | null
+          sist_oppdatert_fra_stortinget?: string | null
+          status?: string | null
+          stengt_dato?: string | null
+          stortinget_id?: string | null
+          stortinget_vedtak?: string | null
+          stortinget_votering_avholdende?: number | null
+          stortinget_votering_for?: number | null
+          stortinget_votering_mot?: number | null
+          tema?: string | null
+          tittel?: string | null
+          updated_at?: string | null
+          vedtak_resultat?: string | null
+          voteringer_synced_at?: string | null
+        }
+        Relationships: []
+      }
+      v_komplette_voteringer: {
+        Row: {
+          argumenter_for: Json | null
+          argumenter_mot: Json | null
+          created_at: string | null
+          folke_stemmer_count: number | null
+          forslag_tekst: string | null
+          id: string | null
+          oppsummering: string | null
+          resultat_avholdende: number | null
+          resultat_for: number | null
+          resultat_mot: number | null
+          sak_er_viktig: boolean | null
+          sak_id: string | null
+          sak_kategori: string | null
+          sak_oppsummering: string | null
+          sak_tittel: string | null
+          status: string | null
+          stortinget_votering_id: string | null
+          updated_at: string | null
+          vedtatt: boolean | null
+          votering_dato: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voteringer_sak_id_fkey"
+            columns: ["sak_id"]
+            isOneToOne: false
+            referencedRelation: "stortinget_saker"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voteringer_sak_id_fkey"
+            columns: ["sak_id"]
+            isOneToOne: false
+            referencedRelation: "v_komplette_saker"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never

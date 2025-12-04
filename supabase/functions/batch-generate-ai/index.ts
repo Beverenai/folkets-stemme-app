@@ -16,6 +16,19 @@ const CATEGORY_PRIORITY: Record<string, number> = {
   'representantforslag': 6,
 };
 
+// Important topics for representantforslag filtering
+const VIKTIGE_TEMAER = [
+  'helse', 'sykehus', 'fastlege', 'eldreomsorg',
+  'skatt', 'moms', 'avgift',
+  'utdanning', 'skole', 'barnehage', 'lærere',
+  'klima', 'miljø', 'natur', 'forurensning',
+  'bolig', 'husleie', 'eiendom',
+  'forsvar', 'militær', 'nato',
+  'arbeid', 'lønn', 'pensjon', 'nav', 'trygd',
+  'samferdsel', 'vei', 'jernbane', 'fly',
+  'politi', 'kriminalitet', 'rettsvesen',
+];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -36,19 +49,26 @@ serve(async (req) => {
   }
 
   let count = 50;
+  let filterCategory: string | null = null;
+  let includeAllSessions = false;
+  
   try {
     const body = await req.json();
     count = Math.min(body.count || 50, 100); // Max 100 per batch
+    filterCategory = body.category || null; // Filter by specific category
+    includeAllSessions = body.allSessions || false; // Include historical sessions
   } catch {
-    // Use default
+    // Use defaults
   }
 
   console.log(`Starting batch AI generation for ${count} saker...`);
+  console.log(`Category filter: ${filterCategory || 'all'}`);
+  console.log(`Sessions: ${includeAllSessions ? 'all' : '2024-2026'}`);
 
   // Create log entry
   const { data: logEntry } = await supabase
     .from('sync_log')
-    .insert({ source: 'batch-ai' })
+    .insert({ source: `batch-ai${filterCategory ? `-${filterCategory}` : ''}` })
     .select('id')
     .single();
   const logId = logEntry?.id;
@@ -57,16 +77,26 @@ serve(async (req) => {
   const errors: string[] = [];
 
   try {
-    // Fetch saker without AI content, prioritized by category
-    // Only 2024-2025 and 2025-2026 sessions
-    const { data: sakerUtenAI, error: fetchError } = await supabase
+    // Build query with filters
+    let query = supabase
       .from('stortinget_saker')
-      .select('id, tittel, beskrivelse, tema, kategori')
+      .select('id, tittel, beskrivelse, tema, kategori, behandlet_sesjon')
       .eq('er_viktig', true)
-      .is('oppsummering', null)
-      .in('behandlet_sesjon', ['2024-2025', '2025-2026'])
+      .is('oppsummering', null);
+
+    // Filter by category if specified
+    if (filterCategory) {
+      query = query.ilike('kategori', filterCategory);
+    }
+
+    // Filter sessions unless allSessions is true
+    if (!includeAllSessions) {
+      query = query.in('behandlet_sesjon', ['2024-2025', '2025-2026']);
+    }
+
+    const { data: sakerUtenAI, error: fetchError } = await query
       .order('created_at', { ascending: false })
-      .limit(count);
+      .limit(count * 2); // Fetch extra for filtering
 
     if (fetchError) {
       throw new Error(`Failed to fetch saker: ${fetchError.message}`);
@@ -77,25 +107,49 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         generated: 0,
-        message: 'Alle viktige saker har allerede AI-innhold',
+        message: `Alle ${filterCategory || 'viktige'} saker har allerede AI-innhold`,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Sort by category priority
-    const sortedSaker = sakerUtenAI.sort((a, b) => {
-      const priorityA = CATEGORY_PRIORITY[a.kategori || ''] || 99;
-      const priorityB = CATEGORY_PRIORITY[b.kategori || ''] || 99;
-      return priorityA - priorityB;
-    });
+    // For representantforslag, filter by important topics
+    let filteredSaker = sakerUtenAI;
+    if (!filterCategory || filterCategory.toLowerCase() === 'representantforslag') {
+      filteredSaker = sakerUtenAI.filter(sak => {
+        if (sak.kategori?.toLowerCase() !== 'representantforslag') return true;
+        
+        // Check if title or description contains important topics
+        const searchText = `${sak.tittel} ${sak.beskrivelse || ''} ${sak.tema || ''}`.toLowerCase();
+        return VIKTIGE_TEMAER.some(tema => searchText.includes(tema));
+      });
+    }
 
-    console.log(`Found ${sortedSaker.length} saker needing AI content`);
-    console.log(`Categories: ${sortedSaker.map(s => s.kategori).join(', ')}`);
+    // Sort by category priority, then by session (newest first)
+    const sortedSaker = filteredSaker
+      .sort((a, b) => {
+        const priorityA = CATEGORY_PRIORITY[a.kategori?.toLowerCase() || ''] || 99;
+        const priorityB = CATEGORY_PRIORITY[b.kategori?.toLowerCase() || ''] || 99;
+        if (priorityA !== priorityB) return priorityA - priorityB;
+        
+        // Sort by session (newer first)
+        return (b.behandlet_sesjon || '').localeCompare(a.behandlet_sesjon || '');
+      })
+      .slice(0, count);
+
+    console.log(`Found ${sakerUtenAI.length} saker, filtered to ${sortedSaker.length} after topic filter`);
+    
+    // Log category breakdown
+    const categoryBreakdown = sortedSaker.reduce((acc, s) => {
+      const cat = s.kategori || 'unknown';
+      acc[cat] = (acc[cat] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    console.log('Category breakdown:', JSON.stringify(categoryBreakdown));
 
     for (const sak of sortedSaker) {
       try {
-        console.log(`Generating AI for: ${sak.tittel?.substring(0, 60)}...`);
+        console.log(`[${generated + 1}/${sortedSaker.length}] Generating for: ${sak.tittel?.substring(0, 50)}...`);
         
         const prompt = `Du er en norsk politisk analytiker. Analyser følgende stortingssak og generer innhold på norsk.
 
@@ -104,6 +158,8 @@ SAKTITTEL: ${sak.tittel}
 BESKRIVELSE: ${sak.beskrivelse || 'Ingen beskrivelse tilgjengelig'}
 
 TEMA: ${sak.tema || 'Ikke spesifisert'}
+
+SESJON: ${sak.behandlet_sesjon || 'Ukjent'}
 
 Generer følgende i JSON-format:
 
@@ -179,7 +235,7 @@ Svar KUN med gyldig JSON i dette formatet:
         }
 
         generated++;
-        console.log(`✓ Generated ${generated}/${sortedSaker.length}: ${sak.tittel?.substring(0, 40)}...`);
+        console.log(`✓ Generated ${generated}/${sortedSaker.length}: ${sak.kategori} - ${sak.tittel?.substring(0, 35)}...`);
 
         // Rate limit delay - 1.5 seconds between calls
         await new Promise(resolve => setTimeout(resolve, 1500));
@@ -212,6 +268,9 @@ Svar KUN med gyldig JSON i dette formatet:
       generated,
       requested: count,
       found: sortedSaker.length,
+      categoryFilter: filterCategory,
+      allSessions: includeAllSessions,
+      categoryBreakdown,
       errors: errors.length > 0 ? errors.slice(0, 5) : null,
       durationMs,
     }), {
