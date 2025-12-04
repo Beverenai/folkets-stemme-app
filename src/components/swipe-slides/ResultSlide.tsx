@@ -1,10 +1,12 @@
-import { Share2, Users, Building2, CheckCircle, XCircle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Share2, Users, Building2, CheckCircle, XCircle, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 import PartiVoteringList from '@/components/PartiVoteringList';
 import RepresentantVoteList from '@/components/RepresentantVoteList';
 import { cn } from '@/lib/utils';
 import { PartiVote, RepresentantVote, VoteStats } from '@/types';
 
 interface ResultSlideProps {
+  sakId: string;
   userVote: string | null;
   voteStats: VoteStats;
   stortingetFor: number | null;
@@ -83,6 +85,7 @@ function StatDisplay({
 }
 
 export default function ResultSlide({ 
+  sakId,
   userVote, 
   voteStats, 
   stortingetFor,
@@ -120,7 +123,7 @@ export default function ResultSlide({
           <h2 className="text-lg font-bold">Takk for din stemme!</h2>
           <p className="text-xs text-muted-foreground">
             Du stemte <span className={userVote === 'for' ? 'text-vote-for font-semibold' : 'text-vote-mot font-semibold'}>
-              {userVote === 'for' ? 'Ja' : 'Nei'}
+              {userVote === 'for' ? 'Enig' : 'Uenig'}
             </span>
           </p>
         </div>
@@ -143,8 +146,8 @@ export default function ResultSlide({
                 <AnimatedBar percentage={folketMotPct} color="mot" delay={200} />
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-vote-for font-semibold">{folketForPct}% Ja</span>
-                <span className="text-vote-mot font-semibold">{folketMotPct}% Nei</span>
+                <span className="text-vote-for font-semibold">{folketForPct}% Enig</span>
+                <span className="text-vote-mot font-semibold">{folketMotPct}% Uenig</span>
               </div>
             </>
           ) : (
@@ -217,6 +220,15 @@ export default function ResultSlide({
           <PartiVoteringList partiVotes={partiVotes} />
         </div>
       )}
+
+      {/* Link to politician votes */}
+      <Link
+        to={`/sak/${sakId}`}
+        className="w-full py-3 rounded-2xl bg-secondary/80 backdrop-blur-sm border border-border/50 font-semibold flex items-center justify-center gap-2 ios-press mb-3 shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+      >
+        Se hvordan politikerne stemte
+        <ChevronRight className="h-4 w-4" />
+      </Link>
 
       {/* Share button */}
       <button

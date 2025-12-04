@@ -39,15 +39,20 @@ export default function ResultBar({
   const avholdendePercent = (avholdendeCount / total) * 100;
 
   return (
-    <div className="space-y-2">
-      {/* Percentage labels above bar */}
-      {showPercentages && size === 'lg' && (
-        <div className="flex justify-between text-sm font-semibold">
-          <span className="text-vote-for">{Math.round(forPercent)}%</span>
+    <div className="space-y-1">
+      {/* Percentage labels above bar - always show when showPercentages is true */}
+      {showPercentages && (
+        <div className={cn(
+          "flex justify-between font-semibold",
+          size === 'sm' && 'text-[10px]',
+          size === 'md' && 'text-xs',
+          size === 'lg' && 'text-sm'
+        )}>
+          <span className={cn(size === 'sm' ? 'text-white/90' : 'text-vote-for')}>{Math.round(forPercent)}%</span>
           {avholdendeCount > 0 && (
-            <span className="text-vote-avholdende">{Math.round(avholdendePercent)}%</span>
+            <span className={cn(size === 'sm' ? 'text-white/70' : 'text-vote-avholdende')}>{Math.round(avholdendePercent)}%</span>
           )}
-          <span className="text-vote-mot">{Math.round(motPercent)}%</span>
+          <span className={cn(size === 'sm' ? 'text-white/90' : 'text-vote-mot')}>{Math.round(motPercent)}%</span>
         </div>
       )}
 

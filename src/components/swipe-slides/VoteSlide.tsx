@@ -23,7 +23,7 @@ export default function VoteSlide({
   onVote,
   isSubmitting 
 }: VoteSlideProps) {
-  const selectedVote = userVote === 'for' ? 'ja' : userVote === 'mot' ? 'nei' : null;
+  const selectedVote = userVote === 'for' ? 'enig' : userVote === 'mot' ? 'uenig' : null;
   const displayQuestion = spoersmaal || kortTittel || tittel;
 
   if (!isLoggedIn) {
@@ -71,19 +71,19 @@ export default function VoteSlide({
           disabled={isSubmitting}
           className={cn(
             "w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ios-press shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
-            selectedVote === 'ja' 
+            selectedVote === 'enig' 
               ? "border-vote-for bg-vote-for/10 shadow-[0_4px_12px_rgba(52,199,89,0.2)]" 
               : "border-border bg-secondary/60 hover:border-muted-foreground hover:bg-secondary"
           )}
         >
-          <span className="text-lg font-semibold">Ja</span>
+          <span className="text-lg font-semibold">Enig</span>
           <div className={cn(
             "h-6 w-6 rounded-full border-2 flex items-center justify-center",
-            selectedVote === 'ja' 
+            selectedVote === 'enig' 
               ? "border-vote-for bg-vote-for" 
               : "border-muted-foreground"
           )}>
-            {selectedVote === 'ja' && <Check className="h-4 w-4 text-white" />}
+            {selectedVote === 'enig' && <Check className="h-4 w-4 text-white" />}
           </div>
         </button>
 
@@ -96,19 +96,19 @@ export default function VoteSlide({
           disabled={isSubmitting}
           className={cn(
             "w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ios-press shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
-            selectedVote === 'nei' 
+            selectedVote === 'uenig' 
               ? "border-vote-mot bg-vote-mot/10 shadow-[0_4px_12px_rgba(255,59,48,0.2)]" 
               : "border-border bg-secondary/60 hover:border-muted-foreground hover:bg-secondary"
           )}
         >
-          <span className="text-lg font-semibold">Nei</span>
+          <span className="text-lg font-semibold">Uenig</span>
           <div className={cn(
             "h-6 w-6 rounded-full border-2 flex items-center justify-center",
-            selectedVote === 'nei' 
+            selectedVote === 'uenig' 
               ? "border-vote-mot bg-vote-mot" 
               : "border-muted-foreground"
           )}>
-            {selectedVote === 'nei' && <Check className="h-4 w-4 text-white" />}
+            {selectedVote === 'uenig' && <Check className="h-4 w-4 text-white" />}
           </div>
         </button>
       </div>

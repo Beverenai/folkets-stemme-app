@@ -112,6 +112,7 @@ export default function SakSwipeView({
     />,
     <ResultSlide
       key="result"
+      sakId={sak.id}
       userVote={userVote}
       voteStats={voteStats}
       stortingetFor={sak.stortinget_votering_for}
