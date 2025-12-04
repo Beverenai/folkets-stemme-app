@@ -1,6 +1,28 @@
-import { Share2, Users, Building2, CheckCircle, XCircle } from 'lucide-react';
+import { Share2, Users, Building2, CheckCircle, XCircle, Vote, UserCheck } from 'lucide-react';
 import ResultBar from '@/components/ResultBar';
+import PartiVoteringList from '@/components/PartiVoteringList';
+import RepresentantVoteList from '@/components/RepresentantVoteList';
 import { cn } from '@/lib/utils';
+
+interface PartiVote {
+  parti_forkortelse: string;
+  parti_navn: string;
+  stemmer_for: number;
+  stemmer_mot: number;
+  stemmer_avholdende: number;
+}
+
+interface RepresentantVote {
+  id: string;
+  stemme: string;
+  representant: {
+    id: string;
+    fornavn: string;
+    etternavn: string;
+    parti_forkortelse: string | null;
+    bilde_url: string | null;
+  };
+}
 
 interface ResultSlideProps {
   userVote: string | null;
@@ -13,6 +35,8 @@ interface ResultSlideProps {
   stortingetFor: number | null;
   stortingetMot: number | null;
   stortingetAvholdende: number | null;
+  partiVotes?: PartiVote[];
+  representantVotes?: RepresentantVote[];
   onShare: () => void;
 }
 
@@ -22,6 +46,8 @@ export default function ResultSlide({
   stortingetFor,
   stortingetMot,
   stortingetAvholdende,
+  partiVotes = [],
+  representantVotes = [],
   onShare 
 }: ResultSlideProps) {
   const hasStortingetVotes = (stortingetFor || 0) > 0 || (stortingetMot || 0) > 0;
@@ -93,7 +119,7 @@ export default function ResultSlide({
               "font-semibold",
               vedtatt ? "text-vote-for" : "text-vote-mot"
             )}>
-              {vedtatt ? 'Vedtatt' : 'Forkastet'} ({stortingetFor}–{stortingetMot})
+              {vedtatt ? 'Vedtatt' : 'Avvist'} ({stortingetFor}–{stortingetMot})
             </p>
           </div>
 
@@ -122,6 +148,28 @@ export default function ResultSlide({
               : "Folket er uenig med Stortinget ✗"
             }
           </p>
+        </div>
+      )}
+
+      {/* Party votes */}
+      {partiVotes.length > 0 && (
+        <div className="premium-card p-5 mb-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Vote className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Slik stemte partiene</h3>
+          </div>
+          <PartiVoteringList partiVotes={partiVotes} />
+        </div>
+      )}
+
+      {/* Representative votes */}
+      {representantVotes.length > 0 && (
+        <div className="premium-card p-5 mb-4">
+          <div className="flex items-center gap-2 mb-4">
+            <UserCheck className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Slik stemte politikerne</h3>
+          </div>
+          <RepresentantVoteList votes={representantVotes} />
         </div>
       )}
 

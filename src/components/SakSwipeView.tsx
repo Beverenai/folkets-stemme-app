@@ -12,6 +12,26 @@ interface Forslagsstiller {
   parti: string;
 }
 
+interface PartiVote {
+  parti_forkortelse: string;
+  parti_navn: string;
+  stemmer_for: number;
+  stemmer_mot: number;
+  stemmer_avholdende: number;
+}
+
+interface RepresentantVote {
+  id: string;
+  stemme: string;
+  representant: {
+    id: string;
+    fornavn: string;
+    etternavn: string;
+    parti_forkortelse: string | null;
+    bilde_url: string | null;
+  };
+}
+
 interface SakSwipeViewProps {
   sak: {
     id: string;
@@ -38,6 +58,8 @@ interface SakSwipeViewProps {
     avholdende: number;
     total: number;
   };
+  partiVotes?: PartiVote[];
+  representantVotes?: RepresentantVote[];
   onVote: (vote: 'for' | 'mot' | 'avholdende') => Promise<void>;
   onShare: () => void;
 }
@@ -47,6 +69,8 @@ export default function SakSwipeView({
   isLoggedIn,
   userVote,
   voteStats,
+  partiVotes = [],
+  representantVotes = [],
   onVote,
   onShare
 }: SakSwipeViewProps) {
@@ -136,6 +160,8 @@ export default function SakSwipeView({
       stortingetFor={sak.stortinget_votering_for}
       stortingetMot={sak.stortinget_votering_mot}
       stortingetAvholdende={sak.stortinget_votering_avholdende}
+      partiVotes={partiVotes}
+      representantVotes={representantVotes}
       onShare={onShare}
     />
   ];

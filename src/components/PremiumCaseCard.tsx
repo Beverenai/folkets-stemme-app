@@ -139,7 +139,7 @@ export default function PremiumCaseCard({
   };
 
   const getVedtakBadge = () => {
-    if (!isCompleted || !vedtakResultat) return null;
+    if (!vedtakResultat) return null;
     
     if (vedtakResultat === 'vedtatt') {
       return (
@@ -151,7 +151,7 @@ export default function PremiumCaseCard({
     if (vedtakResultat === 'ikke_vedtatt') {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-vote-against/20 text-vote-against">
-          <X className="w-3 h-3" /> Ikke vedtatt
+          <X className="w-3 h-3" /> Avvist
         </span>
       );
     }

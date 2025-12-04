@@ -302,6 +302,8 @@ export default function SakDetalj() {
             isLoggedIn={!!user}
             userVote={userVote}
             voteStats={voteStats}
+            partiVotes={partiVotes}
+            representantVotes={representantVotes}
             onVote={handleVote}
             onShare={handleShare}
           />
