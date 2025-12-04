@@ -7,6 +7,11 @@ import VoteSlide from './swipe-slides/VoteSlide';
 import ResultSlide from './swipe-slides/ResultSlide';
 import { Json } from '@/integrations/supabase/types';
 
+interface Forslagsstiller {
+  navn: string;
+  parti: string;
+}
+
 interface SakSwipeViewProps {
   sak: {
     id: string;
@@ -21,6 +26,9 @@ interface SakSwipeViewProps {
     stortinget_votering_for: number | null;
     stortinget_votering_mot: number | null;
     stortinget_votering_avholdende: number | null;
+    komite_navn?: string | null;
+    forslagsstiller?: Forslagsstiller[] | null;
+    prosess_steg?: number | null;
   };
   isLoggedIn: boolean;
   userVote: string | null;
@@ -92,6 +100,9 @@ export default function SakSwipeView({
     }
   };
 
+  // Parse forslagsstiller from JSON
+  const forslagsstillerData = sak.forslagsstiller as Forslagsstiller[] | null;
+
   const slides = [
     <IntroSlide
       key="intro"
@@ -101,6 +112,9 @@ export default function SakSwipeView({
       oppsummering={sak.oppsummering}
       beskrivelse={sak.beskrivelse}
       stortingetId={sak.stortinget_id}
+      komiteNavn={sak.komite_navn}
+      forslagsstiller={forslagsstillerData}
+      prosessSteg={sak.prosess_steg || 1}
     />,
     <ArgumentsSlide
       key="arguments"

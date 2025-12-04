@@ -121,6 +121,78 @@ interface StortingetSak {
   er_viktig: boolean;
 }
 
+interface EnrichedSakData {
+  komite_navn: string | null;
+  forslagsstiller: Array<{ navn: string; parti: string }>;
+  prosess_steg: number;
+}
+
+// Fetch detailed sak info from API for enrichment
+async function fetchSakDetails(sakId: string): Promise<EnrichedSakData | null> {
+  try {
+    const url = `https://data.stortinget.no/eksport/sak?sakid=${sakId}&format=json`;
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+    });
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    
+    // Extract komite
+    const komite_navn = data.komite?.navn || null;
+    
+    // Extract forslagsstillere
+    const forslagsstiller: Array<{ navn: string; parti: string }> = [];
+    const opphav = data.sak_opphav;
+    if (opphav?.forslagstiller_liste) {
+      for (const person of opphav.forslagstiller_liste) {
+        if (person.fornavn && person.etternavn) {
+          forslagsstiller.push({
+            navn: `${person.fornavn} ${person.etternavn}`,
+            parti: person.parti?.navn || person.parti || 'Ukjent',
+          });
+        }
+      }
+    }
+    
+    // Determine prosess_steg from saksgang
+    let prosess_steg = 1; // Default: Forslag
+    const saksgang = data.saksgang?.saksgang_steg_liste || [];
+    
+    // Find the highest completed step
+    for (const steg of saksgang) {
+      const stegNavn = (steg.navn || '').toLowerCase();
+      const stegNummer = steg.steg_nummer || 0;
+      
+      // Check if step seems completed (has dates or status)
+      const hasActivity = steg.dato || steg.behandlet_dato;
+      
+      if (hasActivity && stegNummer > prosess_steg) {
+        prosess_steg = Math.min(stegNummer, 3); // Cap at 3
+      }
+      
+      // Special handling for common step names
+      if (stegNavn.includes('komite') && hasActivity) {
+        prosess_steg = Math.max(prosess_steg, 2);
+      }
+      if ((stegNavn.includes('vedtak') || stegNavn.includes('debatt')) && hasActivity) {
+        prosess_steg = 3;
+      }
+    }
+    
+    // If ferdigbehandlet, it's at step 3
+    if (data.ferdigbehandlet === true) {
+      prosess_steg = 3;
+    }
+    
+    return { komite_navn, forslagsstiller, prosess_steg };
+  } catch (error) {
+    console.error(`Error fetching details for sak ${sakId}:`, error);
+    return null;
+  }
+}
+
 async function fetchStortingetSaker(sesjonId: string): Promise<StortingetSak[]> {
   console.log(`Fetching saker for session: ${sesjonId}`);
   
@@ -276,6 +348,7 @@ serve(async (req) => {
     let totalInserted = 0;
     let totalUpdated = 0;
     let viktigeInserted = 0;
+    let enrichedCount = 0;
     let errors: string[] = [];
 
     for (const sesjonId of sessions) {
@@ -287,7 +360,7 @@ serve(async (req) => {
           // Check if sak already exists
           const { data: existing } = await supabase
             .from('stortinget_saker')
-            .select('id, status, kategori')
+            .select('id, status, kategori, komite_navn')
             .eq('stortinget_id', sak.stortinget_id)
             .maybeSingle();
 
@@ -306,23 +379,56 @@ serve(async (req) => {
               
               if (!error) totalUpdated++;
             }
+            
+            // Enrich viktige saker that don't have komite yet
+            if (sak.er_viktig && !existing.komite_navn) {
+              const details = await fetchSakDetails(sak.stortinget_id);
+              if (details) {
+                await supabase
+                  .from('stortinget_saker')
+                  .update({
+                    komite_navn: details.komite_navn,
+                    forslagsstiller: details.forslagsstiller,
+                    prosess_steg: details.prosess_steg,
+                  })
+                  .eq('id', existing.id);
+                enrichedCount++;
+              }
+              // Rate limit for detail fetches
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
           } else {
             // Insert new sak
+            const insertData: any = {
+              stortinget_id: sak.stortinget_id,
+              tittel: sak.tittel,
+              kort_tittel: sak.kort_tittel,
+              beskrivelse: sak.beskrivelse,
+              tema: sak.tema,
+              status: sak.status,
+              dokumentgruppe: sak.dokumentgruppe,
+              behandlet_sesjon: sak.behandlet_sesjon,
+              kategori: sak.kategori,
+              er_viktig: sak.er_viktig,
+              sist_oppdatert_fra_stortinget: new Date().toISOString(),
+            };
+            
+            // Fetch enriched data for viktige saker
+            if (sak.er_viktig) {
+              const details = await fetchSakDetails(sak.stortinget_id);
+              if (details) {
+                insertData.komite_navn = details.komite_navn;
+                insertData.forslagsstiller = details.forslagsstiller;
+                insertData.prosess_steg = details.prosess_steg;
+                enrichedCount++;
+              }
+              // Rate limit for detail fetches
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
             const { error } = await supabase
               .from('stortinget_saker')
-              .insert({
-                stortinget_id: sak.stortinget_id,
-                tittel: sak.tittel,
-                kort_tittel: sak.kort_tittel,
-                beskrivelse: sak.beskrivelse,
-                tema: sak.tema,
-                status: sak.status,
-                dokumentgruppe: sak.dokumentgruppe,
-                behandlet_sesjon: sak.behandlet_sesjon,
-                kategori: sak.kategori,
-                er_viktig: sak.er_viktig,
-                sist_oppdatert_fra_stortinget: new Date().toISOString(),
-              });
+              .insert(insertData);
 
             if (error) {
               console.error(`Error inserting sak ${sak.stortinget_id}:`, error);
@@ -376,6 +482,7 @@ serve(async (req) => {
       inserted: totalInserted,
       viktigeInserted: viktigeInserted,
       updated: totalUpdated,
+      enriched: enrichedCount,
       errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
     };
 

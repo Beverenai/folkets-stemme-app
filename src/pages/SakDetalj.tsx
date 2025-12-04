@@ -11,6 +11,11 @@ import ShareCard from '@/components/ShareCard';
 import SakSwipeView from '@/components/SakSwipeView';
 import { Json } from '@/integrations/supabase/types';
 
+interface Forslagsstiller {
+  navn: string;
+  parti: string;
+}
+
 interface Sak {
   id: string;
   stortinget_id: string;
@@ -28,6 +33,9 @@ interface Sak {
   stortinget_votering_mot: number | null;
   stortinget_votering_avholdende: number | null;
   stortinget_vedtak: string | null;
+  komite_navn: string | null;
+  forslagsstiller: Forslagsstiller[] | null;
+  prosess_steg: number | null;
 }
 
 interface VoteStats {
@@ -112,7 +120,15 @@ export default function SakDetalj() {
           navigate('/saker');
           return;
         }
-        setSak(sakData);
+        
+        // Transform forslagsstiller from Json to typed array
+        const transformedSak: Sak = {
+          ...sakData,
+          forslagsstiller: Array.isArray(sakData.forslagsstiller) 
+            ? (sakData.forslagsstiller as unknown as Forslagsstiller[])
+            : null
+        };
+        setSak(transformedSak);
 
         const { data: votes } = await supabase
           .from('folke_stemmer')

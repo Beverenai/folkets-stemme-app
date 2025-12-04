@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BarChart3, ChevronRight, Sparkles, Users, Clock } from 'lucide-react';
+import { BarChart3, ChevronRight, Sparkles, Users, FileText, Vote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import KategoriBadge from '@/components/KategoriBadge';
 import { formatDistanceToNow } from 'date-fns';
@@ -18,6 +18,7 @@ interface ViktigSak {
   kategori: string | null;
   status: string;
   updated_at: string;
+  prosess_steg: number | null;
   stortinget_votering_for: number | null;
   stortinget_votering_mot: number | null;
   stortinget_votering_avholdende: number | null;
@@ -33,7 +34,7 @@ async function fetchHomeData() {
     // Fetch pågående viktige saker (kommende voteringer)
     sb
       .from('stortinget_saker')
-      .select('id, tittel, kort_tittel, oppsummering, kategori, status, updated_at, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat, argumenter_for')
+      .select('id, tittel, kort_tittel, oppsummering, kategori, status, updated_at, prosess_steg, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat, argumenter_for')
       .eq('er_viktig', true)
       .eq('status', 'pågående')
       .not('oppsummering', 'is', null)
@@ -175,10 +176,10 @@ export default function Index() {
                 const folkeForPct = folkeCounts.total > 0 ? Math.round((folkeCounts.for / folkeCounts.total) * 100) : 0;
                 const stortingetForPct = stortingetTotal > 0 ? Math.round(((sak.stortinget_votering_for || 0) / stortingetTotal) * 100) : 0;
                 
-                // Check if updated recently (within last 24 hours)
-                const updatedAt = new Date(sak.updated_at);
-                const hoursAgo = Math.floor((Date.now() - updatedAt.getTime()) / (1000 * 60 * 60));
-                const isRecent = hoursAgo < 24;
+                // Prosess steg label
+                const prosessSteg = sak.prosess_steg || 1;
+                const prosessLabel = prosessSteg === 1 ? 'Forslag' : prosessSteg === 2 ? 'I komité' : 'Votering';
+                const ProsessIcon = prosessSteg === 1 ? FileText : prosessSteg === 2 ? Users : Vote;
 
                 return (
                   <Link
@@ -189,18 +190,15 @@ export default function Index() {
                   >
                     <div className="absolute inset-0 glass-gradient rounded-2xl" />
                     <div className="relative z-[1]">
-                      {/* Header with kategori and activity */}
+                      {/* Header with kategori and process step */}
                       <div className="flex items-center justify-between mb-3">
                         <KategoriBadge kategori={sak.kategori} size="sm" />
                         <span className={cn(
                           'px-2 py-1 rounded-full text-[10px] font-medium flex items-center gap-1',
-                          isRecent ? 'bg-ios-orange/20 text-ios-orange' : 'bg-vote-for/20 text-vote-for'
+                          prosessSteg === 3 ? 'bg-ios-orange/20 text-ios-orange' : 'bg-primary/20 text-primary'
                         )}>
-                          <Clock className="h-3 w-3" />
-                          {isRecent 
-                            ? (hoursAgo < 1 ? 'Akkurat nå' : `${hoursAgo}t siden`)
-                            : formatDistanceToNow(updatedAt, { addSuffix: false, locale: nb })
-                          }
+                          <ProsessIcon className="h-3 w-3" />
+                          {prosessLabel}
                         </span>
                       </div>
 

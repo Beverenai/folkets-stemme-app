@@ -1,4 +1,10 @@
-import { ExternalLink, ChevronRight } from 'lucide-react';
+import { ExternalLink, ChevronRight, Users } from 'lucide-react';
+import ProsessIndikator from '@/components/ProsessIndikator';
+
+interface Forslagsstiller {
+  navn: string;
+  parti: string;
+}
 
 interface IntroSlideProps {
   tittel: string;
@@ -7,6 +13,9 @@ interface IntroSlideProps {
   oppsummering: string | null;
   beskrivelse: string | null;
   stortingetId: string;
+  komiteNavn?: string | null;
+  forslagsstiller?: Forslagsstiller[] | null;
+  prosessSteg?: number;
 }
 
 export default function IntroSlide({ 
@@ -15,16 +24,47 @@ export default function IntroSlide({
   kategori, 
   oppsummering, 
   beskrivelse,
-  stortingetId 
+  stortingetId,
+  komiteNavn,
+  forslagsstiller,
+  prosessSteg = 1,
 }: IntroSlideProps) {
+  // Get first proposer for display
+  const hovedForslagsstiller = forslagsstiller && forslagsstiller.length > 0 
+    ? forslagsstiller[0] 
+    : null;
+
   return (
     <div className="h-full flex flex-col px-4 pt-6 pb-20">
       <h2 className="text-xl font-bold text-primary mb-6">Sett deg inn i saken</h2>
       
       <div className="premium-card p-5 flex-1 flex flex-col min-h-0">
-        <h3 className="text-lg font-semibold leading-tight mb-4">
+        {/* Komité badge */}
+        {komiteNavn && (
+          <div className="flex items-center gap-1.5 mb-3">
+            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">{komiteNavn}</span>
+          </div>
+        )}
+        
+        <h3 className="text-lg font-semibold leading-tight mb-3">
           {kortTittel || tittel}
         </h3>
+        
+        {/* Forslagsstiller */}
+        {hovedForslagsstiller && (
+          <p className="text-sm text-muted-foreground mb-3">
+            Fremmet av {hovedForslagsstiller.navn} ({hovedForslagsstiller.parti})
+            {forslagsstiller && forslagsstiller.length > 1 && (
+              <span className="text-muted-foreground/60"> +{forslagsstiller.length - 1} til</span>
+            )}
+          </p>
+        )}
+        
+        {/* Prosess-indikator */}
+        <div className="mb-4">
+          <ProsessIndikator steg={prosessSteg} />
+        </div>
         
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xs text-muted-foreground">Kilde: Stortinget</span>
