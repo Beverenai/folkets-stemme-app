@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { X } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import SakSwipeView from './SakSwipeView';
 import { triggerHaptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
@@ -114,38 +114,41 @@ export default function StemModal({
   if (!isOpen || !sak) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 flex flex-col">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/90 animate-modal-backdrop"
+        className="absolute inset-0 bg-black/95 animate-modal-backdrop"
         onClick={handleClose}
       />
       
-      {/* Modal content */}
-      <div className={cn(
-        "absolute inset-0 animate-modal-enter",
-        "flex flex-col bg-background"
-      )}>
-        {/* Close button */}
+      {/* Back button - outside card */}
+      <div className="relative z-50 safe-top px-4 pt-2">
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 z-50 h-10 w-10 rounded-full bg-secondary/80 backdrop-blur-sm flex items-center justify-center ios-press hover:bg-secondary transition-colors"
-          aria-label="Lukk"
+          className="flex items-center gap-1 text-primary ios-press"
+          aria-label="Tilbake"
         >
-          <X className="h-5 w-5" />
+          <ChevronLeft className="h-6 w-6" />
+          <span className="text-base font-medium">Tilbake</span>
         </button>
-
-        {/* SakSwipeView */}
-        <SakSwipeView
-          sak={sak}
-          isLoggedIn={isLoggedIn}
-          userVote={userVote}
-          voteStats={voteStats}
-          partiVotes={partiVotes}
-          representantVotes={representantVotes}
-          onVote={onVote}
-          onShare={onShare}
-        />
+      </div>
+      
+      {/* Modal card content */}
+      <div className="relative z-10 flex-1 flex flex-col px-4 pt-4 pb-6 animate-card-slide-up">
+        {/* Floating card */}
+        <div className="flex-1 rounded-3xl bg-card modal-card overflow-hidden">
+          <SakSwipeView
+            sak={sak}
+            isLoggedIn={isLoggedIn}
+            userVote={userVote}
+            voteStats={voteStats}
+            partiVotes={partiVotes}
+            representantVotes={representantVotes}
+            onVote={onVote}
+            onShare={onShare}
+            showDotsOutside={false}
+          />
+        </div>
       </div>
     </div>
   );

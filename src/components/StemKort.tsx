@@ -50,8 +50,10 @@ export default function StemKort({
   return (
     <div 
       className={cn(
-        "relative h-full w-full rounded-3xl overflow-hidden transition-all duration-300",
-        isActive ? "scale-100" : "scale-[0.97] opacity-90"
+        "relative h-full w-full rounded-3xl overflow-hidden transition-all duration-500",
+        isActive 
+          ? "scale-100 stem-card-active" 
+          : "scale-[0.88] opacity-60"
       )}
     >
       {/* Background image */}
