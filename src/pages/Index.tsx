@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Vote, BarChart3, Clock, ChevronRight, Sparkles, Users } from 'lucide-react';
+import { BarChart3, ChevronRight, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import KategoriBadge from '@/components/KategoriBadge';
 import { formatDistanceToNow } from 'date-fns';
@@ -24,34 +24,21 @@ interface ViktigSak {
   folke_stemmer?: { stemme: string; user_id: string }[];
 }
 
-interface Stats {
-  totalVoteringer: number;
-  totalStemmer: number;
-  aktiveVoteringer: number;
-}
-
 async function fetchHomeData() {
   const sb = supabase as any;
   
   // Parallel fetch all data
-  const [sakerRes, statsRes, syncRes] = await Promise.all([
-    // Fetch viktige saker
+  const [sakerRes, syncRes] = await Promise.all([
+    // Fetch pågående viktige saker (kommende voteringer)
     sb
       .from('stortinget_saker')
       .select('id, tittel, kort_tittel, oppsummering, kategori, status, stortinget_votering_for, stortinget_votering_mot, stortinget_votering_avholdende, vedtak_resultat, argumenter_for')
       .eq('er_viktig', true)
+      .eq('status', 'pågående')
       .not('oppsummering', 'is', null)
       .not('argumenter_for', 'eq', '[]')
-      .in('behandlet_sesjon', ['2024-2025', '2025-2026'])
       .order('updated_at', { ascending: false })
       .limit(12),
-    
-    // Fetch all stats in parallel
-    Promise.all([
-      sb.from('voteringer').select('*', { count: 'exact', head: true }),
-      sb.from('folke_stemmer').select('*', { count: 'exact', head: true }),
-      sb.from('stortinget_saker').select('*', { count: 'exact', head: true }).eq('status', 'pågående').eq('er_viktig', true)
-    ]),
     
     // Fetch last sync
     sb
@@ -81,29 +68,13 @@ async function fetchHomeData() {
     ...s,
     folke_stemmer: folkeData.filter((st: any) => st.sak_id === s.id)
   }));
-
-  const [voteringRes, stemmerRes, aktiveRes] = statsRes;
   
   return {
     viktigeSaker: sakerWithStemmer as ViktigSak[],
-    stats: {
-      totalVoteringer: voteringRes.count || 0,
-      totalStemmer: stemmerRes.count || 0,
-      aktiveVoteringer: aktiveRes.count || 0
-    } as Stats,
     lastSync: syncRes.data?.completed_at || null
   };
 }
 
-function StatCardSkeleton() {
-  return (
-    <div className="premium-card p-4 text-center">
-      <Skeleton className="h-11 w-11 rounded-2xl mx-auto mb-3" />
-      <Skeleton className="h-7 w-12 mx-auto mb-1" />
-      <Skeleton className="h-3 w-16 mx-auto" />
-    </div>
-  );
-}
 
 function SakCardSkeleton() {
   return (
@@ -134,7 +105,6 @@ export default function Index() {
   });
 
   const viktigeSaker = data?.viktigeSaker || [];
-  const stats = data?.stats || { totalVoteringer: 0, totalStemmer: 0, aktiveVoteringer: 0 };
   const lastSync = data?.lastSync;
 
   const getFolkeCounts = (sak: ViktigSak) => {
@@ -172,58 +142,15 @@ export default function Index() {
           )}
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          {isLoading ? (
-            <>
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-            </>
-          ) : (
-            <>
-              <div className="relative nrk-stat-card animate-ios-slide-up stagger-1 glass-shine card-glow overflow-hidden">
-                <div className="absolute inset-0 glass-gradient rounded-3xl" />
-                <div className="relative z-[1]">
-                  <div className="h-11 w-11 rounded-2xl bg-primary/15 flex items-center justify-center mx-auto mb-3">
-                    <Vote className="h-5 w-5 text-primary" />
-                  </div>
-                  <p className="text-2xl font-bold">{stats.totalStemmer}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Stemmer</p>
-                </div>
-              </div>
-              
-              <div className="relative nrk-stat-card animate-ios-slide-up stagger-2 glass-shine card-glow overflow-hidden">
-                <div className="absolute inset-0 glass-gradient rounded-3xl" />
-                <div className="relative z-[1]">
-                  <div className="h-11 w-11 rounded-2xl bg-vote-for/15 flex items-center justify-center mx-auto mb-3">
-                    <Clock className="h-5 w-5 text-vote-for" />
-                  </div>
-                  <p className="text-2xl font-bold">{stats.aktiveVoteringer}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Aktive</p>
-                </div>
-              </div>
-              
-              <div className="relative nrk-stat-card animate-ios-slide-up stagger-3 glass-shine card-glow overflow-hidden">
-                <div className="absolute inset-0 glass-gradient rounded-3xl" />
-                <div className="relative z-[1]">
-                  <div className="h-11 w-11 rounded-2xl bg-ios-orange/15 flex items-center justify-center mx-auto mb-3">
-                    <BarChart3 className="h-5 w-5 text-ios-orange" />
-                  </div>
-                  <p className="text-2xl font-bold">{stats.totalVoteringer}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Totalt</p>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Viktige Saker Nå - NRK Style */}
-        <div className="animate-ios-slide-up stagger-4">
+        {/* Stem før Stortinget */}
+        <div className="animate-ios-slide-up stagger-1">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-bold">Viktige saker nå</h2>
+              <span className="text-xl">🔥</span>
+              <div>
+                <h2 className="text-lg font-bold">Stem før Stortinget</h2>
+                <p className="text-xs text-muted-foreground">{viktigeSaker.length} saker venter på din stemme</p>
+              </div>
             </div>
             <Link to="/saker" className="text-primary text-sm font-medium ios-touch flex items-center gap-1">
               Se alle
