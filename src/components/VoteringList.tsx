@@ -1,17 +1,7 @@
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-
-interface Votering {
-  id: string;
-  stortinget_votering_id: string;
-  forslag_tekst: string | null;
-  votering_dato: string | null;
-  vedtatt: boolean | null;
-  resultat_for: number | null;
-  resultat_mot: number | null;
-  resultat_avholdende: number | null;
-}
+import { Votering } from '@/types';
 
 interface VoteringListProps {
   voteringer: Votering[];

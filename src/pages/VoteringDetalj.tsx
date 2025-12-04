@@ -12,6 +12,7 @@ import PartiVoteringList from '@/components/PartiVoteringList';
 import RepresentantVoteList from '@/components/RepresentantVoteList';
 import KategoriBadge from '@/components/KategoriBadge';
 import SwipeBackIndicator from '@/components/SwipeBackIndicator';
+import { VoteStats, PartiVote, RepresentantVote } from '@/types';
 
 interface Votering {
   id: string;
@@ -30,33 +31,6 @@ interface Votering {
     stortinget_id: string;
     kategori: string | null;
   } | null;
-}
-
-interface VoteStats {
-  for: number;
-  mot: number;
-  avholdende: number;
-  total: number;
-}
-
-interface PartiVote {
-  parti_forkortelse: string;
-  parti_navn: string;
-  stemmer_for: number;
-  stemmer_mot: number;
-  stemmer_avholdende: number;
-}
-
-interface RepresentantVote {
-  id: string;
-  stemme: string;
-  representant: {
-    id: string;
-    fornavn: string;
-    etternavn: string;
-    parti_forkortelse: string | null;
-    bilde_url: string | null;
-  };
 }
 
 export default function VoteringDetalj() {

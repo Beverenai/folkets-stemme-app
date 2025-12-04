@@ -1,15 +1,10 @@
 import { Users, Building2, CheckCircle, XCircle, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface VoteStats {
-  for: number;
-  mot: number;
-  avholdende: number;
-}
+import { VoteStats } from '@/types';
 
 interface VoteComparisonProps {
-  folkeStats: VoteStats & { total: number };
-  stortingetStats: VoteStats;
+  folkeStats: VoteStats;
+  stortingetStats: Omit<VoteStats, 'total'>;
   vedtak?: string | null;
 }
 

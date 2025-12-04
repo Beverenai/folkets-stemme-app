@@ -5,60 +5,13 @@ import IntroSlide from './swipe-slides/IntroSlide';
 import ArgumentsSlide from './swipe-slides/ArgumentsSlide';
 import VoteSlide from './swipe-slides/VoteSlide';
 import ResultSlide from './swipe-slides/ResultSlide';
-import { Json } from '@/integrations/supabase/types';
-
-interface Forslagsstiller {
-  navn: string;
-  parti: string;
-}
-
-interface PartiVote {
-  parti_forkortelse: string;
-  parti_navn: string;
-  stemmer_for: number;
-  stemmer_mot: number;
-  stemmer_avholdende: number;
-}
-
-interface RepresentantVote {
-  id: string;
-  stemme: string;
-  representant: {
-    id: string;
-    fornavn: string;
-    etternavn: string;
-    parti_forkortelse: string | null;
-    bilde_url: string | null;
-  };
-}
+import { Sak, PartiVote, RepresentantVote, VoteStats, Forslagsstiller } from '@/types';
 
 interface SakSwipeViewProps {
-  sak: {
-    id: string;
-    stortinget_id: string;
-    tittel: string;
-    kort_tittel: string | null;
-    spoersmaal: string | null;
-    kategori: string | null;
-    oppsummering: string | null;
-    beskrivelse: string | null;
-    argumenter_for: Json;
-    argumenter_mot: Json;
-    stortinget_votering_for: number | null;
-    stortinget_votering_mot: number | null;
-    stortinget_votering_avholdende: number | null;
-    komite_navn?: string | null;
-    forslagsstiller?: Forslagsstiller[] | null;
-    prosess_steg?: number | null;
-  };
+  sak: Sak & { prosess_steg?: number | null };
   isLoggedIn: boolean;
   userVote: string | null;
-  voteStats: {
-    for: number;
-    mot: number;
-    avholdende: number;
-    total: number;
-  };
+  voteStats: VoteStats;
   partiVotes?: PartiVote[];
   representantVotes?: RepresentantVote[];
   onVote: (vote: 'for' | 'mot' | 'avholdende') => Promise<void>;

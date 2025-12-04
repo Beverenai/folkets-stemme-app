@@ -9,13 +9,9 @@ import { usePageMeta, getOGImageUrl } from '@/hooks/usePageMeta';
 import { ChevronLeft, Share2 } from 'lucide-react';
 import ShareCard from '@/components/ShareCard';
 import SakSwipeView from '@/components/SakSwipeView';
-import { Json } from '@/integrations/supabase/types';
 import SwipeBackIndicator from '@/components/SwipeBackIndicator';
-
-interface Forslagsstiller {
-  navn: string;
-  parti: string;
-}
+import { VoteStats, PartiVote, Votering, RepresentantVote, Forslagsstiller } from '@/types';
+import { Json } from '@/integrations/supabase/types';
 
 interface Sak {
   id: string;
@@ -38,44 +34,6 @@ interface Sak {
   komite_navn: string | null;
   forslagsstiller: Forslagsstiller[] | null;
   prosess_steg: number | null;
-}
-
-interface VoteStats {
-  for: number;
-  mot: number;
-  avholdende: number;
-  total: number;
-}
-
-interface PartiVote {
-  parti_forkortelse: string;
-  parti_navn: string;
-  stemmer_for: number;
-  stemmer_mot: number;
-  stemmer_avholdende: number;
-}
-
-interface Votering {
-  id: string;
-  stortinget_votering_id: string;
-  forslag_tekst: string | null;
-  votering_dato: string | null;
-  vedtatt: boolean | null;
-  resultat_for: number | null;
-  resultat_mot: number | null;
-  resultat_avholdende: number | null;
-}
-
-interface RepresentantVote {
-  id: string;
-  stemme: string;
-  representant: {
-    id: string;
-    fornavn: string;
-    etternavn: string;
-    parti_forkortelse: string | null;
-    bilde_url: string | null;
-  };
 }
 
 export default function SakDetalj() {

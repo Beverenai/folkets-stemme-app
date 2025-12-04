@@ -2,52 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import SakSwipeView from './SakSwipeView';
 import { triggerHaptic } from '@/lib/haptics';
-import { cn } from '@/lib/utils';
-import { Json } from '@/integrations/supabase/types';
-
-interface Forslagsstiller {
-  navn: string;
-  parti: string;
-}
-
-interface PartiVote {
-  parti_forkortelse: string;
-  parti_navn: string;
-  stemmer_for: number;
-  stemmer_mot: number;
-  stemmer_avholdende: number;
-}
-
-interface RepresentantVote {
-  id: string;
-  stemme: string;
-  representant: {
-    id: string;
-    fornavn: string;
-    etternavn: string;
-    parti_forkortelse: string | null;
-    bilde_url: string | null;
-  };
-}
-
-interface Sak {
-  id: string;
-  stortinget_id: string;
-  tittel: string;
-  kort_tittel: string | null;
-  spoersmaal: string | null;
-  kategori: string | null;
-  oppsummering: string | null;
-  beskrivelse: string | null;
-  argumenter_for: Json;
-  argumenter_mot: Json;
-  stortinget_votering_for: number | null;
-  stortinget_votering_mot: number | null;
-  stortinget_votering_avholdende: number | null;
-  komite_navn?: string | null;
-  forslagsstiller?: Forslagsstiller[] | null;
-  stengt_dato?: string | null;
-}
+import { Sak, PartiVote, RepresentantVote, VoteStats } from '@/types';
 
 interface StemModalProps {
   isOpen: boolean;
@@ -55,12 +10,7 @@ interface StemModalProps {
   sak: Sak | null;
   isLoggedIn: boolean;
   userVote: string | null;
-  voteStats: {
-    for: number;
-    mot: number;
-    avholdende: number;
-    total: number;
-  };
+  voteStats: VoteStats;
   partiVotes?: PartiVote[];
   representantVotes?: RepresentantVote[];
   onVote: (vote: 'for' | 'mot' | 'avholdende') => Promise<void>;

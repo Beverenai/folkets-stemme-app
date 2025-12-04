@@ -1,12 +1,5 @@
 import { getPartiConfig, PARTI_CONFIG } from '@/lib/partiConfig';
-
-interface PartiVote {
-  parti_forkortelse: string;
-  parti_navn: string;
-  stemmer_for: number;
-  stemmer_mot: number;
-  stemmer_avholdende: number;
-}
+import { PartiVote } from '@/types';
 
 interface PartiStancePreviewProps {
   partiVoteringer: PartiVote[];

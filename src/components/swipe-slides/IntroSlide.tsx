@@ -1,11 +1,7 @@
 import { ExternalLink } from 'lucide-react';
 import { getSakBildeUrl, getKategoriConfig } from '@/lib/kategoriConfig';
 import { cn } from '@/lib/utils';
-
-interface Forslagsstiller {
-  navn: string;
-  parti: string;
-}
+import { Forslagsstiller } from '@/types';
 
 interface IntroSlideProps {
   sakId?: string;
