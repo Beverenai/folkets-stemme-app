@@ -142,6 +142,10 @@ export default {
           "50%": { transform: "scale(0.95)" },
           "100%": { transform: "scale(1)" },
         },
+        "swipe-hint": {
+          "0%, 100%": { transform: "translateX(0)", opacity: "0.6" },
+          "50%": { transform: "translateX(8px)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -153,6 +157,7 @@ export default {
         "progress-fill": "progress-fill 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "vote-success": "vote-success 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        "swipe-hint": "swipe-hint 1.5s ease-in-out infinite",
       },
     },
   },

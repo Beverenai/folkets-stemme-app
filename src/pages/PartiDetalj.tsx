@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { getPartiConfig } from '@/lib/partiConfig';
 import PartiBadge from '@/components/PartiBadge';
+import SwipeBackIndicator from '@/components/SwipeBackIndicator';
 
 interface PartiVotering {
   id: string;
@@ -136,6 +137,7 @@ export default function PartiDetalj() {
 
   return (
     <div className="min-h-screen pb-safe relative">
+      <SwipeBackIndicator />
       {/* Subtle gradient background */}
       <div 
         className="fixed inset-0 pointer-events-none"
