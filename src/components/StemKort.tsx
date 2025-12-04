@@ -177,7 +177,7 @@ export default function StemKort({
             onClick={handleStemNå}
             className="flex-1 py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-base ios-press hover:brightness-110 transition-all shadow-lg shadow-primary/30"
           >
-            LES MER
+            Stem her
           </button>
           <button
             onClick={handleShare}

@@ -134,9 +134,9 @@ export default function StemModal({
       </div>
       
       {/* Modal card content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center px-2 pt-4 pb-6 animate-card-slide-up">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-2 pt-4 pb-6 animate-card-slide-up">
         {/* Floating card - same size as StemKort */}
-        <div className="w-[92%] h-full rounded-[2.5rem] bg-card modal-card overflow-hidden">
+        <div className="w-[92%] max-h-[calc(100vh-180px)] rounded-[2.5rem] bg-card modal-card overflow-hidden">
           <SakSwipeView
             sak={sak}
             isLoggedIn={isLoggedIn}
