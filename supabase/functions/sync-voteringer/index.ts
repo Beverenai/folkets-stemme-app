@@ -79,11 +79,11 @@ function hasIndividualVotes(votering: any): boolean {
   if (votering?.personlig_votering === true || votering?.personlig_votering === 'true') {
     return true;
   }
-  // Also check if there are actual vote counts (indicates real voting happened)
+  // Check if there are any vote counts at all (indicates voting happened)
   const antallFor = parseInt(votering?.antall_for) || 0;
   const antallMot = parseInt(votering?.antall_mot) || 0;
-  // If there were any dissenting votes, individual records should exist
-  return antallFor > 0 && antallMot > 0;
+  // If there were any votes recorded, try to get individual records
+  return antallFor > 0 || antallMot > 0;
 }
 
 // Find the FINAL votering for a sak (the decisive vote)
