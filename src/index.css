@@ -614,6 +614,12 @@
 }
 
 /* NRK-style cards for backwards compatibility */
+.nrk-header {
+  @apply bg-background/95;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 .nrk-card {
   @apply bg-card rounded-2xl border border-border/30 p-5;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
