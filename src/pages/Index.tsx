@@ -5,8 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BarChart3, ChevronRight, Sparkles, Users, Vote, CheckCircle, XCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { BarChart3, ChevronRight, Sparkles, Users, Vote } from 'lucide-react';
 import KategoriBadge from '@/components/KategoriBadge';
 import { formatDistanceToNow, format } from 'date-fns';
 import { nb } from 'date-fns/locale';
@@ -141,27 +140,17 @@ export default function Index() {
   return (
     <Layout title="Hjem">
       <div className="px-4 py-6 space-y-6 animate-ios-fade">
-        {/* Hero Card */}
-        <div className="premium-card-glow p-6 text-center animate-ios-spring">
-          <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 mb-4 animate-float">
-            <span className="text-4xl">🏛️</span>
-          </div>
-          <h1 className="text-2xl font-bold mb-2 gradient-text">
-            Folkets Storting
-          </h1>
-          <p className="text-muted-foreground text-sm mb-6 max-w-xs mx-auto">
-            Stem på de samme sakene som politikerne og se hvordan folket mener
-          </p>
-          
-          {!user && (
+        {/* CTA for non-logged in users */}
+        {!user && (
+          <div className="animate-ios-spring">
             <Button asChild className="w-full h-12 text-base font-semibold ios-press rounded-xl">
               <Link to="/auth">
                 <Sparkles className="mr-2 h-5 w-5" />
                 Kom i gang
               </Link>
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Stem før Stortinget */}
         <div className="animate-ios-slide-up stagger-1">
@@ -307,61 +296,6 @@ export default function Index() {
               Oppdatert {formatDistanceToNow(new Date(lastSync), { addSuffix: true, locale: nb })}
             </p>
           )}
-        </div>
-
-        {/* Quick links */}
-        <div className="grid grid-cols-2 gap-3 animate-ios-slide-up" style={{ animationDelay: '0.3s' }}>
-          <Link 
-            to="/representanter" 
-            className="relative premium-card p-4 ios-press glass-shine card-glow overflow-hidden"
-          >
-            <div className="absolute inset-0 glass-gradient rounded-3xl" />
-            <div className="relative z-[1]">
-              <div className="h-10 w-10 rounded-xl bg-ios-purple/15 flex items-center justify-center mb-2">
-                <Users className="h-5 w-5 text-ios-purple" />
-              </div>
-              <p className="font-semibold text-sm">Politikere</p>
-              <p className="text-xs text-muted-foreground">Utforsk representanter</p>
-            </div>
-          </Link>
-          
-          <Link 
-            to="/statistikk" 
-            className="relative premium-card p-4 ios-press glass-shine card-glow overflow-hidden"
-          >
-            <div className="absolute inset-0 glass-gradient rounded-3xl" />
-            <div className="relative z-[1]">
-              <div className="h-10 w-10 rounded-xl bg-ios-orange/15 flex items-center justify-center mb-2">
-                <BarChart3 className="h-5 w-5 text-ios-orange" />
-              </div>
-              <p className="font-semibold text-sm">Statistikk</p>
-              <p className="text-xs text-muted-foreground">Se analyser</p>
-            </div>
-          </Link>
-        </div>
-
-        {/* How it works */}
-        <div className="animate-ios-slide-up" style={{ animationDelay: '0.35s' }}>
-          <h2 className="text-lg font-semibold mb-3">Slik fungerer det</h2>
-          <div className="relative premium-card overflow-hidden divide-y divide-border/30 glass-shine">
-            <div className="absolute inset-0 glass-gradient rounded-3xl" />
-            {[
-              { num: 1, title: 'Registrer deg', desc: 'Anonymt og sikkert', color: 'bg-primary text-primary-foreground' },
-              { num: 2, title: 'Les argumentene', desc: 'For og mot saken', color: 'bg-vote-for text-vote-for-foreground' },
-              { num: 3, title: 'Stem', desc: 'For, mot eller avstå', color: 'bg-ios-orange text-white' },
-              { num: 4, title: 'Sammenlign', desc: 'Folket vs. Stortinget', color: 'bg-ios-purple text-white' },
-            ].map((step, index) => (
-              <div key={step.num} className="relative z-[1] flex items-center gap-4 p-4" style={{ animationDelay: `${0.4 + index * 0.05}s` }}>
-                <div className={cn('h-10 w-10 rounded-xl flex items-center justify-center text-sm font-bold', step.color)}>
-                  {step.num}
-                </div>
-                <div>
-                  <p className="font-medium text-[15px]">{step.title}</p>
-                  <p className="text-xs text-muted-foreground">{step.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </Layout>

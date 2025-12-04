@@ -84,20 +84,46 @@ export default function Profil() {
   if (!user) {
     return (
       <Layout title="Profil">
-        <div className="px-4 py-16 text-center animate-ios-fade">
-          <div className="h-20 w-20 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
-            <User className="h-10 w-10 text-muted-foreground" />
+        <div className="px-4 py-16 animate-ios-fade">
+          <div className="text-center mb-8">
+            <div className="h-20 w-20 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
+              <User className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <h1 className="text-xl font-bold mb-2">Logg inn</h1>
+            <p className="text-muted-foreground text-sm mb-6">
+              Se dine stemmer og statistikk
+            </p>
+            <Button asChild className="ios-press">
+              <Link to="/auth">
+                <LogIn className="h-4 w-4 mr-2" />
+                Logg inn
+              </Link>
+            </Button>
           </div>
-          <h1 className="text-xl font-bold mb-2">Logg inn</h1>
-          <p className="text-muted-foreground text-sm mb-6">
-            Se dine stemmer og statistikk
-          </p>
-          <Button asChild className="ios-press">
-            <Link to="/auth">
-              <LogIn className="h-4 w-4 mr-2" />
-              Logg inn
-            </Link>
-          </Button>
+
+          {/* Slik fungerer det - only for non-logged in users */}
+          <div className="mt-12">
+            <h2 className="text-lg font-semibold mb-3">Slik fungerer det</h2>
+            <div className="relative premium-card overflow-hidden divide-y divide-border/30 glass-shine">
+              <div className="absolute inset-0 glass-gradient rounded-3xl" />
+              {[
+                { num: 1, title: 'Registrer deg', desc: 'Anonymt og sikkert', color: 'bg-primary text-primary-foreground' },
+                { num: 2, title: 'Les argumentene', desc: 'For og mot saken', color: 'bg-vote-for text-vote-for-foreground' },
+                { num: 3, title: 'Stem', desc: 'For, mot eller avstå', color: 'bg-ios-orange text-white' },
+                { num: 4, title: 'Sammenlign', desc: 'Folket vs. Stortinget', color: 'bg-ios-purple text-white' },
+              ].map((step) => (
+                <div key={step.num} className="relative z-[1] flex items-center gap-4 p-4">
+                  <div className={cn('h-10 w-10 rounded-xl flex items-center justify-center text-sm font-bold', step.color)}>
+                    {step.num}
+                  </div>
+                  <div>
+                    <p className="font-medium text-[15px]">{step.title}</p>
+                    <p className="text-xs text-muted-foreground">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </Layout>
     );
