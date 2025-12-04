@@ -49,6 +49,7 @@ async function fetchResultater() {
         stortinget_saker(tittel, kategori)
       `)
       .eq('status', 'avsluttet')
+      .gt('resultat_for', 0)
       .order('votering_dato', { ascending: false })
       .limit(15),
     sb.from('folke_stemmer').select('stemme, votering_id'),
