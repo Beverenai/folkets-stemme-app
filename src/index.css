@@ -615,9 +615,16 @@
 
 /* NRK-style cards for backwards compatibility */
 .nrk-header {
-  @apply bg-background/95;
+  @apply bg-[#1C1C1E];
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+}
+
+/* Active stem card shadow */
+.stem-card-active {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6),
+              0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .nrk-card {
