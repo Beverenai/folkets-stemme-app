@@ -13,11 +13,11 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      {/* White background with subtle border */}
-      <div className="absolute inset-0 bg-card border-t border-border/50 shadow-lg" />
+      {/* iOS-style frosted glass background */}
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-xl border-t border-border/30" />
       
       {/* Content */}
-      <div className="relative flex items-center justify-around h-20 px-2 safe-bottom">
+      <div className="relative flex items-center justify-around h-[84px] px-6 safe-bottom">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href || 
@@ -28,28 +28,23 @@ export default function BottomNav() {
               key={item.href}
               to={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 flex-1 py-2 rounded-2xl transition-all duration-200 ios-press',
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                'flex flex-col items-center justify-center gap-0.5 min-w-[64px] py-1 transition-all duration-300 ease-out',
+                isActive ? 'text-primary' : 'text-muted-foreground/70 active:text-muted-foreground'
               )}
             >
-              <div className={cn(
-                'relative p-2 rounded-xl transition-all duration-200',
-                isActive && 'bg-primary/10'
-              )}>
+              <div className="relative flex items-center justify-center h-7">
                 <Icon
                   className={cn(
-                    'h-6 w-6 transition-all',
-                    isActive && 'animate-ios-bounce'
+                    'h-[26px] w-[26px] transition-transform duration-300',
+                    isActive && 'scale-105'
                   )}
-                  strokeWidth={isActive ? 2.5 : 1.5}
+                  strokeWidth={isActive ? 2 : 1.5}
+                  fill={isActive ? 'currentColor' : 'none'}
                 />
-                {isActive && (
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1 w-4 rounded-full bg-primary" />
-                )}
               </div>
               <span className={cn(
-                'text-[10px] font-medium transition-all',
-                isActive && 'font-semibold'
+                'text-[10px] tracking-tight transition-all duration-300',
+                isActive ? 'font-semibold' : 'font-medium'
               )}>
                 {item.label}
               </span>
