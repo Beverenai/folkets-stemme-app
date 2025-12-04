@@ -63,6 +63,7 @@ interface SakSwipeViewProps {
   representantVotes?: RepresentantVote[];
   onVote: (vote: 'for' | 'mot' | 'avholdende') => Promise<void>;
   onShare: () => void;
+  showDotsOutside?: boolean;
 }
 
 export default function SakSwipeView({
@@ -73,7 +74,8 @@ export default function SakSwipeView({
   partiVotes = [],
   representantVotes = [],
   onVote,
-  onShare
+  onShare,
+  showDotsOutside = true
 }: SakSwipeViewProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     watchDrag: true,
@@ -183,24 +185,47 @@ export default function SakSwipeView({
         </div>
       </div>
 
-      {/* Dot indicators */}
-      <div className="flex items-center justify-center gap-2 py-4 safe-bottom">
-        {[0, 1, 2, 3].map((i) => (
-          <button
-            key={i}
-            onClick={() => {
-              emblaApi?.scrollTo(i);
-              triggerHaptic();
-            }}
-            className={cn(
-              'h-2 rounded-full transition-all duration-300',
-              currentSlide === i 
-                ? 'w-6 bg-primary' 
-                : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
-            )}
-          />
-        ))}
-      </div>
+      {/* Dot indicators - inside card */}
+      {showDotsOutside && (
+        <div className="flex items-center justify-center gap-2 py-4 safe-bottom">
+          {[0, 1, 2, 3].map((i) => (
+            <button
+              key={i}
+              onClick={() => {
+                emblaApi?.scrollTo(i);
+                triggerHaptic();
+              }}
+              className={cn(
+                'h-2 rounded-full transition-all duration-300',
+                currentSlide === i 
+                  ? 'w-6 bg-primary' 
+                  : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
+              )}
+            />
+          ))}
+        </div>
+      )}
+      
+      {/* Dot indicators inside card (for modal) */}
+      {!showDotsOutside && (
+        <div className="flex items-center justify-center gap-2 py-4 pb-6">
+          {[0, 1, 2, 3].map((i) => (
+            <button
+              key={i}
+              onClick={() => {
+                emblaApi?.scrollTo(i);
+                triggerHaptic();
+              }}
+              className={cn(
+                'h-2 rounded-full transition-all duration-300',
+                currentSlide === i 
+                  ? 'w-6 bg-primary' 
+                  : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
+              )}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
