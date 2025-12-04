@@ -104,7 +104,7 @@ export default function StemKort({
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col p-4">
+      <div className="relative z-10 h-full flex flex-col p-4 overflow-hidden">
         {/* Top metadata */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 text-white/70">
@@ -128,7 +128,7 @@ export default function StemKort({
         )}
 
         {/* Question */}
-        <h2 className="text-lg font-bold text-white leading-tight mb-3 line-clamp-3">
+        <h2 className="text-lg font-bold text-white leading-tight mb-3 line-clamp-3 break-words">
           {displayQuestion}
         </h2>
 
