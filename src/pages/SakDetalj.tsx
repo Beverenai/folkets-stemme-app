@@ -21,6 +21,7 @@ interface Sak {
   stortinget_id: string;
   tittel: string;
   kort_tittel: string | null;
+  spoersmaal: string | null;
   beskrivelse: string | null;
   tema: string | null;
   status: string;

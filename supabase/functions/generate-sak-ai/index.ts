@@ -37,7 +37,7 @@ serve(async (req) => {
 
     console.log(`Generating AI content for sak: ${sak.tittel}`);
 
-    const prompt = `Du er en norsk politisk analytiker. Analyser følgende stortingssak og generer innhold på norsk.
+    const prompt = `Du er en norsk politisk kommunikatør. Analyser følgende stortingssak og generer innhold på norsk.
 
 SAKTITTEL: ${sak.tittel}
 
@@ -47,16 +47,24 @@ TEMA: ${sak.tema || 'Ikke spesifisert'}
 
 Generer følgende i JSON-format:
 
-1. "oppsummering": En kort, lettfattelig oppsummering på 2-3 setninger som forklarer saken for vanlige borgere. Unngå politisk sjargong.
+1. "spoersmaal": Et enkelt ja/nei-spørsmål som vanlige folk kan svare på. 
+   - Start med "Bør", "Skal", "Er det riktig at" eller lignende
+   - Maks 12-15 ord
+   - Må kunne besvares med Ja eller Nei
+   - Unngå juridisk/politisk sjargong
+   - Eksempler: "Bør minstepensjonen heves til over fattigdomsgrensen?", "Skal det bli lettere å få erstatning etter vold?"
 
-2. "kategori": En kort kategori (1-2 ord) som beskriver saksområdet. Eksempler: "Bolig", "Helse", "Miljø", "Skatt", "Utdanning", "Forsvar", "Arbeid", "Samferdsel", "Justis", "Kultur".
+2. "oppsummering": En kort, lettfattelig oppsummering på 2-3 setninger som forklarer saken for vanlige borgere. Unngå politisk sjargong.
 
-3. "argumenter_for": En liste med 3-4 argumenter FOR forslaget. Hver argument skal være en setning som forklarer hvorfor noen støtter dette.
+3. "kategori": En kort kategori (1-2 ord) som beskriver saksområdet. Eksempler: "Bolig", "Helse", "Miljø", "Skatt", "Utdanning", "Forsvar", "Arbeid", "Samferdsel", "Justis", "Kultur".
 
-4. "argumenter_mot": En liste med 3-4 argumenter MOT forslaget. Hver argument skal være en setning som forklarer hvorfor noen er imot dette.
+4. "argumenter_for": En liste med 3-4 argumenter FOR forslaget. Hver argument skal være en kort setning.
+
+5. "argumenter_mot": En liste med 3-4 argumenter MOT forslaget. Hver argument skal være en kort setning.
 
 Svar KUN med gyldig JSON i dette formatet:
 {
+  "spoersmaal": "...",
   "oppsummering": "...",
   "kategori": "...",
   "argumenter_for": ["...", "...", "..."],
@@ -72,7 +80,7 @@ Svar KUN med gyldig JSON i dette formatet:
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "Du er en politisk analytiker som genererer nøytrale, balanserte analyser av stortingssaker på norsk. Svar alltid med gyldig JSON." },
+          { role: "system", content: "Du er en politisk kommunikatør som gjør kompliserte stortingssaker forståelige for vanlige folk. Du formulerer saker som enkle ja/nei-spørsmål. Svar alltid med gyldig JSON." },
           { role: "user", content: prompt }
         ],
       }),
@@ -121,6 +129,7 @@ Svar KUN med gyldig JSON i dette formatet:
     const { error: updateError } = await supabase
       .from('stortinget_saker')
       .update({
+        spoersmaal: parsed.spoersmaal,
         oppsummering: parsed.oppsummering,
         kategori: parsed.kategori,
         argumenter_for: parsed.argumenter_for,
@@ -139,6 +148,7 @@ Svar KUN med gyldig JSON i dette formatet:
       success: true, 
       sakId,
       generated: {
+        spoersmaal: parsed.spoersmaal,
         oppsummering: parsed.oppsummering,
         kategori: parsed.kategori,
         argumenter_for: parsed.argumenter_for,

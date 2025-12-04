@@ -3,6 +3,7 @@ import { LogIn, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VoteSlideProps {
+  spoersmaal: string | null;
   tittel: string;
   kortTittel: string | null;
   isLoggedIn: boolean;
@@ -12,6 +13,7 @@ interface VoteSlideProps {
 }
 
 export default function VoteSlide({ 
+  spoersmaal,
   tittel, 
   kortTittel, 
   isLoggedIn, 
@@ -20,6 +22,7 @@ export default function VoteSlide({
   isSubmitting 
 }: VoteSlideProps) {
   const selectedVote = userVote === 'for' ? 'ja' : userVote === 'mot' ? 'nei' : null;
+  const displayQuestion = spoersmaal || kortTittel || tittel;
 
   if (!isLoggedIn) {
     return (
@@ -46,14 +49,16 @@ export default function VoteSlide({
 
   return (
     <div className="h-full flex flex-col px-4 pt-6 pb-20">
-      <h2 className="text-xl font-bold text-primary mb-6">Stem på forslaget</h2>
+      <h2 className="text-sm font-medium text-muted-foreground mb-4">Stem på forslaget</h2>
       
+      {/* Spørsmålet */}
       <div className="premium-card p-5 mb-6">
-        <p className="text-[15px] font-medium leading-tight">
-          {kortTittel || tittel}
+        <p className="text-lg font-semibold leading-tight">
+          {displayQuestion}
         </p>
       </div>
 
+      {/* Ja/Nei knapper */}
       <div className="space-y-3 mb-6">
         <button
           onClick={() => onVote('for')}
@@ -98,13 +103,11 @@ export default function VoteSlide({
         </button>
       </div>
 
-      {userVote && (
+      {userVote ? (
         <p className="text-xs text-center text-muted-foreground">
           Du kan endre stemmen din når som helst
         </p>
-      )}
-
-      {!userVote && (
+      ) : (
         <p className="text-sm text-center text-muted-foreground">
           Velg et alternativ ovenfor
         </p>
