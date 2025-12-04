@@ -54,7 +54,7 @@ export default function VoteSlide({
       <h2 className="text-sm font-medium text-muted-foreground mb-4">Stem på forslaget</h2>
       
       {/* Spørsmålet */}
-      <div className="premium-card p-5 mb-6">
+      <div className="rounded-2xl bg-secondary/80 backdrop-blur-sm border border-border/50 p-5 mb-6 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
         <p className="text-lg font-semibold leading-tight">
           {displayQuestion}
         </p>
@@ -70,10 +70,10 @@ export default function VoteSlide({
           }}
           disabled={isSubmitting}
           className={cn(
-            "w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ios-press",
+            "w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ios-press shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
             selectedVote === 'ja' 
-              ? "border-vote-for bg-vote-for/10" 
-              : "border-border bg-secondary hover:border-muted-foreground"
+              ? "border-vote-for bg-vote-for/10 shadow-[0_4px_12px_rgba(52,199,89,0.2)]" 
+              : "border-border bg-secondary/60 hover:border-muted-foreground hover:bg-secondary"
           )}
         >
           <span className="text-lg font-semibold">Ja</span>
@@ -95,10 +95,10 @@ export default function VoteSlide({
           }}
           disabled={isSubmitting}
           className={cn(
-            "w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ios-press",
+            "w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ios-press shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
             selectedVote === 'nei' 
-              ? "border-vote-mot bg-vote-mot/10" 
-              : "border-border bg-secondary hover:border-muted-foreground"
+              ? "border-vote-mot bg-vote-mot/10 shadow-[0_4px_12px_rgba(255,59,48,0.2)]" 
+              : "border-border bg-secondary/60 hover:border-muted-foreground hover:bg-secondary"
           )}
         >
           <span className="text-lg font-semibold">Nei</span>

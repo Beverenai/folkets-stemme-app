@@ -135,8 +135,8 @@ export default function StemModal({
       
       {/* Modal card content */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pt-2 pb-6 animate-card-slide-up">
-        {/* Floating card */}
-        <div className="w-full max-w-[340px] h-[62vh] max-h-[520px] rounded-[2rem] bg-card modal-card overflow-hidden shadow-2xl">
+        {/* Floating card with iOS-style layered shadows */}
+        <div className="w-full max-w-[340px] h-[62vh] max-h-[520px] rounded-[28px] bg-card overflow-hidden border border-white/[0.08] shadow-[0_4px_12px_rgba(0,0,0,0.15),0_16px_32px_rgba(0,0,0,0.2),0_32px_64px_rgba(0,0,0,0.25)]">
           <SakSwipeView
             sak={sak}
             isLoggedIn={isLoggedIn}
