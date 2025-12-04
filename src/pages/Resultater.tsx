@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BarChart3, Users, CheckCircle, XCircle, Share2, PartyPopper, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ResultBar from '@/components/ResultBar';
@@ -90,6 +90,7 @@ function ResultCardSkeleton() {
 }
 
 export default function Resultater() {
+  const navigate = useNavigate();
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -153,11 +154,19 @@ export default function Resultater() {
       <div className="h-[calc(100vh-60px)] flex flex-col animate-ios-fade">
         {/* Header - kompakt med teller */}
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-foreground">Resultater</h1>
-            <p className="text-xs text-muted-foreground">
-              Swipe for å se avstemninger
-            </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-0.5 text-primary ios-press -ml-1"
+            >
+              <ChevronLeft className="h-7 w-7" />
+            </button>
+            <div>
+              <h1 className="text-lg font-bold text-foreground">Resultater</h1>
+              <p className="text-xs text-muted-foreground">
+                Swipe for å se avstemninger
+              </p>
+            </div>
           </div>
           {resultater.length > 0 && (
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
