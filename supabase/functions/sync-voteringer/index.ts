@@ -460,8 +460,8 @@ Deno.serve(async (req) => {
           }
         }
 
-        // FALLBACK: If API totals are 0 but we have partiVotes, calculate from them
-        if (finalFor === 0 && finalMot === 0 && Object.keys(finalPartiVotes).length > 0) {
+        // FALLBACK: If API totals are 0, negative, or missing but we have partiVotes, calculate from them
+        if (finalFor <= 0 && Object.keys(finalPartiVotes).length > 0) {
           finalFor = Object.values(finalPartiVotes).reduce((sum, p) => sum + p.for, 0);
           finalMot = Object.values(finalPartiVotes).reduce((sum, p) => sum + p.mot, 0);
           finalAvholdende = Object.values(finalPartiVotes).reduce((sum, p) => sum + p.avholdende, 0);
