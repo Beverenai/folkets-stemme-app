@@ -122,26 +122,47 @@ export type Database = {
         Row: {
           anonymous_id: string
           created_at: string
+          current_streak: number | null
           display_name: string | null
           id: string
+          last_vote_date: string | null
+          onboarding_completed_at: string | null
+          political_compass: Json | null
+          political_interests: string[] | null
+          total_votes: number | null
           updated_at: string
           user_id: string
+          xp_points: number | null
         }
         Insert: {
           anonymous_id?: string
           created_at?: string
+          current_streak?: number | null
           display_name?: string | null
           id?: string
+          last_vote_date?: string | null
+          onboarding_completed_at?: string | null
+          political_compass?: Json | null
+          political_interests?: string[] | null
+          total_votes?: number | null
           updated_at?: string
           user_id: string
+          xp_points?: number | null
         }
         Update: {
           anonymous_id?: string
           created_at?: string
+          current_streak?: number | null
           display_name?: string | null
           id?: string
+          last_vote_date?: string | null
+          onboarding_completed_at?: string | null
+          political_compass?: Json | null
+          political_interests?: string[] | null
+          total_votes?: number | null
           updated_at?: string
           user_id?: string
+          xp_points?: number | null
         }
         Relationships: []
       }
@@ -394,6 +415,30 @@ export type Database = {
           source?: string | null
           started_at?: string | null
           voteringer_synced?: number | null
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          metadata: Json | null
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          metadata?: Json | null
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          metadata?: Json | null
+          unlocked_at?: string
+          user_id?: string
         }
         Relationships: []
       }

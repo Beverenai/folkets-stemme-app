@@ -4,9 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
-import { User, Vote, LogIn, ThumbsUp, ThumbsDown, Minus, ChevronRight, LogOut, TrendingUp, Building2 } from 'lucide-react';
+import { User, Vote, LogIn, ThumbsUp, ThumbsDown, Minus, ChevronRight, LogOut, TrendingUp, Building2, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { triggerHaptic } from '@/lib/haptics';
+import { useGamification } from '@/hooks/useGamification';
+import GamificationProgress from '@/components/gamification/GamificationProgress';
+import AchievementBadge from '@/components/gamification/AchievementBadge';
 
 interface UserVote {
   id: string;
@@ -44,6 +47,7 @@ export default function Profil() {
     comparableVotes: 0
   });
   const [loading, setLoading] = useState(true);
+  const { level, xpPoints, progressToNextLevel, getUnlockedAchievements, allAchievements, hasAchievement } = useGamification();
 
   useEffect(() => {
     async function fetchUserData() {
@@ -211,6 +215,26 @@ export default function Profil() {
               <p className="text-xl font-bold text-vote-mot tabular-nums">{stats.motVotes}</p>
               <p className="text-[10px] text-muted-foreground font-medium">Mot</p>
             </div>
+          </div>
+        </div>
+
+        {/* Gamification Progress */}
+        <div className="rounded-2xl bg-secondary/80 backdrop-blur-sm border border-border/50 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold">Dine merker</h3>
+          </div>
+          <GamificationProgress level={level} xpPoints={xpPoints} progressToNextLevel={progressToNextLevel} className="mb-4" />
+          <div className="flex flex-wrap gap-3 justify-center">
+            {allAchievements.slice(0, 6).map((achievement) => (
+              <AchievementBadge
+                key={achievement.id}
+                achievement={achievement}
+                unlocked={hasAchievement(achievement.id)}
+                size="sm"
+                showLabel={false}
+              />
+            ))}
           </div>
         </div>
 
